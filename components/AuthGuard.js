@@ -30,7 +30,7 @@ export default function AuthGuard({ children }) {
   if (loading || !user) {
     return (
       <div className="auth-wrap">
-        <p className="muted">Carregando...</p>
+        <p className="muted">Chargement...</p>
       </div>
     );
   }

@@ -6,26 +6,27 @@ import AuthGuard from '@/components/AuthGuard';
 import BottomNav from '@/components/BottomNav';
 import ExercisePicker from '@/components/ExercisePicker';
 import { supabase } from '@/lib/supabase';
+import { IconPlus, IconRest } from '@/components/Icons';
 
 export default function NovaRotinaPage() {
   return (
     <AuthGuard>
       {(user) => (
-        <Suspense fallback={<p className="muted">Carregando...</p>}>
-          <NovaRotina user={user} />
+        <Suspense fallback={<p className="muted">Chargement...</p>}>
+          <NouvelleRoutine user={user} />
         </Suspense>
       )}
     </AuthGuard>
   );
 }
 
-function NovaRotina({ user }) {
+function NouvelleRoutine({ user }) {
   const router = useRouter();
   const params = useSearchParams();
   const editId = params.get('id');
 
   const [name, setName] = useState('');
-  const [items, setItems] = useState([]); // [{id, name, gif, category, muscle, sets: n, reps: n}]
+  const [items, setItems] = useState([]); // [{id, name, gif, category, muscle, sets, reps, rest}]
   const [showPicker, setShowPicker] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -49,7 +50,7 @@ function NovaRotina({ user }) {
       setShowPicker(false);
       return;
     }
-    setItems([...items, { ...ex, sets: 3, reps: 10 }]);
+    setItems([...items, { ...ex, sets: 3, reps: 10, rest: 60 }]);
     setShowPicker(false);
   }
 
@@ -67,9 +68,9 @@ function NovaRotina({ user }) {
     setItems(copy);
   }
 
-  async function salvar() {
-    if (!name.trim()) return alert('Dê um nome para a rotina.');
-    if (items.length === 0) return alert('Adicione pelo menos um exercício.');
+  async function sauvegarder() {
+    if (!name.trim()) return alert('Donnez un nom à votre routine.');
+    if (items.length === 0) return alert('Ajoutez au moins un exercice.');
     setSaving(true);
 
     const payload = { user_id: user.id, name: name.trim(), exercises: items };
@@ -78,20 +79,20 @@ function NovaRotina({ user }) {
       : await supabase.from('routines').insert(payload);
 
     setSaving(false);
-    if (error) alert('Erro ao salvar: ' + error.message);
+    if (error) alert('Erreur lors de la sauvegarde : ' + error.message);
     else router.push('/treino');
   }
 
   return (
     <div className="page">
-      <h1 className="page-title">{editId ? 'Editar rotina' : 'Nova rotina'}</h1>
+      <h1 className="page-title">{editId ? 'Modifier la routine' : 'Nouvelle routine'}</h1>
 
-      <label className="label">Nome da rotina</label>
+      <label className="label">Nom de la routine</label>
       <input
         className="input"
         value={name}
         onChange={(e) => setName(e.target.value)}
-        placeholder="Ex: Peito e Tríceps"
+        placeholder="Ex : Pectoraux et Triceps"
       />
 
       <div style={{ marginTop: 16 }}>
@@ -111,7 +112,8 @@ function NovaRotina({ user }) {
                 <button className="check-btn" onClick={() => move(idx, 1)}>↓</button>
               </div>
             </div>
-            <div style={{ display: 'flex', gap: 10, marginTop: 10, alignItems: 'center' }}>
+
+            <div style={{ display: 'flex', gap: 10, marginTop: 10 }}>
               <div style={{ flex: 1 }}>
                 <label className="label" style={{ margin: '0 0 4px' }}>Séries</label>
                 <input
@@ -123,7 +125,7 @@ function NovaRotina({ user }) {
                 />
               </div>
               <div style={{ flex: 1 }}>
-                <label className="label" style={{ margin: '0 0 4px' }}>Repetições</label>
+                <label className="label" style={{ margin: '0 0 4px' }}>Répétitions</label>
                 <input
                   className="input"
                   type="number"
@@ -132,24 +134,38 @@ function NovaRotina({ user }) {
                   onChange={(e) => updateItem(idx, 'reps', Number(e.target.value))}
                 />
               </div>
-              <button
-                className="btn danger small"
-                style={{ marginTop: 18 }}
-                onClick={() => setItems(items.filter((_, i) => i !== idx))}
-              >
-                Remover
-              </button>
+              <div style={{ flex: 1 }}>
+                <label className="label" style={{ margin: '0 0 4px', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <IconRest size={13} /> Repos (s)
+                </label>
+                <input
+                  className="input"
+                  type="number"
+                  min={0}
+                  step={5}
+                  value={it.rest ?? 60}
+                  onChange={(e) => updateItem(idx, 'rest', Number(e.target.value))}
+                />
+              </div>
             </div>
+
+            <button
+              className="btn danger small"
+              style={{ marginTop: 10 }}
+              onClick={() => setItems(items.filter((_, i) => i !== idx))}
+            >
+              Retirer
+            </button>
           </div>
         ))}
       </div>
 
       <button className="btn secondary" style={{ marginTop: 8 }} onClick={() => setShowPicker(true)}>
-        + Adicionar exercício
+        <IconPlus /> Ajouter un exercice
       </button>
 
-      <button className="btn" style={{ marginTop: 10 }} onClick={salvar} disabled={saving}>
-        {saving ? 'Salvando...' : 'Salvar rotina'}
+      <button className="btn" style={{ marginTop: 10 }} onClick={sauvegarder} disabled={saving}>
+        {saving ? 'Sauvegarde...' : 'Sauvegarder la routine'}
       </button>
 
       {showPicker && <ExercisePicker onSelect={addExercise} onClose={() => setShowPicker(false)} />}

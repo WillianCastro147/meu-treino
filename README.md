@@ -1,12 +1,12 @@
-# Meu Treino 💪
+# Moviq
 
-App web estilo Hevy para registrar treinos, com 3 abas (Início, Treino e Perfil), 1.062 exercícios com GIFs animados, login e dados na nuvem via Supabase.
+App web estilo Hevy para registrar treinos, **em francês**, com 3 abas (Accueil, Entraînement e Profil), 1.062 exercícios com GIFs animados (nomes traduzidos para o francês), login e dados na nuvem via Supabase.
 
 ## Estrutura
 
-- **Início** — histórico de treinos realizados (duração, séries, volume, detalhes)
-- **Treino** — criar/editar rotinas e executar treinos (registrar kg, reps e séries com cronômetro)
-- **Perfil** — nome, peso, altura, IMC, estatísticas e logout
+- **Accueil (Início)** — histórico de treinos com miniaturas dos exercícios, duração, séries e volume
+- **Entraînement (Treino)** — criar/editar rotinas (séries, repetições e tempo de descanso) e executar treinos com cronômetro + descanso automático entre séries (com bipe e vibração)
+- **Profil (Perfil)** — nome, peso, altura, IMC, estatísticas e logout
 
 Tecnologias: Next.js 14 + Supabase (autenticação e banco de dados) + Vercel (hospedagem).
 

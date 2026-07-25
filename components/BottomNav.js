@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 const tabs = [
   {
     href: '/inicio',
-    label: 'Início',
+    label: 'Accueil',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M3 10.5 12 3l9 7.5" />
@@ -16,7 +16,7 @@ const tabs = [
   },
   {
     href: '/treino',
-    label: 'Treino',
+    label: 'Entraînement',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path d="M6.5 6.5v11M17.5 6.5v11M3 9v6M21 9v6M6.5 12h11" />
@@ -25,7 +25,7 @@ const tabs = [
   },
   {
     href: '/perfil',
-    label: 'Perfil',
+    label: 'Profil',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <circle cx="12" cy="8" r="4" />

@@ -8,16 +8,16 @@ import { supabase } from '@/lib/supabase';
 export default function PerfilPage() {
   return (
     <AuthGuard>
-      {(user) => <Perfil user={user} />}
+      {(user) => <Profil user={user} />}
     </AuthGuard>
   );
 }
 
-function Perfil({ user }) {
+function Profil({ user }) {
   const [name, setName] = useState('');
   const [weight, setWeight] = useState('');
   const [height, setHeight] = useState('');
-  const [stats, setStats] = useState({ total: 0, minutos: 0 });
+  const [stats, setStats] = useState({ total: 0, minutes: 0 });
   const [msg, setMsg] = useState('');
 
   useEffect(() => {
@@ -41,12 +41,12 @@ function Perfil({ user }) {
         if (data)
           setStats({
             total: data.length,
-            minutos: data.reduce((t, w) => t + (w.duration_min || 0), 0),
+            minutes: data.reduce((t, w) => t + (w.duration_min || 0), 0),
           });
       });
   }, [user.id]);
 
-  async function salvar() {
+  async function sauvegarder() {
     setMsg('');
     const { error } = await supabase.from('profiles').upsert({
       id: user.id,
@@ -55,7 +55,7 @@ function Perfil({ user }) {
       height_cm: height === '' ? null : Number(height),
       updated_at: new Date().toISOString(),
     });
-    setMsg(error ? 'Erro ao salvar: ' + error.message : 'Perfil salvo! ✓');
+    setMsg(error ? 'Erreur : ' + error.message : 'Profil sauvegardé !');
   }
 
   const imc =
@@ -63,16 +63,16 @@ function Perfil({ user }) {
 
   return (
     <div className="page">
-      <h1 className="page-title">Perfil</h1>
+      <h1 className="page-title">Profil</h1>
 
       <div className="stat-grid">
         <div className="stat">
           <b>{stats.total}</b>
-          <span className="muted">treinos</span>
+          <span className="muted">séances</span>
         </div>
         <div className="stat">
-          <b>{Math.round(stats.minutos / 60)}h</b>
-          <span className="muted">treinadas</span>
+          <b>{Math.round(stats.minutes / 60)}h</b>
+          <span className="muted">d&apos;entraînement</span>
         </div>
         <div className="stat">
           <b>{imc || '--'}</b>
@@ -81,7 +81,7 @@ function Perfil({ user }) {
       </div>
 
       <div className="card">
-        <label className="label" style={{ marginTop: 0 }}>Nome</label>
+        <label className="label" style={{ marginTop: 0 }}>Nom</label>
         <input className="input" value={name} onChange={(e) => setName(e.target.value)} />
 
         <label className="label">E-mail</label>
@@ -89,7 +89,7 @@ function Perfil({ user }) {
 
         <div style={{ display: 'flex', gap: 10 }}>
           <div style={{ flex: 1 }}>
-            <label className="label">Peso (kg)</label>
+            <label className="label">Poids (kg)</label>
             <input
               className="input"
               type="number"
@@ -99,7 +99,7 @@ function Perfil({ user }) {
             />
           </div>
           <div style={{ flex: 1 }}>
-            <label className="label">Altura (cm)</label>
+            <label className="label">Taille (cm)</label>
             <input
               className="input"
               type="number"
@@ -110,14 +110,14 @@ function Perfil({ user }) {
           </div>
         </div>
 
-        <button className="btn" style={{ marginTop: 16 }} onClick={salvar}>
-          Salvar perfil
+        <button className="btn" style={{ marginTop: 16 }} onClick={sauvegarder}>
+          Sauvegarder le profil
         </button>
-        {msg && <p className={msg.includes('Erro') ? 'error-msg' : 'success-msg'}>{msg}</p>}
+        {msg && <p className={msg.includes('Erreur') ? 'error-msg' : 'success-msg'}>{msg}</p>}
       </div>
 
       <button className="btn danger" onClick={() => supabase.auth.signOut()}>
-        Sair da conta
+        Se déconnecter
       </button>
 
       <BottomNav />

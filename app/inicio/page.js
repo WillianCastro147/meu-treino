@@ -4,16 +4,17 @@ import { useEffect, useState } from 'react';
 import AuthGuard from '@/components/AuthGuard';
 import BottomNav from '@/components/BottomNav';
 import { supabase } from '@/lib/supabase';
+import { IconTimer, IconSets, IconVolume, IconDumbbell, IconTrash } from '@/components/Icons';
 
 export default function InicioPage() {
   return (
     <AuthGuard>
-      {(user) => <Inicio user={user} />}
+      {(user) => <Accueil user={user} />}
     </AuthGuard>
   );
 }
 
-function Inicio({ user }) {
+function Accueil({ user }) {
   const [workouts, setWorkouts] = useState(null);
   const [expanded, setExpanded] = useState(null);
 
@@ -26,23 +27,29 @@ function Inicio({ user }) {
       .then(({ data }) => setWorkouts(data || []));
   }, []);
 
-  async function excluir(id) {
-    if (!confirm('Excluir este treino do histórico?')) return;
+  async function supprimer(id) {
+    if (!confirm('Supprimer cet entraînement de votre historique ?')) return;
     await supabase.from('workouts').delete().eq('id', id);
     setWorkouts(workouts.filter((w) => w.id !== id));
   }
 
   return (
     <div className="page">
-      <h1 className="page-title">Início</h1>
+      <h1 className="page-title">Accueil</h1>
 
-      {workouts === null && <p className="muted">Carregando...</p>}
+      {workouts === null && <p className="muted">Chargement...</p>}
 
       {workouts && workouts.length === 0 && (
         <div className="card" style={{ textAlign: 'center', padding: 30 }}>
-          <p style={{ fontSize: 40 }}>🏋️</p>
-          <p style={{ fontWeight: 700, margin: '8px 0 4px' }}>Nenhum treino ainda</p>
-          <p className="muted">Vá na aba Treino para criar sua primeira rotina e começar!</p>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}>
+            <IconDumbbell size={48} color="var(--accent)" />
+          </div>
+          <p style={{ fontWeight: 700, margin: '8px 0 4px', fontSize: 17 }}>
+            Aucun entraînement pour le moment
+          </p>
+          <p className="muted">
+            Allez dans l&apos;onglet Entraînement pour créer votre première routine !
+          </p>
         </div>
       )}
 
@@ -65,13 +72,26 @@ function Inicio({ user }) {
                 onClick={() => setExpanded(isOpen ? null : w.id)}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <b style={{ fontSize: 16 }}>{w.name}</b>
+                  <b style={{ fontSize: 18 }}>{w.name}</b>
                   <span className="muted">{formatDate(w.started_at)}</span>
                 </div>
-                <p className="muted" style={{ marginTop: 6 }}>
-                  ⏱ {w.duration_min} min &nbsp;·&nbsp; 🔢 {totalSets} séries &nbsp;·&nbsp; 🏋️{' '}
-                  {Math.round(volume)} kg de volume
+
+                <p className="muted stat-line">
+                  <IconTimer /> {w.duration_min} min
+                  <IconSets /> {totalSets} séries
+                  <IconVolume /> {Math.round(volume)} kg
                 </p>
+
+                {/* Miniatures des exercices de la routine */}
+                <div className="thumb-strip">
+                  {exs.slice(0, 5).map(
+                    (ex, i) =>
+                      ex.gif && (
+                        <img key={i} src={ex.gif} alt={ex.name} className="strip-thumb" loading="lazy" />
+                      )
+                  )}
+                  {exs.length > 5 && <span className="strip-more">+{exs.length - 5}</span>}
+                </div>
               </div>
 
               {isOpen && (
@@ -85,13 +105,13 @@ function Inicio({ user }) {
                           {ex.sets
                             .filter((s) => s.done)
                             .map((s) => `${s.weight || 0}kg × ${s.reps || 0}`)
-                            .join('  ·  ') || 'Nenhuma série concluída'}
+                            .join('  ·  ') || 'Aucune série terminée'}
                         </p>
                       </div>
                     </div>
                   ))}
-                  <button className="btn danger small" style={{ marginTop: 10 }} onClick={() => excluir(w.id)}>
-                    Excluir treino
+                  <button className="btn danger small" style={{ marginTop: 10 }} onClick={() => supprimer(w.id)}>
+                    <IconTrash /> Supprimer
                   </button>
                 </div>
               )}
@@ -106,7 +126,9 @@ function Inicio({ user }) {
 
 function formatDate(iso) {
   const d = new Date(iso);
-  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }) +
+  return (
+    d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }) +
     ' ' +
-    d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+  );
 }

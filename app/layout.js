@@ -1,8 +1,8 @@
 import './globals.css';
 
 export const metadata = {
-  title: 'Meu Treino',
-  description: 'Registre seus treinos, crie rotinas e acompanhe seu progresso',
+  title: 'Moviq',
+  description: 'Enregistrez vos entraînements, créez vos routines et suivez vos progrès',
 };
 
 export const viewport = {
@@ -14,7 +14,7 @@ export const viewport = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="pt-BR">
+    <html lang="fr">
       <body>{children}</body>
     </html>
   );

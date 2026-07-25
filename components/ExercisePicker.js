@@ -2,18 +2,19 @@
 
 import { useMemo, useState } from 'react';
 import exercises from '@/data/exercises.json';
+import { IconSearch } from '@/components/Icons';
 
-const categories = ['Todos', ...new Set(exercises.map((e) => e.category))];
+const categories = ['Tous', ...new Set(exercises.map((e) => e.category))];
 
 export default function ExercisePicker({ onSelect, onClose }) {
   const [search, setSearch] = useState('');
-  const [cat, setCat] = useState('Todos');
+  const [cat, setCat] = useState('Tous');
   const [limit, setLimit] = useState(60);
 
   const filtered = useMemo(() => {
     const q = normalize(search);
     return exercises.filter((e) => {
-      if (cat !== 'Todos' && e.category !== cat) return false;
+      if (cat !== 'Tous' && e.category !== cat) return false;
       if (q && !normalize(e.name + ' ' + (e.muscle || '')).includes(q)) return false;
       return true;
     });
@@ -23,19 +24,23 @@ export default function ExercisePicker({ onSelect, onClose }) {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <b style={{ fontSize: 17 }}>Adicionar exercício</b>
+          <b style={{ fontSize: 18 }}>Ajouter un exercice</b>
           <button
             onClick={onClose}
-            style={{ background: 'none', color: 'var(--muted)', fontSize: 22 }}
+            style={{ background: 'none', color: 'var(--muted)', fontSize: 24 }}
           >
             ✕
           </button>
         </div>
 
-        <div style={{ padding: '10px 16px 0' }}>
+        <div style={{ padding: '10px 16px 0', position: 'relative' }}>
+          <span style={{ position: 'absolute', left: 30, top: 24, color: 'var(--muted)' }}>
+            <IconSearch size={18} />
+          </span>
           <input
             className="input"
-            placeholder="🔍 Buscar exercício..."
+            style={{ paddingLeft: 42 }}
+            placeholder="Rechercher un exercice..."
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);
@@ -61,7 +66,7 @@ export default function ExercisePicker({ onSelect, onClose }) {
 
         <div className="modal-body">
           <p className="muted" style={{ marginBottom: 6 }}>
-            {filtered.length} exercícios
+            {filtered.length} exercices
           </p>
           {filtered.slice(0, limit).map((e) => (
             <div
@@ -82,7 +87,7 @@ export default function ExercisePicker({ onSelect, onClose }) {
           ))}
           {filtered.length > limit && (
             <button className="btn secondary" style={{ marginTop: 10 }} onClick={() => setLimit(limit + 60)}>
-              Mostrar mais
+              Afficher plus
             </button>
           )}
         </div>
