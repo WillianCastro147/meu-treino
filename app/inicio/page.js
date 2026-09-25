@@ -5,6 +5,8 @@ import AuthGuard from '@/components/AuthGuard';
 import BottomNav from '@/components/BottomNav';
 import { supabase } from '@/lib/supabase';
 import { useI18n } from '@/lib/i18n';
+import { useDialog } from '@/components/Dialog';
+import ActiveBanner from '@/components/ActiveBanner';
 import { IconTimer, IconSets, IconVolume, IconDumbbell, IconTrash } from '@/components/Icons';
 
 export default function InicioPage() {
@@ -19,6 +21,7 @@ function Accueil({ user }) {
   const [workouts, setWorkouts] = useState(null);
   const [expanded, setExpanded] = useState(null);
   const { t, locale, exName } = useI18n();
+  const dialog = useDialog();
 
   useEffect(() => {
     supabase
@@ -30,7 +33,7 @@ function Accueil({ user }) {
   }, []);
 
   async function supprimer(id) {
-    if (!confirm(t('confirmDeleteWorkout'))) return;
+    if (!(await dialog.confirm(t('confirmDeleteWorkout'), { danger: true, confirmLabel: t('delete') }))) return;
     await supabase.from('workouts').delete().eq('id', id);
     setWorkouts(workouts.filter((w) => w.id !== id));
   }
@@ -38,6 +41,8 @@ function Accueil({ user }) {
   return (
     <div className="page">
       <h1 className="page-title">{t('tabHome')}</h1>
+
+      <ActiveBanner userId={user.id} />
 
       {workouts === null && <p className="muted">{t('loading')}</p>}
 
@@ -59,7 +64,9 @@ function Accueil({ user }) {
           const volume = exs.reduce(
             (t, ex) =>
               t +
-              ex.sets.reduce((s, set) => s + (Number(set.weight) || 0) * (Number(set.reps) || 0), 0),
+              ex.sets
+                .filter((set) => set.done)
+                .reduce((s, set) => s + (Number(set.weight) || 0) * (Number(set.reps) || 0), 0),
             0
           );
           const totalSets = exs.reduce((t, ex) => t + ex.sets.filter((s) => s.done).length, 0);

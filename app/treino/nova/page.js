@@ -7,6 +7,8 @@ import BottomNav from '@/components/BottomNav';
 import ExercisePicker from '@/components/ExercisePicker';
 import { supabase } from '@/lib/supabase';
 import { useI18n } from '@/lib/i18n';
+import { useDialog } from '@/components/Dialog';
+import ExerciseDetail from '@/components/ExerciseDetail';
 import { IconPlus, IconRest } from '@/components/Icons';
 
 export default function NovaRotinaPage() {
@@ -27,6 +29,8 @@ function NouvelleRoutine({ user }) {
   const params = useSearchParams();
   const editId = params.get('id');
   const { t, exName, exMeta } = useI18n();
+  const dialog = useDialog();
+  const [detail, setDetail] = useState(null);
 
   const [name, setName] = useState('');
   const [items, setItems] = useState([]); // [{id, name, gif, category, muscle, sets, reps, rest}]
@@ -72,8 +76,8 @@ function NouvelleRoutine({ user }) {
   }
 
   async function sauvegarder() {
-    if (!name.trim()) return alert(t('alertRoutineName'));
-    if (items.length === 0) return alert(t('alertAddExercise'));
+    if (!name.trim()) return dialog.alert(t('alertRoutineName'));
+    if (items.length === 0) return dialog.alert(t('alertAddExercise'));
     setSaving(true);
 
     const payload = { user_id: user.id, name: name.trim(), exercises: items };
@@ -82,7 +86,7 @@ function NouvelleRoutine({ user }) {
       : await supabase.from('routines').insert(payload);
 
     setSaving(false);
-    if (error) alert(t('saveError') + error.message);
+    if (error) dialog.alert(t('saveError') + error.message);
     else router.push('/treino');
   }
 
@@ -102,7 +106,9 @@ function NouvelleRoutine({ user }) {
         {items.map((it, idx) => (
           <div key={it.id} className="card">
             <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-              <img src={it.gif} alt="" className="ex-thumb" loading="lazy" />
+              <button className="thumb-btn" onClick={() => setDetail(it)} aria-label={exName(it)}>
+                <img src={it.gif} alt="" className="ex-thumb" loading="lazy" />
+              </button>
               <div style={{ flex: 1 }}>
                 <p className="ex-name">{exName(it)}</p>
                 <p className="muted">{exMeta(it)}</p>
@@ -169,6 +175,7 @@ function NouvelleRoutine({ user }) {
       </button>
 
       {showPicker && <ExercisePicker onSelect={addExercise} onClose={() => setShowPicker(false)} />}
+      {detail && <ExerciseDetail exercise={detail} onClose={() => setDetail(null)} />}
 
       <BottomNav />
     </div>

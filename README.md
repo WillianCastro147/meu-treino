@@ -12,6 +12,26 @@ App web estilo Hevy para registrar treinos, **em português, espanhol e francês
   - Français: `https://SEU-APP.vercel.app/login?lang=fr`
 - Textos da interface: `lib/i18n.js`. Nomes dos exercícios: `data/exercises.json` (campo `name` com `pt`, `es` e `fr`).
 
+## Recursos do treino
+
+- **Treino salvo automaticamente:** se a página recarregar ou o celular fechar o navegador, o treino continua de onde parou (aviso "Treino em andamento · Continuar" no Início e no Treino).
+- **Desempenho anterior** em cada série (ex.: `60×10`). Toque para copiar; se marcar a série sem digitar o peso, usa o da última vez.
+- Adicionar exercício, remover série e remover exercício durante o treino.
+- Toque no GIF para ver o exercício em tamanho grande.
+- Cronômetro e descanso pelo horário real (não atrasam com a tela bloqueada), tela sempre acesa durante o treino e bipe compatível com iPhone.
+- Instalável como app (ícone próprio e tela cheia) pelo "Adicionar à tela inicial".
+- "Esqueci minha senha" na tela de login.
+
+## Esqueci minha senha (configuração única no Supabase)
+
+Em **Authentication → URL Configuration → Redirect URLs**, adicione:
+`https://SEU-APP.vercel.app/redefinir-senha`
+(Mesmo sem isso o fluxo funciona, mas com isso o link abre direto na tela certa.)
+
+## Supabase sempre ativo
+
+O arquivo `vercel.json` agenda uma chamada diária para `/api/keepalive`, que faz uma consulta leve no banco. Isso evita que o Supabase gratuito pause por falta de uso. Nada a configurar: a Vercel ativa sozinha após o deploy (veja em Settings → Cron Jobs).
+
 ## App não abre / login não funciona?
 
 No plano gratuito, o Supabase **pausa o projeto após alguns dias sem uso**. Aí o login e os dados param de funcionar. Para resolver: entre em supabase.com/dashboard, abra o projeto e clique em **Restore project**. Espere uns 2 minutos e teste de novo.
@@ -102,10 +122,16 @@ meu-treino/
 │   ├── treino/           # Aba Treino (rotinas)
 │   │   ├── nova/         # Criar/editar rotina
 │   │   └── executar/     # Executar treino
-│   └── perfil/           # Aba Perfil
-├── components/           # BottomNav, AuthGuard, ExercisePicker
+│   ├── perfil/           # Aba Perfil
+│   ├── redefinir-senha/  # Nova senha (link do e-mail)
+│   └── api/keepalive/    # Mantém o Supabase ativo (cron diário)
+├── components/           # BottomNav, AuthGuard, ExercisePicker, Dialog, ExerciseDetail...
 ├── data/exercises.json   # Catálogo com os 1.062 exercícios
 ├── lib/supabase.js       # Conexão com o Supabase
+├── lib/i18n.js           # Traduções PT / ES / FR
+├── lib/activeWorkout.js  # Treino em andamento salvo no aparelho
 ├── public/gifs/          # GIFs comprimidos (WebP)
+├── public/icon-*.png     # Ícones do app
+├── vercel.json           # Agenda o keepalive diário
 └── supabase/schema.sql   # Script do banco de dados
 ```

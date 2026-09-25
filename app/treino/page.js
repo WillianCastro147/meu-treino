@@ -6,6 +6,9 @@ import AuthGuard from '@/components/AuthGuard';
 import BottomNav from '@/components/BottomNav';
 import { supabase } from '@/lib/supabase';
 import { useI18n } from '@/lib/i18n';
+import { useDialog } from '@/components/Dialog';
+import { loadActive, clearActive } from '@/lib/activeWorkout';
+import ActiveBanner from '@/components/ActiveBanner';
 import { IconPlus, IconTrash } from '@/components/Icons';
 
 export default function TreinoPage() {
@@ -20,6 +23,7 @@ function Entrainement({ user }) {
   const router = useRouter();
   const [routines, setRoutines] = useState(null);
   const { t, exName } = useI18n();
+  const dialog = useDialog();
 
   useEffect(() => {
     supabase
@@ -30,14 +34,30 @@ function Entrainement({ user }) {
   }, []);
 
   async function supprimer(id) {
-    if (!confirm(t('confirmDeleteRoutine'))) return;
+    if (!(await dialog.confirm(t('confirmDeleteRoutine'), { danger: true, confirmLabel: t('delete') }))) return;
     await supabase.from('routines').delete().eq('id', id);
     setRoutines(routines.filter((r) => r.id !== id));
+  }
+
+  // Se já existe outro treino em andamento, pergunta antes de descartá-lo
+  async function demarrer(id) {
+    const active = loadActive();
+    if (active && active.userId === user.id && active.routineId !== id) {
+      const ok = await dialog.confirm(`${t('workoutInProgress')}: ${active.routineName}. ${t('confirmDiscard')}`, {
+        danger: true,
+        confirmLabel: t('discard'),
+      });
+      if (!ok) return;
+      clearActive();
+    }
+    router.push(`/treino/executar?id=${id}`);
   }
 
   return (
     <div className="page">
       <h1 className="page-title">{t('tabWorkout')}</h1>
+
+      <ActiveBanner userId={user.id} />
 
       <button className="btn" onClick={() => router.push('/treino/nova')}>
         <IconPlus /> {t('createRoutine')}
@@ -73,7 +93,7 @@ function Entrainement({ user }) {
               <button
                 className="btn small"
                 style={{ flex: 1 }}
-                onClick={() => router.push(`/treino/executar?id=${r.id}`)}
+                onClick={() => demarrer(r.id)}
               >
                 {t('start')}
               </button>

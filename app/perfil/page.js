@@ -76,7 +76,7 @@ function Profil({ user }) {
           <span className="muted">{t('sessions')}</span>
         </div>
         <div className="stat">
-          <b>{Math.round(stats.minutes / 60)}h</b>
+          <b>{fmtDuration(stats.minutes)}</b>
           <span className="muted">{t('trainingTime')}</span>
         </div>
         <div className="stat">
@@ -133,4 +133,12 @@ function Profil({ user }) {
       <BottomNav />
     </div>
   );
+}
+
+// 45 → "45min" · 90 → "1h30" · 600 → "10h"
+function fmtDuration(min) {
+  if (min < 60) return `${min}min`;
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return h >= 10 || m === 0 ? `${h}h` : `${h}h${String(m).padStart(2, '0')}`;
 }

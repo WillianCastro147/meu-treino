@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import exercises from '@/data/exercises.json';
 import { useI18n } from '@/lib/i18n';
 import { IconSearch } from '@/components/Icons';
+import ExerciseDetail from '@/components/ExerciseDetail';
 
 const categoryKeys = ['all', ...new Set(exercises.map((e) => e.cat))];
 
@@ -12,6 +13,7 @@ export default function ExercisePicker({ onSelect, onClose }) {
   const [search, setSearch] = useState('');
   const [cat, setCat] = useState('all');
   const [limit, setLimit] = useState(60);
+  const [detail, setDetail] = useState(null);
 
   const filtered = useMemo(() => {
     const q = normalize(search);
@@ -78,7 +80,16 @@ export default function ExercisePicker({ onSelect, onClose }) {
               style={{ cursor: 'pointer' }}
               onClick={() => onSelect(e)}
             >
-              <img src={e.gif} alt="" className="ex-thumb" loading="lazy" />
+              <button
+                className="thumb-btn"
+                onClick={(ev) => {
+                  ev.stopPropagation();
+                  setDetail(e);
+                }}
+                aria-label={e.name[lang]}
+              >
+                <img src={e.gif} alt="" className="ex-thumb" loading="lazy" />
+              </button>
               <div>
                 <p className="ex-name">{e.name[lang]}</p>
                 <p className="muted">
@@ -95,6 +106,9 @@ export default function ExercisePicker({ onSelect, onClose }) {
           )}
         </div>
       </div>
+      {detail && (
+        <ExerciseDetail exercise={detail} onClose={() => setDetail(null)} onSelect={(ex) => onSelect(ex)} />
+      )}
     </div>
   );
 }
