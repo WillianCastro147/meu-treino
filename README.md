@@ -1,16 +1,17 @@
 # Moviq
 
-App web estilo Hevy para registrar treinos, **em português, espanhol e francês**, com 3 abas (Início, Treino e Perfil), 1.062 exercícios com GIFs animados (nomes nos 3 idiomas), login e dados na nuvem via Supabase.
+App web estilo Hevy para registrar treinos, **em inglês (idioma principal), português, espanhol e francês**, com 3 abas (Início, Treino e Perfil), 1.062 exercícios com GIFs animados (nomes nos 4 idiomas), login e dados na nuvem via Supabase.
 
-## Idiomas (PT / ES / FR)
+## Idiomas (EN / PT / ES / FR)
 
-- O app detecta o idioma do navegador automaticamente (português, espanhol ou francês; se for outro, abre em português).
-- O usuário pode trocar a qualquer momento no seletor **PT · ES · FR** da tela de login ou da aba Perfil (a escolha fica salva no aparelho).
+- **Inglês é o idioma principal.** O app detecta o idioma do navegador: português, espanhol ou francês abrem no respectivo idioma; qualquer outro abre em inglês.
+- O usuário pode trocar a qualquer momento no seletor **EN · PT · ES · FR** da tela de login ou da aba Perfil (a escolha fica salva no aparelho).
 - Para mandar um link já no idioma certo (ex.: em cada oferta), adicione `?lang=`:
+  - English: `https://SEU-APP.vercel.app/login?lang=en`
   - Português: `https://SEU-APP.vercel.app/login?lang=pt`
   - Español: `https://SEU-APP.vercel.app/login?lang=es`
   - Français: `https://SEU-APP.vercel.app/login?lang=fr`
-- Textos da interface: `lib/i18n.js`. Nomes dos exercícios: `data/exercises.json` (campo `name` com `pt`, `es` e `fr`).
+- Textos da interface: `lib/i18n.js`. Nomes dos exercícios: `data/exercises.json` (campo `name` com `en`, `pt`, `es` e `fr`).
 
 ## Recursos do treino
 
@@ -128,7 +129,7 @@ meu-treino/
 ├── components/           # BottomNav, AuthGuard, ExercisePicker, Dialog, ExerciseDetail...
 ├── data/exercises.json   # Catálogo com os 1.062 exercícios
 ├── lib/supabase.js       # Conexão com o Supabase
-├── lib/i18n.js           # Traduções PT / ES / FR
+├── lib/i18n.js           # Traduções EN / PT / ES / FR
 ├── lib/activeWorkout.js  # Treino em andamento salvo no aparelho
 ├── public/gifs/          # GIFs comprimidos (WebP)
 ├── public/icon-*.png     # Ícones do app

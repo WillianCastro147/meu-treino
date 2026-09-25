@@ -3,7 +3,7 @@ export default function manifest() {
   return {
     name: 'Moviq',
     short_name: 'Moviq',
-    description: 'Treinos, rotinas e evolução · Entrenamientos · Entraînements',
+    description: 'Workouts, routines and progress · Treinos · Entrenamientos · Entraînements',
     start_url: '/',
     display: 'standalone',
     orientation: 'portrait',

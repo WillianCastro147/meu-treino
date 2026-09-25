@@ -3,7 +3,7 @@ import Providers from '@/components/Providers';
 
 export const metadata = {
   title: 'Moviq',
-  description: 'Registre seus treinos, crie rotinas e acompanhe sua evolução · Registra tus entrenamientos · Enregistrez vos entraînements',
+  description: 'Log your workouts, build routines and track your progress · Registre seus treinos · Registra tus entrenamientos · Enregistrez vos entraînements',
   applicationName: 'Moviq',
   appleWebApp: {
     capable: true,
@@ -29,7 +29,7 @@ export const viewport = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="pt">
+    <html lang="en">
       <body>
         <Providers>{children}</Providers>
       </body>
