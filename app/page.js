@@ -8,9 +8,12 @@ export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      router.replace(session ? '/inicio' : '/login');
-    });
+    supabase.auth
+      .getSession()
+      .then(({ data: { session } }) => {
+        router.replace(session ? '/inicio' : '/login');
+      })
+      .catch(() => router.replace('/login'));
   }, [router]);
 
   return null;

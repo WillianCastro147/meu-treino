@@ -1,6 +1,20 @@
 # Moviq
 
-App web estilo Hevy para registrar treinos, **em francês**, com 3 abas (Accueil, Entraînement e Profil), 1.062 exercícios com GIFs animados (nomes traduzidos para o francês), login e dados na nuvem via Supabase.
+App web estilo Hevy para registrar treinos, **em português, espanhol e francês**, com 3 abas (Início, Treino e Perfil), 1.062 exercícios com GIFs animados (nomes nos 3 idiomas), login e dados na nuvem via Supabase.
+
+## Idiomas (PT / ES / FR)
+
+- O app detecta o idioma do navegador automaticamente (português, espanhol ou francês; se for outro, abre em português).
+- O usuário pode trocar a qualquer momento no seletor **PT · ES · FR** da tela de login ou da aba Perfil (a escolha fica salva no aparelho).
+- Para mandar um link já no idioma certo (ex.: em cada oferta), adicione `?lang=`:
+  - Português: `https://SEU-APP.vercel.app/login?lang=pt`
+  - Español: `https://SEU-APP.vercel.app/login?lang=es`
+  - Français: `https://SEU-APP.vercel.app/login?lang=fr`
+- Textos da interface: `lib/i18n.js`. Nomes dos exercícios: `data/exercises.json` (campo `name` com `pt`, `es` e `fr`).
+
+## App não abre / login não funciona?
+
+No plano gratuito, o Supabase **pausa o projeto após alguns dias sem uso**. Aí o login e os dados param de funcionar. Para resolver: entre em supabase.com/dashboard, abra o projeto e clique em **Restore project**. Espere uns 2 minutos e teste de novo.
 
 ## Estrutura
 

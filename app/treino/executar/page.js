@@ -4,13 +4,15 @@ import { Suspense, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import AuthGuard from '@/components/AuthGuard';
 import { supabase } from '@/lib/supabase';
+import { useI18n } from '@/lib/i18n';
 import { IconCheck, IconPlus, IconRest } from '@/components/Icons';
 
 export default function ExecutarPage() {
+  const { t } = useI18n();
   return (
     <AuthGuard>
       {(user) => (
-        <Suspense fallback={<p className="muted">Chargement...</p>}>
+        <Suspense fallback={<p className="muted">{t('loading')}</p>}>
           <Seance user={user} />
         </Suspense>
       )}
@@ -22,6 +24,7 @@ function Seance({ user }) {
   const router = useRouter();
   const params = useSearchParams();
   const routineId = params.get('id');
+  const { t, exName } = useI18n();
 
   const [routine, setRoutine] = useState(null);
   const [exs, setExs] = useState([]); // [{name, gif, rest, sets: [{weight, reps, done}]}]
@@ -60,6 +63,7 @@ function Seance({ user }) {
         setRoutine(data);
         setExs(
           (data.exercises || []).map((e) => ({
+            id: e.id,
             name: e.name,
             gif: e.gif,
             rest: e.rest ?? 60,
@@ -93,23 +97,23 @@ function Seance({ user }) {
 
   async function terminer() {
     const anyDone = exs.some((e) => e.sets.some((s) => s.done));
-    if (!anyDone && !confirm('Aucune série terminée. Terminer quand même ?')) return;
+    if (!anyDone && !confirm(t('confirmNoSets'))) return;
 
     setSaving(true);
     const { error } = await supabase.from('workouts').insert({
       user_id: user.id,
-      name: routine?.name || 'Séance',
+      name: routine?.name || t('defaultSession'),
       started_at: startRef.current.toISOString(),
       duration_min: Math.max(1, Math.round(seconds / 60)),
       exercises: exs,
     });
     setSaving(false);
 
-    if (error) alert('Erreur lors de la sauvegarde : ' + error.message);
+    if (error) alert(t('saveError') + error.message);
     else router.replace('/inicio');
   }
 
-  if (!routine) return <div className="page"><p className="muted">Chargement...</p></div>;
+  if (!routine) return <div className="page"><p className="muted">{t('loading')}</p></div>;
 
   return (
     <div className="page" style={{ paddingBottom: 130 }}>
@@ -123,19 +127,19 @@ function Seance({ user }) {
           <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 6 }}>
             {ex.gif && <img src={ex.gif} alt="" className="ex-thumb big" />}
             <div>
-              <b style={{ fontSize: 17 }}>{ex.name}</b>
+              <b style={{ fontSize: 17 }}>{exName(ex)}</b>
               {ex.rest > 0 && (
                 <p className="muted" style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 4 }}>
-                  <IconRest size={14} /> Repos : {ex.rest}s
+                  <IconRest size={14} /> {t('rest')}: {ex.rest}s
                 </p>
               )}
             </div>
           </div>
 
           <div className="set-grid muted" style={{ fontSize: 13, fontWeight: 700 }}>
-            <span style={{ textAlign: 'center' }}>SÉRIE</span>
-            <span style={{ textAlign: 'center' }}>KG</span>
-            <span style={{ textAlign: 'center' }}>REPS</span>
+            <span style={{ textAlign: 'center' }}>{t('setCol')}</span>
+            <span style={{ textAlign: 'center' }}>{t('kgCol')}</span>
+            <span style={{ textAlign: 'center' }}>{t('repsCol')}</span>
             <span></span>
           </div>
 
@@ -160,7 +164,7 @@ function Seance({ user }) {
               <button
                 className={`check-btn ${s.done ? 'done' : ''}`}
                 onClick={() => updateSet(ei, si, 'done', !s.done)}
-                aria-label="Série terminée"
+                aria-label={t('setDone')}
               >
                 <IconCheck />
               </button>
@@ -168,22 +172,22 @@ function Seance({ user }) {
           ))}
 
           <button className="btn secondary small" onClick={() => addSet(ei)}>
-            <IconPlus size={14} /> Série
+            <IconPlus size={14} /> {t('addSet')}
           </button>
         </div>
       ))}
 
       <button className="btn" style={{ background: 'var(--green)' }} onClick={terminer} disabled={saving}>
-        {saving ? 'Sauvegarde...' : 'Terminer la séance'}
+        {saving ? t('saving') : t('finishWorkout')}
       </button>
       <button
         className="btn danger"
         style={{ marginTop: 10 }}
         onClick={() => {
-          if (confirm('Abandonner cette séance ?')) router.replace('/treino');
+          if (confirm(t('confirmDiscard'))) router.replace('/treino');
         }}
       >
-        Abandonner
+        {t('discard')}
       </button>
 
       {/* Barre de repos */}
@@ -193,7 +197,7 @@ function Seance({ user }) {
             <IconRest size={22} color="var(--accent)" />
             <div>
               <b style={{ fontSize: 22 }}>{fmt(restLeft)}</b>
-              <p className="muted" style={{ fontSize: 12 }}>Repos en cours</p>
+              <p className="muted" style={{ fontSize: 12 }}>{t('resting')}</p>
             </div>
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
@@ -201,7 +205,7 @@ function Seance({ user }) {
               +15s
             </button>
             <button className="btn small" onClick={() => setRestLeft(null)}>
-              Passer
+              {t('skip')}
             </button>
           </div>
         </div>

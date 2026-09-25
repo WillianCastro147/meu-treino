@@ -2,29 +2,32 @@
 
 import { useMemo, useState } from 'react';
 import exercises from '@/data/exercises.json';
+import { useI18n } from '@/lib/i18n';
 import { IconSearch } from '@/components/Icons';
 
-const categories = ['Tous', ...new Set(exercises.map((e) => e.category))];
+const categoryKeys = ['all', ...new Set(exercises.map((e) => e.cat))];
 
 export default function ExercisePicker({ onSelect, onClose }) {
+  const { t, lang, catName, muscleName } = useI18n();
   const [search, setSearch] = useState('');
-  const [cat, setCat] = useState('Tous');
+  const [cat, setCat] = useState('all');
   const [limit, setLimit] = useState(60);
 
   const filtered = useMemo(() => {
     const q = normalize(search);
     return exercises.filter((e) => {
-      if (cat !== 'Tous' && e.category !== cat) return false;
-      if (q && !normalize(e.name + ' ' + (e.muscle || '')).includes(q)) return false;
+      if (cat !== 'all' && e.cat !== cat) return false;
+      if (q && !normalize(e.name[lang] + ' ' + muscleName(e.muscle)).includes(q)) return false;
       return true;
     });
-  }, [search, cat]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, cat, lang]);
 
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <b style={{ fontSize: 18 }}>Ajouter un exercice</b>
+          <b style={{ fontSize: 18 }}>{t('addExercise')}</b>
           <button
             onClick={onClose}
             style={{ background: 'none', color: 'var(--muted)', fontSize: 24 }}
@@ -40,7 +43,7 @@ export default function ExercisePicker({ onSelect, onClose }) {
           <input
             className="input"
             style={{ paddingLeft: 42 }}
-            placeholder="Rechercher un exercice..."
+            placeholder={t('searchExercise')}
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);
@@ -50,7 +53,7 @@ export default function ExercisePicker({ onSelect, onClose }) {
         </div>
 
         <div className="chip-row">
-          {categories.map((c) => (
+          {categoryKeys.map((c) => (
             <button
               key={c}
               className={`chip ${cat === c ? 'active' : ''}`}
@@ -59,14 +62,14 @@ export default function ExercisePicker({ onSelect, onClose }) {
                 setLimit(60);
               }}
             >
-              {c}
+              {c === 'all' ? t('all') : catName(c)}
             </button>
           ))}
         </div>
 
         <div className="modal-body">
           <p className="muted" style={{ marginBottom: 6 }}>
-            {filtered.length} exercices
+            {filtered.length} {t('exercisesCount')}
           </p>
           {filtered.slice(0, limit).map((e) => (
             <div
@@ -77,17 +80,17 @@ export default function ExercisePicker({ onSelect, onClose }) {
             >
               <img src={e.gif} alt="" className="ex-thumb" loading="lazy" />
               <div>
-                <p className="ex-name">{e.name}</p>
+                <p className="ex-name">{e.name[lang]}</p>
                 <p className="muted">
-                  {e.category}
-                  {e.muscle ? ` · ${e.muscle}` : ''}
+                  {catName(e.cat)}
+                  {e.muscle ? ` · ${muscleName(e.muscle)}` : ''}
                 </p>
               </div>
             </div>
           ))}
           {filtered.length > limit && (
             <button className="btn secondary" style={{ marginTop: 10 }} onClick={() => setLimit(limit + 60)}>
-              Afficher plus
+              {t('showMore')}
             </button>
           )}
         </div>
@@ -97,8 +100,8 @@ export default function ExercisePicker({ onSelect, onClose }) {
 }
 
 function normalize(s) {
-  return s
+  return (s || '')
     .toLowerCase()
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
+    .replace(/[̀-ͯ]/g, '');
 }

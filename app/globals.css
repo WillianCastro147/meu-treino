@@ -405,3 +405,29 @@ textarea {
   font-size: 14px;
   margin-top: 10px;
 }
+
+/* Seletor de idioma (PT / ES / FR) */
+.lang-switch {
+  display: flex;
+  width: fit-content;
+  gap: 4px;
+  padding: 4px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.lang-switch button {
+  background: none;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 7px 14px;
+  border-radius: 9px;
+  letter-spacing: 0.5px;
+}
+
+.lang-switch button.active {
+  background: var(--accent);
+  color: #fff;
+}

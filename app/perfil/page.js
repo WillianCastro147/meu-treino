@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import AuthGuard from '@/components/AuthGuard';
 import BottomNav from '@/components/BottomNav';
 import { supabase } from '@/lib/supabase';
+import { useI18n } from '@/lib/i18n';
+import LangSwitcher from '@/components/LangSwitcher';
 
 export default function PerfilPage() {
   return (
@@ -19,6 +21,8 @@ function Profil({ user }) {
   const [height, setHeight] = useState('');
   const [stats, setStats] = useState({ total: 0, minutes: 0 });
   const [msg, setMsg] = useState('');
+  const [msgErr, setMsgErr] = useState(false);
+  const { t } = useI18n();
 
   useEffect(() => {
     supabase
@@ -55,7 +59,8 @@ function Profil({ user }) {
       height_cm: height === '' ? null : Number(height),
       updated_at: new Date().toISOString(),
     });
-    setMsg(error ? 'Erreur : ' + error.message : 'Profil sauvegardé !');
+    setMsgErr(!!error);
+    setMsg(error ? t('errPrefix') + error.message : t('profileSaved'));
   }
 
   const imc =
@@ -63,33 +68,33 @@ function Profil({ user }) {
 
   return (
     <div className="page">
-      <h1 className="page-title">Profil</h1>
+      <h1 className="page-title">{t('tabProfile')}</h1>
 
       <div className="stat-grid">
         <div className="stat">
           <b>{stats.total}</b>
-          <span className="muted">séances</span>
+          <span className="muted">{t('sessions')}</span>
         </div>
         <div className="stat">
           <b>{Math.round(stats.minutes / 60)}h</b>
-          <span className="muted">d&apos;entraînement</span>
+          <span className="muted">{t('trainingTime')}</span>
         </div>
         <div className="stat">
           <b>{imc || '--'}</b>
-          <span className="muted">IMC</span>
+          <span className="muted">{t('bmi')}</span>
         </div>
       </div>
 
       <div className="card">
-        <label className="label" style={{ marginTop: 0 }}>Nom</label>
+        <label className="label" style={{ marginTop: 0 }}>{t('name')}</label>
         <input className="input" value={name} onChange={(e) => setName(e.target.value)} />
 
-        <label className="label">E-mail</label>
+        <label className="label">{t('email')}</label>
         <input className="input" value={user.email} disabled style={{ opacity: 0.6 }} />
 
         <div style={{ display: 'flex', gap: 10 }}>
           <div style={{ flex: 1 }}>
-            <label className="label">Poids (kg)</label>
+            <label className="label">{t('weight')}</label>
             <input
               className="input"
               type="number"
@@ -99,7 +104,7 @@ function Profil({ user }) {
             />
           </div>
           <div style={{ flex: 1 }}>
-            <label className="label">Taille (cm)</label>
+            <label className="label">{t('height')}</label>
             <input
               className="input"
               type="number"
@@ -111,13 +116,18 @@ function Profil({ user }) {
         </div>
 
         <button className="btn" style={{ marginTop: 16 }} onClick={sauvegarder}>
-          Sauvegarder le profil
+          {t('saveProfile')}
         </button>
-        {msg && <p className={msg.includes('Erreur') ? 'error-msg' : 'success-msg'}>{msg}</p>}
+        {msg && <p className={msgErr ? 'error-msg' : 'success-msg'}>{msg}</p>}
+      </div>
+
+      <div className="card">
+        <label className="label" style={{ marginTop: 0 }}>{t('language')}</label>
+        <LangSwitcher style={{ marginTop: 6 }} />
       </div>
 
       <button className="btn danger" onClick={() => supabase.auth.signOut()}>
-        Se déconnecter
+        {t('logout')}
       </button>
 
       <BottomNav />

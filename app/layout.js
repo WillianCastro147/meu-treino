@@ -1,8 +1,9 @@
 import './globals.css';
+import { LangProvider } from '@/lib/i18n';
 
 export const metadata = {
   title: 'Moviq',
-  description: 'Enregistrez vos entraînements, créez vos routines et suivez vos progrès',
+  description: 'Registre seus treinos, crie rotinas e acompanhe sua evolução · Registra tus entrenamientos · Enregistrez vos entraînements',
 };
 
 export const viewport = {
@@ -14,8 +15,10 @@ export const viewport = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="fr">
-      <body>{children}</body>
+    <html lang="pt">
+      <body>
+        <LangProvider>{children}</LangProvider>
+      </body>
     </html>
   );
 }

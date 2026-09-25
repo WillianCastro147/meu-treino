@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import AuthGuard from '@/components/AuthGuard';
 import BottomNav from '@/components/BottomNav';
 import { supabase } from '@/lib/supabase';
+import { useI18n } from '@/lib/i18n';
 import { IconPlus, IconTrash } from '@/components/Icons';
 
 export default function TreinoPage() {
@@ -18,6 +19,7 @@ export default function TreinoPage() {
 function Entrainement({ user }) {
   const router = useRouter();
   const [routines, setRoutines] = useState(null);
+  const { t, exName } = useI18n();
 
   useEffect(() => {
     supabase
@@ -28,25 +30,25 @@ function Entrainement({ user }) {
   }, []);
 
   async function supprimer(id) {
-    if (!confirm('Supprimer cette routine ?')) return;
+    if (!confirm(t('confirmDeleteRoutine'))) return;
     await supabase.from('routines').delete().eq('id', id);
     setRoutines(routines.filter((r) => r.id !== id));
   }
 
   return (
     <div className="page">
-      <h1 className="page-title">Entraînement</h1>
+      <h1 className="page-title">{t('tabWorkout')}</h1>
 
       <button className="btn" onClick={() => router.push('/treino/nova')}>
-        <IconPlus /> Créer une nouvelle routine
+        <IconPlus /> {t('createRoutine')}
       </button>
 
-      <h2 style={{ fontSize: 18, fontWeight: 700, margin: '22px 0 10px' }}>Mes routines</h2>
+      <h2 style={{ fontSize: 18, fontWeight: 700, margin: '22px 0 10px' }}>{t('myRoutines')}</h2>
 
-      {routines === null && <p className="muted">Chargement...</p>}
+      {routines === null && <p className="muted">{t('loading')}</p>}
 
       {routines && routines.length === 0 && (
-        <p className="muted">Vous n&apos;avez pas encore de routine. Créez la première ci-dessus !</p>
+        <p className="muted">{t('noRoutines')}</p>
       )}
 
       {routines &&
@@ -54,13 +56,13 @@ function Entrainement({ user }) {
           <div key={r.id} className="card">
             <b style={{ fontSize: 18 }}>{r.name}</b>
             <p className="muted" style={{ margin: '4px 0 10px' }}>
-              {(r.exercises || []).map((e) => e.name).join(' · ')}
+              {(r.exercises || []).map((e) => exName(e)).join(' · ')}
             </p>
 
             <div className="thumb-strip" style={{ marginBottom: 12 }}>
               {(r.exercises || []).slice(0, 5).map(
                 (e, i) =>
-                  e.gif && <img key={i} src={e.gif} alt={e.name} className="strip-thumb" loading="lazy" />
+                  e.gif && <img key={i} src={e.gif} alt={exName(e)} className="strip-thumb" loading="lazy" />
               )}
               {(r.exercises || []).length > 5 && (
                 <span className="strip-more">+{r.exercises.length - 5}</span>
@@ -73,13 +75,13 @@ function Entrainement({ user }) {
                 style={{ flex: 1 }}
                 onClick={() => router.push(`/treino/executar?id=${r.id}`)}
               >
-                Démarrer
+                {t('start')}
               </button>
               <button
                 className="btn secondary small"
                 onClick={() => router.push(`/treino/nova?id=${r.id}`)}
               >
-                Modifier
+                {t('edit')}
               </button>
               <button className="btn danger small" onClick={() => supprimer(r.id)}>
                 <IconTrash />

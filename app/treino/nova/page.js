@@ -6,13 +6,15 @@ import AuthGuard from '@/components/AuthGuard';
 import BottomNav from '@/components/BottomNav';
 import ExercisePicker from '@/components/ExercisePicker';
 import { supabase } from '@/lib/supabase';
+import { useI18n } from '@/lib/i18n';
 import { IconPlus, IconRest } from '@/components/Icons';
 
 export default function NovaRotinaPage() {
+  const { t } = useI18n();
   return (
     <AuthGuard>
       {(user) => (
-        <Suspense fallback={<p className="muted">Chargement...</p>}>
+        <Suspense fallback={<p className="muted">{t('loading')}</p>}>
           <NouvelleRoutine user={user} />
         </Suspense>
       )}
@@ -24,6 +26,7 @@ function NouvelleRoutine({ user }) {
   const router = useRouter();
   const params = useSearchParams();
   const editId = params.get('id');
+  const { t, exName, exMeta } = useI18n();
 
   const [name, setName] = useState('');
   const [items, setItems] = useState([]); // [{id, name, gif, category, muscle, sets, reps, rest}]
@@ -50,7 +53,7 @@ function NouvelleRoutine({ user }) {
       setShowPicker(false);
       return;
     }
-    setItems([...items, { ...ex, sets: 3, reps: 10, rest: 60 }]);
+    setItems([...items, { id: ex.id, name: exName(ex), gif: ex.gif, sets: 3, reps: 10, rest: 60 }]);
     setShowPicker(false);
   }
 
@@ -69,8 +72,8 @@ function NouvelleRoutine({ user }) {
   }
 
   async function sauvegarder() {
-    if (!name.trim()) return alert('Donnez un nom à votre routine.');
-    if (items.length === 0) return alert('Ajoutez au moins un exercice.');
+    if (!name.trim()) return alert(t('alertRoutineName'));
+    if (items.length === 0) return alert(t('alertAddExercise'));
     setSaving(true);
 
     const payload = { user_id: user.id, name: name.trim(), exercises: items };
@@ -79,20 +82,20 @@ function NouvelleRoutine({ user }) {
       : await supabase.from('routines').insert(payload);
 
     setSaving(false);
-    if (error) alert('Erreur lors de la sauvegarde : ' + error.message);
+    if (error) alert(t('saveError') + error.message);
     else router.push('/treino');
   }
 
   return (
     <div className="page">
-      <h1 className="page-title">{editId ? 'Modifier la routine' : 'Nouvelle routine'}</h1>
+      <h1 className="page-title">{editId ? t('editRoutine') : t('newRoutine')}</h1>
 
-      <label className="label">Nom de la routine</label>
+      <label className="label">{t('routineName')}</label>
       <input
         className="input"
         value={name}
         onChange={(e) => setName(e.target.value)}
-        placeholder="Ex : Pectoraux et Triceps"
+        placeholder={t('routineNamePlaceholder')}
       />
 
       <div style={{ marginTop: 16 }}>
@@ -101,11 +104,8 @@ function NouvelleRoutine({ user }) {
             <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
               <img src={it.gif} alt="" className="ex-thumb" loading="lazy" />
               <div style={{ flex: 1 }}>
-                <p className="ex-name">{it.name}</p>
-                <p className="muted">
-                  {it.category}
-                  {it.muscle ? ` · ${it.muscle}` : ''}
-                </p>
+                <p className="ex-name">{exName(it)}</p>
+                <p className="muted">{exMeta(it)}</p>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <button className="check-btn" onClick={() => move(idx, -1)}>↑</button>
@@ -115,7 +115,7 @@ function NouvelleRoutine({ user }) {
 
             <div style={{ display: 'flex', gap: 10, marginTop: 10 }}>
               <div style={{ flex: 1 }}>
-                <label className="label" style={{ margin: '0 0 4px' }}>Séries</label>
+                <label className="label" style={{ margin: '0 0 4px' }}>{t('setsLabel')}</label>
                 <input
                   className="input"
                   type="number"
@@ -125,7 +125,7 @@ function NouvelleRoutine({ user }) {
                 />
               </div>
               <div style={{ flex: 1 }}>
-                <label className="label" style={{ margin: '0 0 4px' }}>Répétitions</label>
+                <label className="label" style={{ margin: '0 0 4px' }}>{t('repsLabel')}</label>
                 <input
                   className="input"
                   type="number"
@@ -136,7 +136,7 @@ function NouvelleRoutine({ user }) {
               </div>
               <div style={{ flex: 1 }}>
                 <label className="label" style={{ margin: '0 0 4px', display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <IconRest size={13} /> Repos (s)
+                  <IconRest size={13} /> {t('restLabel')}
                 </label>
                 <input
                   className="input"
@@ -154,18 +154,18 @@ function NouvelleRoutine({ user }) {
               style={{ marginTop: 10 }}
               onClick={() => setItems(items.filter((_, i) => i !== idx))}
             >
-              Retirer
+              {t('remove')}
             </button>
           </div>
         ))}
       </div>
 
       <button className="btn secondary" style={{ marginTop: 8 }} onClick={() => setShowPicker(true)}>
-        <IconPlus /> Ajouter un exercice
+        <IconPlus /> {t('addExercise')}
       </button>
 
       <button className="btn" style={{ marginTop: 10 }} onClick={sauvegarder} disabled={saving}>
-        {saving ? 'Sauvegarde...' : 'Sauvegarder la routine'}
+        {saving ? t('saving') : t('saveRoutine')}
       </button>
 
       {showPicker && <ExercisePicker onSelect={addExercise} onClose={() => setShowPicker(false)} />}
