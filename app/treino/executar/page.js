@@ -7,9 +7,11 @@ import ExercisePicker from '@/components/ExercisePicker';
 import ExerciseDetail from '@/components/ExerciseDetail';
 import { useDialog } from '@/components/Dialog';
 import { supabase } from '@/lib/supabase';
-import { useI18n, findExercise } from '@/lib/i18n';
+import { useI18n, exKey } from '@/lib/i18n';
 import { loadActive, saveActive, clearActive } from '@/lib/activeWorkout';
-import { IconCheck, IconPlus, IconRest, IconTrash } from '@/components/Icons';
+import { fetchAllWorkouts } from '@/lib/data';
+import { bestByExercise, findRecords, fmtKg, isSetRecord, workoutSets, workoutVolume } from '@/lib/stats';
+import { IconCheck, IconPlus, IconRest, IconTrash, IconTrophy } from '@/components/Icons';
 
 export default function ExecutarPage() {
   const { t } = useI18n();
@@ -24,13 +26,11 @@ export default function ExecutarPage() {
   );
 }
 
-// Chave única do exercício (funciona também para treinos antigos salvos sem id)
-const exKey = (e) => findExercise(e)?.id || e.id || e.gif;
-
 function Seance({ user }) {
   const router = useRouter();
   const params = useSearchParams();
   const routineId = params.get('id');
+  const livre = !routineId && params.get('livre') === '1'; // treino sem rotina
   const { t, exName } = useI18n();
   const dialog = useDialog();
 
@@ -40,9 +40,12 @@ function Seance({ user }) {
   const [restEndsAt, setRestEndsAt] = useState(null); // ms
   const [now, setNow] = useState(Date.now());
   const [previous, setPrevious] = useState({}); // exKey -> [{weight, reps}]
+  const [history, setHistory] = useState([]); // todos os treinos anteriores
+  const [bests, setBests] = useState(new Map()); // exKey -> melhor 1RM estimado
   const [showPicker, setShowPicker] = useState(false);
   const [detail, setDetail] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [summary, setSummary] = useState(null); // resumo exibido ao finalizar
   const audioRef = useRef(null);
   const ready = useRef(false);
 
@@ -77,52 +80,54 @@ function Seance({ user }) {
     };
   }, []);
 
-  // Carrega a rotina e restaura o treino em andamento (se houver)
+  // Carrega a rotina (ou prepara o treino livre) e restaura o treino em andamento (se houver)
   useEffect(() => {
-    if (!routineId) return;
+    if (!routineId && !livre) return;
+
+    const begin = (data) => {
+      setRoutine(data);
+      const saved = loadActive();
+      if (saved && (saved.routineId || null) === (routineId || null) && saved.userId === user.id) {
+        setExs(saved.exs);
+        setStartedAt(saved.startedAt);
+        setRestEndsAt(saved.restEndsAt && saved.restEndsAt > Date.now() ? saved.restEndsAt : null);
+      } else {
+        setStartedAt(Date.now());
+        setExs(
+          (data.exercises || []).map((e) => ({
+            id: e.id,
+            name: e.name,
+            gif: e.gif,
+            rest: e.rest ?? 60,
+            sets: Array.from({ length: e.sets || 3 }, () => ({
+              weight: '',
+              reps: e.reps || 10,
+              done: false,
+            })),
+          }))
+        );
+      }
+      ready.current = true;
+    };
+
+    if (livre) {
+      begin({ id: null, name: null, exercises: [] });
+      return;
+    }
     supabase
       .from('routines')
       .select('*')
       .eq('id', routineId)
       .single()
-      .then(({ data }) => {
-        if (!data) return;
-        setRoutine(data);
-        const saved = loadActive();
-        if (saved && saved.routineId === routineId && saved.userId === user.id) {
-          setExs(saved.exs);
-          setStartedAt(saved.startedAt);
-          setRestEndsAt(saved.restEndsAt && saved.restEndsAt > Date.now() ? saved.restEndsAt : null);
-        } else {
-          setStartedAt(Date.now());
-          setExs(
-            (data.exercises || []).map((e) => ({
-              id: e.id,
-              name: e.name,
-              gif: e.gif,
-              rest: e.rest ?? 60,
-              sets: Array.from({ length: e.sets || 3 }, () => ({
-                weight: '',
-                reps: e.reps || 10,
-                done: false,
-              })),
-            }))
-          );
-        }
-        ready.current = true;
-      });
-  }, [routineId, user.id]);
+      .then(({ data }) => data && begin(data));
+  }, [routineId, livre, user.id]);
 
-  // Desempenho anterior de cada exercício (último treino em que ele apareceu)
+  // Histórico: desempenho anterior de cada exercício e recordes até hoje
   useEffect(() => {
-    supabase
-      .from('workouts')
-      .select('exercises, started_at')
-      .order('started_at', { ascending: false })
-      .limit(60)
-      .then(({ data }) => {
+    fetchAllWorkouts()
+      .then((data) => {
         const map = {};
-        (data || []).forEach((w) =>
+        data.forEach((w) =>
           (w.exercises || []).forEach((e) => {
             const k = exKey(e);
             const done = (e.sets || []).filter((s) => s.done);
@@ -130,13 +135,24 @@ function Seance({ user }) {
           })
         );
         setPrevious(map);
-      });
+        setHistory(data);
+        setBests(bestByExercise(data, exKey));
+      })
+      .catch(() => {});
   }, []);
 
   // Salva no aparelho a cada alteração
   useEffect(() => {
     if (!ready.current || !routine || !startedAt) return;
-    saveActive({ routineId, routineName: routine.name, userId: user.id, startedAt, restEndsAt, exs });
+    saveActive({
+      routineId: routineId || null,
+      routineName: routine.name || t('defaultSession'),
+      userId: user.id,
+      startedAt,
+      restEndsAt,
+      exs,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [exs, restEndsAt, startedAt, routine, routineId, user.id]);
 
   // Fim do descanso: bipe + vibração
@@ -227,20 +243,27 @@ function Seance({ user }) {
 
     setSaving(true);
     const seconds = Math.round((Date.now() - startedAt) / 1000);
-    const { error } = await supabase.from('workouts').insert({
+    const workout = {
       user_id: user.id,
       name: routine?.name || t('defaultSession'),
       started_at: new Date(startedAt).toISOString(),
       duration_min: Math.max(1, Math.round(seconds / 60)),
       exercises: exs,
-    });
+    };
+    const { error } = await supabase.from('workouts').insert(workout);
     setSaving(false);
 
     if (error) {
       await dialog.alert(t('saveError') + error.message);
     } else {
       clearActive();
-      router.replace('/inicio');
+      setSummary({
+        name: workout.name,
+        minutes: workout.duration_min,
+        volume: workoutVolume(workout),
+        sets: workoutSets(workout),
+        records: findRecords(workout, history, exKey),
+      });
     }
   }
 
@@ -251,6 +274,8 @@ function Seance({ user }) {
     }
   }
 
+  if (summary) return <Summary summary={summary} onDone={() => router.replace('/inicio')} />;
+
   if (!routine || !startedAt) return <div className="page"><p className="muted">{t('loading')}</p></div>;
 
   const seconds = Math.max(0, Math.floor((now - startedAt) / 1000));
@@ -258,7 +283,7 @@ function Seance({ user }) {
   return (
     <div className="page" style={{ paddingBottom: 130 }}>
       <div className="session-head">
-        <h1 style={{ fontSize: 24, fontWeight: 800 }}>{routine.name}</h1>
+        <h1 style={{ fontSize: 24, fontWeight: 800 }}>{routine.name || t('defaultSession')}</h1>
         <span style={{ fontWeight: 700, color: 'var(--accent)', fontSize: 20 }}>{fmt(seconds)}</span>
       </div>
 
@@ -295,9 +320,18 @@ function Seance({ user }) {
 
             {ex.sets.map((s, si) => {
               const prev = prevSets[si];
+              const record = isSetRecord(s, bests.get(exKey(ex))?.est ?? null, ex.sets.slice(0, si));
               return (
                 <div key={si} className={`set-grid ${s.done ? 'set-done' : ''}`}>
-                  <span className="set-num">{si + 1}</span>
+                  <span className="set-num">
+                    {record ? (
+                      <span className="pr-badge" title={t('newRecord')}>
+                        {t('newRecord')}
+                      </span>
+                    ) : (
+                      si + 1
+                    )}
+                  </span>
                   <button className="prev-cell" onClick={() => applyPrevious(ei, si)} disabled={!prev}>
                     {prev ? `${prev.weight || 0}×${prev.reps || 0}` : '—'}
                   </button>
@@ -383,6 +417,65 @@ function Seance({ user }) {
         <ExercisePicker onSelect={addExercise} onClose={() => setShowPicker(false)} />
       )}
       {detail && <ExerciseDetail exercise={detail} onClose={() => setDetail(null)} />}
+    </div>
+  );
+}
+
+// Tela de fim de treino: duração, volume, séries e recordes batidos
+function Summary({ summary, onDone }) {
+  const { t, locale, exName } = useI18n();
+  return (
+    <div className="page summary">
+      <div className="summary-icon">
+        <IconTrophy size={36} color="#facc15" />
+      </div>
+      <h1 className="page-title" style={{ marginBottom: 4 }}>{t('workoutDone')}</h1>
+      <p className="muted" style={{ marginBottom: 16 }}>{summary.name}</p>
+
+      <div className="stat-grid">
+        <div className="stat">
+          <b>{summary.minutes}</b>
+          <span className="muted">{t('minutes')}</span>
+        </div>
+        <div className="stat">
+          <b>{fmtKg(summary.volume, locale)}</b>
+          <span className="muted">kg</span>
+        </div>
+        <div className="stat">
+          <b>{summary.sets}</b>
+          <span className="muted">{t('sets')}</span>
+        </div>
+      </div>
+
+      <div className="card" style={{ textAlign: 'left' }}>
+        <p className="card-title">
+          {t('recordsBeaten')} <span className="pr-badge">{summary.records.length}</span>
+        </p>
+        {summary.records.length === 0 && <p className="muted">{t('noRecords')}</p>}
+        {summary.records.map((r) => (
+          <div key={r.key} className="row-link">
+            {r.ex.gif && <img src={r.ex.gif} alt="" className="ex-thumb" />}
+            <span style={{ minWidth: 0 }}>
+              <span className="ex-name ellipsis">{exName(r.ex)}</span>
+              <span className="muted">
+                {fmtKg(r.weight, locale)} kg × {r.reps}
+              </span>
+            </span>
+            <span className="row-right">
+              <b>{fmtKg(r.est, locale)} kg</b>
+              {r.prev > 0 && (
+                <span className="muted" style={{ display: 'block', fontSize: 12, color: 'var(--green)' }}>
+                  +{fmtKg(r.est - r.prev, locale)} kg
+                </span>
+              )}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      <button className="btn" onClick={onDone}>
+        {t('finish')}
+      </button>
     </div>
   );
 }

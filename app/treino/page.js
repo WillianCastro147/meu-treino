@@ -42,7 +42,7 @@ function Entrainement({ user }) {
   // Se já existe outro treino em andamento, pergunta antes de descartá-lo
   async function demarrer(id) {
     const active = loadActive();
-    if (active && active.userId === user.id && active.routineId !== id) {
+    if (active && active.userId === user.id && (active.routineId || null) !== id) {
       const ok = await dialog.confirm(`${t('workoutInProgress')}: ${active.routineName}. ${t('confirmDiscard')}`, {
         danger: true,
         confirmLabel: t('discard'),
@@ -55,7 +55,7 @@ function Entrainement({ user }) {
 
   return (
     <div className="page">
-      <h1 className="page-title">{t('tabWorkout')}</h1>
+      <h1 className="page-title">{t('tabPlan')}</h1>
 
       <ActiveBanner userId={user.id} />
 

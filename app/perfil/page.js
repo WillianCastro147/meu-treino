@@ -6,6 +6,9 @@ import BottomNav from '@/components/BottomNav';
 import { supabase } from '@/lib/supabase';
 import { useI18n } from '@/lib/i18n';
 import LangSwitcher from '@/components/LangSwitcher';
+import Link from 'next/link';
+import { IconBack } from '@/components/Icons';
+import { fmtDuration } from '@/lib/stats';
 
 export default function PerfilPage() {
   return (
@@ -68,7 +71,12 @@ function Profil({ user }) {
 
   return (
     <div className="page">
-      <h1 className="page-title">{t('tabProfile')}</h1>
+      <div className="page-head" style={{ justifyContent: 'flex-start', gap: 12 }}>
+        <Link href="/inicio" className="round-btn" aria-label={t('back')}>
+          <IconBack />
+        </Link>
+        <h1 className="page-title">{t('settings')}</h1>
+      </div>
 
       <div className="stat-grid">
         <div className="stat">
@@ -85,6 +93,7 @@ function Profil({ user }) {
         </div>
       </div>
 
+      <p className="section-title" style={{ marginTop: 8 }}>{t('tabProfile')}</p>
       <div className="card">
         <label className="label" style={{ marginTop: 0 }}>{t('name')}</label>
         <input className="input" value={name} onChange={(e) => setName(e.target.value)} />
@@ -133,12 +142,4 @@ function Profil({ user }) {
       <BottomNav />
     </div>
   );
-}
-
-// 45 → "45min" · 90 → "1h30" · 600 → "10h"
-function fmtDuration(min) {
-  if (min < 60) return `${min}min`;
-  const h = Math.floor(min / 60);
-  const m = min % 60;
-  return h >= 10 || m === 0 ? `${h}h` : `${h}h${String(m).padStart(2, '0')}`;
 }

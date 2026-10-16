@@ -147,10 +147,11 @@ textarea {
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  font-size: 12px;
+  font-size: 11px;
   color: var(--muted);
   font-weight: 600;
-  width: 33%;
+  width: 20%;
+  white-space: nowrap;
 }
 
 .bottom-nav a.active {
@@ -566,6 +567,264 @@ textarea {
   border-radius: 14px;
   padding: 12px 14px;
   margin-bottom: 14px;
+}
+
+/* Botão central "Iniciar" da barra inferior */
+.nav-start {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 20%;
+  background: none;
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 700;
+  margin-top: -22px;
+  white-space: nowrap;
+}
+
+.nav-start-circle {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-left: 3px;
+  border: 4px solid var(--bg);
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.45);
+}
+
+.nav-start.rec .nav-start-circle {
+  background: var(--green);
+  box-shadow: 0 4px 14px rgba(34, 197, 94, 0.45);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  50% {
+    transform: scale(1.06);
+  }
+}
+
+/* Folha que sobe de baixo, com altura do conteúdo */
+.modal.sheet {
+  height: auto;
+  max-height: 85vh;
+}
+
+.start-option {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  color: var(--text);
+  padding: 14px;
+  margin-bottom: 10px;
+  font-size: 16px;
+}
+
+.start-option-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: var(--card2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.start-option-icon.accent {
+  background: var(--accent);
+}
+
+.ellipsis {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 20px 0 10px;
+}
+
+/* Título da página com ação à direita (ex.: engrenagem) */
+.page-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.page-head .page-title {
+  margin-bottom: 16px;
+}
+
+.round-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Cartões de números */
+.stat-grid.two {
+  grid-template-columns: 1fr 1fr;
+}
+
+.stat small {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+/* Gráficos (SVG) */
+.chart {
+  width: 100%;
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+.chart text {
+  fill: var(--muted);
+  font-size: 10px;
+}
+
+/* Mapa de atividade */
+.heatmap {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(7, 1fr);
+  gap: 3px;
+}
+
+.heatmap span {
+  aspect-ratio: 1;
+  border-radius: 3px;
+  background: var(--card2);
+}
+
+.heatmap span.l1 {
+  background: rgba(59, 130, 246, 0.45);
+}
+
+.heatmap span.l2 {
+  background: rgba(59, 130, 246, 0.75);
+}
+
+.heatmap span.l3 {
+  background: var(--accent);
+}
+
+.heatmap span.future {
+  visibility: hidden;
+}
+
+.heat-legend {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 3px;
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.heat-legend span {
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+}
+
+/* Recordes */
+.pr-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: rgba(234, 179, 8, 0.16);
+  color: #facc15;
+  border-radius: 6px;
+  padding: 2px 6px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+}
+
+.set-grid .set-num .pr-badge {
+  padding: 1px 3px;
+  font-size: 9px;
+}
+
+.row-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  width: 100%;
+  background: none;
+  color: var(--text);
+  text-align: left;
+  font-size: 16px;
+}
+
+.row-link:last-child {
+  border-bottom: none;
+}
+
+.row-link .ex-thumb {
+  width: 52px;
+  height: 52px;
+  border-radius: 10px;
+}
+
+.row-right {
+  margin-left: auto;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* Resumo ao finalizar o treino */
+.summary {
+  text-align: center;
+}
+
+.summary-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  margin: 8px auto 12px;
+  background: rgba(234, 179, 8, 0.16);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 @keyframes fade-in {

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { loadActive } from '@/lib/activeWorkout';
+import { loadActive, activeUrl } from '@/lib/activeWorkout';
 import { useI18n } from '@/lib/i18n';
 import { IconTimer } from '@/components/Icons';
 
@@ -32,7 +32,7 @@ export default function ActiveBanner({ userId }) {
       </div>
       <button
         className="btn small"
-        onClick={() => router.push(`/treino/executar?id=${active.routineId}`)}
+        onClick={() => router.push(activeUrl(active))}
       >
         {t('continueWorkout')}
       </button>

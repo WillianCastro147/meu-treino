@@ -1,6 +1,6 @@
 # Moviq
 
-App web estilo Hevy para registrar treinos, **em inglês (idioma principal), português, espanhol e francês**, com 3 abas (Início, Treino e Perfil), 1.062 exercícios com GIFs animados (nomes nos 4 idiomas), login e dados na nuvem via Supabase.
+App web estilo Hevy para registrar treinos, **em inglês (idioma principal), português, espanhol e francês**, com 5 abas (Início, Plano, ▶ Iniciar, Progresso e Exercícios), 1.062 exercícios com GIFs animados (nomes nos 4 idiomas), login e dados na nuvem via Supabase.
 
 ## Idiomas (EN / PT / ES / FR)
 
@@ -37,11 +37,21 @@ O arquivo `vercel.json` agenda uma chamada diária para `/api/keepalive`, que fa
 
 No plano gratuito, o Supabase **pausa o projeto após alguns dias sem uso**. Aí o login e os dados param de funcionar. Para resolver: entre em supabase.com/dashboard, abra o projeto e clique em **Restore project**. Espere uns 2 minutos e teste de novo.
 
+## Atualizar o banco (Fase 1: peso corporal)
+
+Quem já tem o banco criado precisa rodar **uma vez** o arquivo `supabase/migrations/002_fase1.sql` no **SQL Editor** do Supabase (cole tudo e clique em **Run**). Ele cria a tabela `body_weights` e a coluna `goal_weight_kg` no perfil. Sem isso o app funciona normalmente, só o cartão de peso corporal mostra o aviso para rodar a migração.
+
 ## Estrutura
 
-- **Accueil (Início)** — histórico de treinos com miniaturas dos exercícios, duração, séries e volume
-- **Entraînement (Treino)** — criar/editar rotinas (séries, repetições e tempo de descanso) e executar treinos com cronômetro + descanso automático entre séries (com bipe e vibração)
-- **Profil (Perfil)** — nome, peso, altura, IMC, estatísticas e logout
+Navegação inspirada no openGym (código escrito do zero para o Moviq):
+
+- **Início** — resumo da semana (treinos, tempo, semanas seguidas, volume) e histórico de treinos. A engrenagem abre as **Configurações** (perfil, IMC, idioma, sair).
+- **Plano** — criar/editar rotinas (séries, repetições e tempo de descanso).
+- **▶ Iniciar** (botão central) — começa um **treino livre** ou uma rotina; com treino em andamento vira **Continuar**. Durante o treino, a série que bate seu recorde ganha o selo **PR**, e ao finalizar aparece o resumo com os recordes batidos.
+- **Progresso** — totais, mapa de atividade dos últimos 6 meses, volume e treinos por semana, recordes pessoais (1RM estimado) e peso corporal com gráfico e meta.
+- **Exercícios** — biblioteca com busca e filtro "Que já fiz"; cada exercício mostra melhor 1RM estimado, maior carga, gráfico de evolução e histórico de séries.
+
+O 1RM estimado usa a fórmula de Epley (até 12 repetições). A lógica fica em `lib/stats.js`, com testes em `lib/stats.test.mjs` (`npm test`).
 
 Tecnologias: Next.js 14 + Supabase (autenticação e banco de dados) + Vercel (hospedagem).
 

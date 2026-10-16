@@ -1,13 +1,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import AuthGuard from '@/components/AuthGuard';
 import BottomNav from '@/components/BottomNav';
 import { supabase } from '@/lib/supabase';
 import { useI18n } from '@/lib/i18n';
 import { useDialog } from '@/components/Dialog';
 import ActiveBanner from '@/components/ActiveBanner';
-import { IconTimer, IconSets, IconVolume, IconDumbbell, IconTrash } from '@/components/Icons';
+import { fmtDuration, fmtKg, weekStreak, weeklySummary } from '@/lib/stats';
+import { IconTimer, IconSets, IconVolume, IconDumbbell, IconTrash, IconGear } from '@/components/Icons';
 
 export default function InicioPage() {
   return (
@@ -38,11 +40,45 @@ function Accueil({ user }) {
     setWorkouts(workouts.filter((w) => w.id !== id));
   }
 
+  const week = workouts ? weeklySummary(workouts, 1)[0] : null;
+  // Sequência calculada com os 50 treinos mais recentes já carregados
+  const streak = workouts ? weekStreak(workouts) : 0;
+
   return (
     <div className="page">
-      <h1 className="page-title">{t('tabHome')}</h1>
+      <div className="page-head">
+        <h1 className="page-title">{t('tabHome')}</h1>
+        <Link href="/perfil" className="round-btn" aria-label={t('settings')}>
+          <IconGear size={20} />
+        </Link>
+      </div>
 
       <ActiveBanner userId={user.id} />
+
+      {week && workouts.length > 0 && (
+        <div className="card">
+          <p className="card-title">{t('thisWeek')}</p>
+          <div className="stat-grid" style={{ marginBottom: 0 }}>
+            <div className="stat" style={{ background: 'var(--card2)' }}>
+              <b>{week.workouts}</b>
+              <span className="muted">{t('sessions')}</span>
+            </div>
+            <div className="stat" style={{ background: 'var(--card2)' }}>
+              <b>{fmtDuration(week.minutes)}</b>
+              <span className="muted">{t('trainingTime')}</span>
+            </div>
+            <div className="stat" style={{ background: 'var(--card2)' }}>
+              <b>{streak}</b>
+              <span className="muted">{t('weekStreak')}</span>
+            </div>
+          </div>
+          <p className="muted" style={{ marginTop: 10 }}>
+            {t('volume')}: <b style={{ color: 'var(--text)' }}>{fmtKg(week.volume, locale)} kg</b> · {week.sets} {t('sets')}
+          </p>
+        </div>
+      )}
+
+      {workouts && workouts.length > 0 && <p className="section-title" style={{ marginTop: 8 }}>{t('recentWorkouts')}</p>}
 
       {workouts === null && <p className="muted">{t('loading')}</p>}
 
@@ -86,7 +122,7 @@ function Accueil({ user }) {
                 <p className="muted stat-line">
                   <IconTimer /> {w.duration_min} min
                   <IconSets /> {totalSets} {t('sets')}
-                  <IconVolume /> {Math.round(volume)} kg
+                  <IconVolume /> {fmtKg(volume, locale)} kg
                 </p>
 
                 {/* Miniatures des exercices de la routine */}
