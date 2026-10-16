@@ -17,6 +17,7 @@ import { applySuggestion, suggestNext } from '@/lib/progression';
 import { afterSetDone, cleanLinks, supersetLabels } from '@/lib/superset';
 import { loadEffortScale } from '@/lib/prefs';
 import PlateCalculator from '@/components/PlateCalculator';
+import ExerciseMedia from '@/components/ExerciseMedia';
 import { IconCheck, IconPlus, IconRest, IconTrash, IconTrophy, IconPlate, IconClose, IconArrowUp } from '@/components/Icons';
 
 const TYPE_LABEL = { normal: 'setNormal', warmup: 'setWarmup', drop: 'setDrop', failure: 'setFailure' };
@@ -392,7 +393,7 @@ function Seance({ user }) {
             </p>
             {ex.gif && (
               <button className="ex-media" onClick={() => setDetail(ex)} aria-label={exName(ex)}>
-                <img src={ex.gif} alt="" />
+                <ExerciseMedia ex={ex} alt={exName(ex)} />
               </button>
             )}
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>

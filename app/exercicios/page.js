@@ -2,16 +2,15 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import exercises from '@/data/exercises.json';
 import AuthGuard from '@/components/AuthGuard';
 import BottomNav from '@/components/BottomNav';
 import PageHeader from '@/components/PageHeader';
 import { useI18n, exKey } from '@/lib/i18n';
+import { useCatalog } from '@/lib/catalog';
 import { fetchAllWorkouts } from '@/lib/data';
 import { doneSets } from '@/lib/stats';
+import { BODY_PARTS, COMMON_EQUIPMENT, filterExercises } from '@/lib/exerciseFilter';
 import { IconSearch } from '@/components/Icons';
-
-const categoryKeys = ['all', 'done', ...new Set(exercises.map((e) => e.cat))];
 
 export default function ExerciciosPage() {
   return <AuthGuard>{() => <Biblioteca />}</AuthGuard>;
@@ -19,9 +18,12 @@ export default function ExerciciosPage() {
 
 function Biblioteca() {
   const router = useRouter();
-  const { t, tf, lang, locale, catName, muscleName } = useI18n();
+  const { t, tf, lang, locale, bodyPartName, equipName, exMeta } = useI18n();
+  const { ready, list } = useCatalog();
   const [search, setSearch] = useState('');
-  const [cat, setCat] = useState('all');
+  const [bp, setBp] = useState('all');
+  const [eq, setEq] = useState('all');
+  const [onlyDone, setOnlyDone] = useState(false);
   const [limit, setLimit] = useState(60);
   const [counts, setCounts] = useState(new Map());
 
@@ -38,25 +40,22 @@ function Biblioteca() {
         setCounts(m);
       })
       .catch(() => {});
-  }, []);
+  }, [ready]);
 
   const filtered = useMemo(() => {
-    const q = normalize(search);
-    const list = exercises.filter((e) => {
-      if (cat === 'done' && !counts.has(e.id)) return false;
-      if (cat !== 'all' && cat !== 'done' && e.cat !== cat) return false;
-      if (q && !normalize(e.name[lang] + ' ' + muscleName(e.muscle)).includes(q)) return false;
-      return true;
-    });
-    // Os mais feitos primeiro no filtro "Que já fiz"
-    if (cat === 'done') list.sort((a, b) => counts.get(b.id) - counts.get(a.id));
-    return list;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, cat, lang, counts]);
+    const out = filterExercises(list, { q: search, bp, eq, lang, only: onlyDone ? new Set(counts.keys()) : null });
+    if (onlyDone) out.sort((a, b) => counts.get(b.id) - counts.get(a.id));
+    return out;
+  }, [list, search, bp, eq, lang, onlyDone, counts]);
+
+  const reset = (fn) => (v) => {
+    fn(v);
+    setLimit(60);
+  };
 
   return (
     <div className="page">
-      <PageHeader title={t('tabExercises')} sub={tf('exercisesSub', { n: exercises.length.toLocaleString(locale) })} />
+      <PageHeader title={t('tabExercises')} sub={tf('exercisesSub', { n: (list.length || 5632).toLocaleString(locale) })} />
 
       <div style={{ position: 'relative' }}>
         <span style={{ position: 'absolute', left: 14, top: 14, color: 'var(--muted)' }}>
@@ -67,54 +66,56 @@ function Biblioteca() {
           style={{ paddingLeft: 42 }}
           placeholder={t('searchExercise')}
           value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setLimit(60);
-          }}
+          onChange={(e) => reset(setSearch)(e.target.value)}
         />
       </div>
 
-      <div className="chip-row" style={{ padding: '10px 0', border: 'none' }}>
-        {categoryKeys.map((c) => (
-          <button
-            key={c}
-            className={`chip ${cat === c ? 'active' : ''}`}
-            onClick={() => {
-              setCat(c);
-              setLimit(60);
-            }}
-          >
-            {c === 'all' ? t('all') : c === 'done' ? t('onlyDone') : catName(c)}
+      <div className="chip-row" style={{ padding: '10px 0 4px', border: 'none' }}>
+        <button className={`chip ${onlyDone ? 'active' : ''}`} onClick={() => reset(setOnlyDone)(!onlyDone)}>
+          {t('onlyDone')}
+        </button>
+        {['all', ...BODY_PARTS].map((c) => (
+          <button key={c} className={`chip ${bp === c ? 'active' : ''}`} onClick={() => reset(setBp)(c)}>
+            {c === 'all' ? t('all') : bodyPartName(c)}
+          </button>
+        ))}
+      </div>
+      <div className="chip-row" style={{ padding: '4px 0 10px', border: 'none' }}>
+        {['all', ...COMMON_EQUIPMENT].map((c) => (
+          <button key={c} className={`chip ${eq === c ? 'active' : ''}`} onClick={() => reset(setEq)(c)}>
+            {c === 'all' ? t('allEquipment') : equipName(c)}
           </button>
         ))}
       </div>
 
-      <p className="muted" style={{ marginBottom: 6 }}>
-        {filtered.length} {t('exercisesCount')}
-      </p>
+      {!ready && <p className="muted">{t('loading')}</p>}
+      {ready && (
+        <p className="muted" style={{ marginBottom: 6 }}>
+          {filtered.length} {t('exercisesCount')}
+        </p>
+      )}
 
-      <div className="card" style={{ padding: '4px 14px' }}>
-        {filtered.slice(0, limit).map((e) => {
-          const n = counts.get(e.id);
-          return (
-            <button key={e.id} className="row-link" onClick={() => router.push(`/exercicios/ver?id=${encodeURIComponent(e.id)}`)}>
-              <img src={e.gif} alt="" className="ex-thumb" loading="lazy" />
-              <span style={{ minWidth: 0 }}>
-                <span className="ex-name ellipsis">{e.name[lang]}</span>
-                <span className="muted">
-                  {catName(e.cat)}
-                  {e.muscle ? ` · ${muscleName(e.muscle)}` : ''}
+      {filtered.length > 0 && (
+        <div className="card" style={{ padding: '4px 14px' }}>
+          {filtered.slice(0, limit).map((e) => {
+            const n = counts.get(e.id);
+            return (
+              <button key={e.id} className="row-link" onClick={() => router.push(`/exercicios/ver?id=${encodeURIComponent(e.id)}`)}>
+                <img src={e.gif} alt="" className="ex-thumb" loading="lazy" />
+                <span style={{ minWidth: 0 }}>
+                  <span className="ex-name ellipsis">{e.name[lang]}</span>
+                  <span className="muted">{exMeta(e)}</span>
                 </span>
-              </span>
-              {n > 0 && (
-                <span className="row-right muted" title={`${n} ${t('timesDone')}`}>
-                  <b style={{ color: 'var(--text)' }}>{n}×</b>
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
+                {n > 0 && (
+                  <span className="row-right muted" title={`${n} ${t('timesDone')}`}>
+                    <b style={{ color: 'var(--text)' }}>{n}×</b>
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {filtered.length > limit && (
         <button className="btn secondary" onClick={() => setLimit(limit + 60)}>
@@ -125,11 +126,4 @@ function Biblioteca() {
       <BottomNav />
     </div>
   );
-}
-
-function normalize(s) {
-  return (s || '')
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '');
 }

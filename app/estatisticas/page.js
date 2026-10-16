@@ -9,7 +9,7 @@ import { BarChart, Heatmap } from '@/components/Charts';
 import { useI18n, exKey, findExercise } from '@/lib/i18n';
 import PageHeader from '@/components/PageHeader';
 import BodyMap from '@/components/BodyMap';
-import { regionLevels, setsByMuscle } from '@/lib/muscles';
+import { regionLevelsFromWorkouts, setsByMuscle } from '@/lib/muscles';
 import { fetchAllWorkouts } from '@/lib/data';
 import { activityByDay, bestByExercise, fmtDuration, fmtKg, totals, weekStreak, weeklySummary } from '@/lib/stats';
 import { IconTrophy, IconDumbbell, IconCalendar, IconFlame, IconVolume } from '@/components/Icons';
@@ -66,7 +66,7 @@ function Stats({ user }) {
     if (!workouts) return null;
     const since = range ? Date.now() - range * 864e5 : 0;
     const by = setsByMuscle(workouts, since, findExercise);
-    return { by, levels: regionLevels(by) };
+    return { by, levels: regionLevelsFromWorkouts(workouts, since, findExercise) };
   }, [workouts, range]);
 
   const weekLabel = (d) => d.toLocaleDateString(locale, { day: '2-digit', month: '2-digit' });

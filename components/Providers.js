@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { LangProvider } from '@/lib/i18n';
+import { CatalogProvider } from '@/lib/catalog';
 import { DialogProvider } from '@/components/Dialog';
 import { supabase } from '@/lib/supabase';
 
@@ -20,11 +21,13 @@ function RecoveryListener() {
 
 export default function Providers({ children }) {
   return (
+    <CatalogProvider>
     <LangProvider>
       <DialogProvider>
         <RecoveryListener />
         {children}
       </DialogProvider>
     </LangProvider>
+    </CatalogProvider>
   );
 }

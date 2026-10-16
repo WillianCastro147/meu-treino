@@ -1,8 +1,9 @@
 'use client';
 
 import { useI18n } from '@/lib/i18n';
+import ExerciseMedia from '@/components/ExerciseMedia';
 
-// Detalhe do exercício: GIF grande + categoria e músculo
+// Detalhe do exercício: animação grande + músculo e equipamento
 export default function ExerciseDetail({ exercise, onClose, onSelect }) {
   const { t, exName, exMeta } = useI18n();
   if (!exercise) return null;
@@ -17,7 +18,7 @@ export default function ExerciseDetail({ exercise, onClose, onSelect }) {
     >
       <div className="detail" onClick={(e) => e.stopPropagation()}>
         <div className="detail-gif">
-          <img src={exercise.gif} alt={exName(exercise)} />
+          <ExerciseMedia ex={exercise} alt={exName(exercise)} />
         </div>
         <div style={{ padding: 16 }}>
           <b style={{ fontSize: 19, display: 'block' }}>{exName(exercise)}</b>

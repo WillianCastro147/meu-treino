@@ -10,7 +10,9 @@ import { fetchAllWorkouts } from '@/lib/data';
 import { exerciseHistory, exerciseSummary, fmtKg } from '@/lib/stats';
 import { IconBack, IconTrophy } from '@/components/Icons';
 import BodyMap from '@/components/BodyMap';
-import { MUSCLE_REGIONS, muscleOf } from '@/lib/muscles';
+import { muscleOf, regionsOf } from '@/lib/muscles';
+import ExerciseMedia from '@/components/ExerciseMedia';
+import { loadDetails } from '@/lib/catalog';
 
 export default function VerExercicioPage() {
   const { t } = useI18n();
@@ -29,7 +31,7 @@ function Exercicio() {
   const router = useRouter();
   const params = useSearchParams();
   const key = params.get('id');
-  const { t, locale, exName, exMeta, muscleName } = useI18n();
+  const { t, lang, locale, exName, exMeta, muscleName } = useI18n();
   const [workouts, setWorkouts] = useState(null);
 
   useEffect(() => {
@@ -44,7 +46,18 @@ function Exercicio() {
   // Exercício do catálogo, ou o que veio salvo no histórico (exercícios antigos)
   const ex = findExercise({ id: key, gif: key }) || findLogged(workouts, key);
 
-  const muscle = muscleOf(findExercise({ id: key, gif: key }));
+  const catEx = findExercise({ id: key, gif: key });
+  const muscle = muscleOf(catEx);
+  const regions = regionsOf(catEx);
+
+  // Descrição e passo a passo no idioma atual (catálogo novo)
+  const [info, setInfo] = useState(null);
+  useEffect(() => {
+    if (!catEx || catEx.legacy) return setInfo(null);
+    loadDetails(lang)
+      .then((d) => setInfo(d[catEx.id] || null))
+      .catch(() => setInfo(null));
+  }, [catEx, lang]);
 
   const fmtDate = (d) => new Date(d).toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' });
   const series = history.filter((h) => h.best).map((h) => ({ x: h.date, y: h.best.est }));
@@ -63,7 +76,7 @@ function Exercicio() {
         <>
           <div className="detail" style={{ maxWidth: 'none', margin: '12px 0' }}>
             <div className="detail-gif">
-              <img src={ex.gif} alt={exName(ex)} />
+              <ExerciseMedia ex={ex} alt={exName(ex)} />
             </div>
             <div style={{ padding: 16 }}>
               <b style={{ fontSize: 21, display: 'block' }}>{exName(ex)}</b>
@@ -72,12 +85,28 @@ function Exercicio() {
           </div>
 
           {/* Músculo trabalhado no desenho do corpo */}
-          {muscle && (
+          {info && (info[0] || info[1].length > 0) && (
+            <div className="card">
+              {info[0] && <p style={{ lineHeight: 1.45, marginBottom: 10 }}>{info[0]}</p>}
+              {info[1].length > 0 && (
+                <>
+                  <p className="card-title">{t('howTo')}</p>
+                  <ol className="steps">
+                    {info[1].map((step, i) => (
+                      <li key={i}>{step}</li>
+                    ))}
+                  </ol>
+                </>
+              )}
+            </div>
+          )}
+
+          {regions.length > 0 && (
             <div className="card">
               <p className="card-title">
-                {t('musclesWorked')} <span className="tag-chip">{muscleName(muscle)}</span>
+                {t('musclesWorked')} {muscle && <span className="tag-chip">{muscleName(muscle)}</span>}
               </p>
-              <BodyMap levels={Object.fromEntries(MUSCLE_REGIONS[muscle].map((r) => [r, 4]))} />
+              <BodyMap levels={Object.fromEntries(regions.map((r) => [r, 4]))} />
             </div>
           )}
 
