@@ -79,11 +79,11 @@ Plano → **Criar plano com o Coach (IA)**. O usuário responde objetivo, experi
 
 Configuração (uma vez):
 1. Crie uma chave em platform.openai.com → API keys.
-2. Na Vercel: Project → Settings → Environment Variables → `OPENAI_API_KEY` = a chave (Production e Preview). Opcional: `OPENAI_MODEL` (padrão `gpt-6.1-sol`; `gpt-6-luna` é mais barato) e `OPENAI_REASONING` (`low` por padrão, mais rápido; `medium` pensa mais e demora mais).
+2. Na Vercel: Project → Settings → Environment Variables → `OPENAI_API_KEY` = a chave (Production e Preview). Opcional: `OPENAI_MODEL` (padrão `gpt-6-luna`, o mais barato; `gpt-6.1-sol` caprecha mais e custa ~20x mais) e `OPENAI_REASONING` (`low` por padrão, mais rápido; `medium` pensa mais e demora mais).
 3. Rode `supabase/migrations/004_coach.sql` no SQL Editor (limite de 5 planos por usuário a cada 24 h).
 4. Faça um novo deploy (Deployments → Redeploy) para a Vercel ler a variável.
 
-A chave fica **só no servidor** (`app/api/coach/route.js`), nunca vai para o aparelho. Custo aproximado: US$ 0,02–0,03 por plano com `gpt-6.1-sol`. Lógica em `lib/coach.js`, com testes.
+A chave fica **só no servidor** (`app/api/coach/route.js`), nunca vai para o aparelho. Custo aproximado: menos de US$ 0,002 por plano com `gpt-6-luna` (cerca de US$ 0,015 com `gpt-6.1-sol`). Lógica em `lib/coach.js`, com testes.
 
 ## Licença
 
