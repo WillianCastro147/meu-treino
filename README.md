@@ -73,6 +73,18 @@ Tudo fica no JSON das rotinas e treinos que já existe: **não precisa de migra�
 
 O 1RM estimado usa a fórmula de Epley (até 12 repetições). A lógica fica em `lib/`, com testes em `lib/*.test.mjs` (`npm test`).
 
+### Coach com IA (OpenAI)
+
+Plano → **Criar plano com o Coach (IA)**. O usuário responde objetivo, experiência, dias por semana, tempo por treino, onde treina e observações (lesões, foco). O GPT monta uma rotina por dia **usando só exercícios do catálogo**. O servidor confere cada id, limita séries/reps/descanso e só então mostra a proposta. "Salvar plano" cria as rotinas (com progressão) e já monta a semana.
+
+Configuração (uma vez):
+1. Crie uma chave em platform.openai.com → API keys.
+2. Na Vercel: Project → Settings → Environment Variables → `OPENAI_API_KEY` = a chave (Production e Preview). Opcional: `OPENAI_MODEL` (padrão `gpt-6.1-sol`; `gpt-6-luna` é mais barato).
+3. Rode `supabase/migrations/004_coach.sql` no SQL Editor (limite de 5 planos por usuário a cada 24 h).
+4. Faça um novo deploy (Deployments → Redeploy) para a Vercel ler a variável.
+
+A chave fica **só no servidor** (`app/api/coach/route.js`), nunca vai para o aparelho. Custo aproximado: US$ 0,02–0,03 por plano com `gpt-6.1-sol`. Lógica em `lib/coach.js`, com testes.
+
 ## Licença
 
 O Moviq é software livre sob a **GNU AGPL v3.0** (`LICENSE`), porque usa o catálogo do openGym. Quem usa o app pela internet tem direito ao código-fonte: o link "Código-fonte" nas Configurações aponta para este repositório, que precisa estar **público** para cumprir a licença. As animações dos exercícios (Gym visual) **não** são AGPL; ver `THIRD_PARTY_NOTICES.md`.

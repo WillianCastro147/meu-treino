@@ -112,3 +112,19 @@ create policy "profiles_delete" on public.profiles for delete using (auth.uid() 
 alter table public.profiles add column if not exists plan jsonb;
 alter table public.workouts add column if not exists routine_id uuid references public.routines (id) on delete set null;
 create index if not exists workouts_routine on public.workouts (routine_id);
+
+-- ============================================================
+-- Coach com IA (igual a migrations/004_coach.sql)
+-- ============================================================
+
+create table if not exists public.coach_usage (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users (id) on delete cascade,
+  created_at timestamptz not null default now()
+);
+create index if not exists coach_usage_user_date on public.coach_usage (user_id, created_at desc);
+alter table public.coach_usage enable row level security;
+drop policy if exists "coach_usage_select" on public.coach_usage;
+create policy "coach_usage_select" on public.coach_usage for select using (auth.uid() = user_id);
+drop policy if exists "coach_usage_insert" on public.coach_usage;
+create policy "coach_usage_insert" on public.coach_usage for insert with check (auth.uid() = user_id);

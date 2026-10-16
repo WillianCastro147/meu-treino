@@ -1398,3 +1398,14 @@ textarea {
   width: min(100%, 360px);
   margin: 0 auto;
 }
+
+/* Botão do Coach IA */
+.btn.coach-btn {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  margin-bottom: 10px;
+}
+
+textarea.input {
+  resize: vertical;
+  line-height: 1.4;
+}

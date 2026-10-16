@@ -14,7 +14,7 @@ import { loadActive, clearActive } from '@/lib/activeWorkout';
 import { fetchPlan, savePlan } from '@/lib/data';
 import { normalizePlan, prunePlan, isoDay } from '@/lib/plan';
 import { buildStarterPlan, STARTER_PLANS } from '@/lib/starter';
-import { IconPlus, IconTrash, IconCalendar } from '@/components/Icons';
+import { IconPlus, IconTrash, IconCalendar, IconChart } from '@/components/Icons';
 
 export default function TreinoPage() {
   return <AuthGuard>{(user) => <Plano user={user} />}</AuthGuard>;
@@ -187,7 +187,11 @@ function Plano({ user }) {
         )}
       </div>
 
-      <button className="btn" onClick={() => router.push('/treino/nova')}>
+      <button className="btn coach-btn" onClick={() => router.push('/coach')}>
+        <IconChart size={18} /> {t('coachButton')}
+      </button>
+
+      <button className="btn secondary" onClick={() => router.push('/treino/nova')}>
         <IconPlus /> {t('createRoutine')}
       </button>
       <button className="btn secondary" style={{ marginTop: 10 }} onClick={() => router.push('/treino/registro')}>
