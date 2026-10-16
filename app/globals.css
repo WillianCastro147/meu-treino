@@ -138,7 +138,8 @@ textarea {
   border-top: 1px solid var(--border);
   display: flex;
   justify-content: space-around;
-  padding: 8px 0 max(10px, env(safe-area-inset-bottom));
+  /* No computador as abas ficam na largura do conteúdo (560px), não esticadas */
+  padding: 8px max(0px, calc((100% - 560px) / 2)) max(10px, env(safe-area-inset-bottom));
   z-index: 50;
 }
 
@@ -279,6 +280,11 @@ textarea {
   overflow-x: auto;
   padding: 10px 16px;
   border-bottom: 1px solid var(--border);
+  scrollbar-width: none;
+}
+
+.chip-row::-webkit-scrollbar {
+  display: none;
 }
 
 .chip {
@@ -613,6 +619,10 @@ textarea {
 .modal.sheet {
   height: auto;
   max-height: 85vh;
+}
+
+.modal.sheet .modal-body {
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
 }
 
 .start-option {

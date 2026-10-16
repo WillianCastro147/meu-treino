@@ -106,8 +106,8 @@ function Biblioteca() {
                 </span>
               </span>
               {n > 0 && (
-                <span className="row-right muted">
-                  <b style={{ color: 'var(--text)' }}>{n}</b> {t('timesDone')}
+                <span className="row-right muted" title={`${n} ${t('timesDone')}`}>
+                  <b style={{ color: 'var(--text)' }}>{n}×</b>
                 </span>
               )}
             </button>

@@ -99,6 +99,8 @@ export function BarChart({ bars, format = fmtShort }) {
   const slot = (W - PAD.l - PAD.r) / n;
   const bw = Math.max(4, slot * 0.62);
   const sy = (v) => PAD.t + (1 - v / max) * (H - PAD.t - PAD.b);
+  // Rótulos a cada `step` barras, contando a partir da última (que sempre aparece) para não encavalar
+  const step = Math.ceil(n / 6);
 
   return (
     <svg className="chart" viewBox={`0 0 ${W} ${H}`} role="img">
@@ -128,7 +130,7 @@ export function BarChart({ bars, format = fmtShort }) {
                 opacity={isLast ? 1 : 0.65}
               />
             )}
-            {(i % Math.ceil(n / 6) === 0 || isLast) && (
+            {(n - 1 - i) % step === 0 && (
               <text x={x + bw / 2} y={H - 5} textAnchor="middle">
                 {b.label}
               </text>

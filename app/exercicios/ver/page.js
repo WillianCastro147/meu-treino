@@ -79,7 +79,7 @@ function Exercicio() {
             <>
               <div className="stat-grid two">
                 <div className="stat">
-                  <b>{summary.best1RM ? `${fmtKg(summary.best1RM.est, locale)}` : '--'}</b>
+                  <b>{summary.best1RM ? `${fmtKg(summary.best1RM.est, locale)} kg` : '--'}</b>
                   <span className="muted">{t('best1rm')}</span>
                   {summary.best1RM && (
                     <small>
@@ -88,7 +88,7 @@ function Exercicio() {
                   )}
                 </div>
                 <div className="stat">
-                  <b>{fmtKg(summary.topWeight, locale)}</b>
+                  <b>{fmtKg(summary.topWeight, locale)} kg</b>
                   <span className="muted">{t('topWeight')}</span>
                 </div>
                 <div className="stat">
