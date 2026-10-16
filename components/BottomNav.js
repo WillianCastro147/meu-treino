@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useI18n } from '@/lib/i18n';
 import { loadActive, activeUrl } from '@/lib/activeWorkout';
 import StartSheet from '@/components/StartSheet';
-import { IconCalendar, IconChart, IconDumbbell, IconPlay } from '@/components/Icons';
+import { IconCalendar, IconChart, IconDumbbell, IconList } from '@/components/Icons';
 
 const IconHome = ({ size = 24 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -23,7 +23,7 @@ const left = [
 ];
 const right = [
   { href: '/estatisticas', label: 'tabStats', Icon: IconChart },
-  { href: '/exercicios', label: 'tabExercises', Icon: IconDumbbell },
+  { href: '/exercicios', label: 'tabExercises', Icon: IconList },
 ];
 
 export default function BottomNav() {
@@ -54,7 +54,7 @@ export default function BottomNav() {
           onClick={() => (active ? router.push(activeUrl(active)) : setShowStart(true))}
         >
           <span className="nav-start-circle">
-            <IconPlay size={22} color="#fff" />
+            <IconDumbbell size={28} color="#fff" />
           </span>
           {active ? t('tabResume') : t('tabStart')}
         </button>

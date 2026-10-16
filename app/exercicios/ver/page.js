@@ -9,6 +9,8 @@ import { useI18n, exKey, findExercise } from '@/lib/i18n';
 import { fetchAllWorkouts } from '@/lib/data';
 import { exerciseHistory, exerciseSummary, fmtKg } from '@/lib/stats';
 import { IconBack, IconTrophy } from '@/components/Icons';
+import BodyMap from '@/components/BodyMap';
+import { MUSCLE_REGIONS, muscleOf } from '@/lib/muscles';
 
 export default function VerExercicioPage() {
   const { t } = useI18n();
@@ -27,7 +29,7 @@ function Exercicio() {
   const router = useRouter();
   const params = useSearchParams();
   const key = params.get('id');
-  const { t, locale, exName, exMeta } = useI18n();
+  const { t, locale, exName, exMeta, muscleName } = useI18n();
   const [workouts, setWorkouts] = useState(null);
 
   useEffect(() => {
@@ -41,6 +43,8 @@ function Exercicio() {
 
   // Exercício do catálogo, ou o que veio salvo no histórico (exercícios antigos)
   const ex = findExercise({ id: key, gif: key }) || findLogged(workouts, key);
+
+  const muscle = muscleOf(findExercise({ id: key, gif: key }));
 
   const fmtDate = (d) => new Date(d).toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' });
   const series = history.filter((h) => h.best).map((h) => ({ x: h.date, y: h.best.est }));
@@ -66,6 +70,16 @@ function Exercicio() {
               <p className="muted" style={{ marginTop: 4 }}>{exMeta(ex)}</p>
             </div>
           </div>
+
+          {/* Músculo trabalhado no desenho do corpo */}
+          {muscle && (
+            <div className="card">
+              <p className="card-title">
+                {t('musclesWorked')} <span className="tag-chip">{muscleName(muscle)}</span>
+              </p>
+              <BodyMap levels={Object.fromEntries(MUSCLE_REGIONS[muscle].map((r) => [r, 4]))} />
+            </div>
+          )}
 
           {!workouts && <p className="muted">{t('loading')}</p>}
 

@@ -9,6 +9,7 @@ import { useI18n } from '@/lib/i18n';
 import { useDialog } from '@/components/Dialog';
 import { loadActive, clearActive } from '@/lib/activeWorkout';
 import ActiveBanner from '@/components/ActiveBanner';
+import PageHeader from '@/components/PageHeader';
 import { IconPlus, IconTrash } from '@/components/Icons';
 
 export default function TreinoPage() {
@@ -55,7 +56,7 @@ function Entrainement({ user }) {
 
   return (
     <div className="page">
-      <h1 className="page-title">{t('tabPlan')}</h1>
+      <PageHeader title={t('tabPlan')} sub={t('planSub')} />
 
       <ActiveBanner userId={user.id} />
 

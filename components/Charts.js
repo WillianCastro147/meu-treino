@@ -64,7 +64,7 @@ export function LineChart({ points, goal = null, locale, unit = '' }) {
           x2={W - PAD.r}
           y1={sy(goal)}
           y2={sy(goal)}
-          stroke="var(--green)"
+          stroke="#d1d1d6"
           strokeWidth="1.5"
           strokeDasharray="5 4"
         />

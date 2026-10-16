@@ -79,16 +79,24 @@ export default function BodyWeightCard({ user }) {
 
   return (
     <div className="card">
-      <p className="card-title">
-        {t('bodyWeight')}
-        {last && <span style={{ fontSize: 22, fontWeight: 800 }}>{fmtKg(last.weight_kg, locale)} kg</span>}
-      </p>
+      <p className="muted" style={{ fontSize: 17 }}>{t('bodyWeight')}</p>
+      {last && (
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8, margin: '4px 0 2px' }}>
+          <span className="tile-value" style={{ fontSize: 46 }}>
+            {fmtKg(last.weight_kg, locale)}
+            <small>kg</small>
+          </span>
+          <span className="muted">
+            {new Date(last.measured_on + 'T12:00:00').toLocaleDateString(locale, { day: 'numeric', month: 'short' })}
+          </span>
+        </div>
+      )}
 
       {diff != null && (
-        <p className="muted" style={{ marginTop: -8, marginBottom: 10, textAlign: 'right' }}>
+        <p style={{ color: 'var(--accent)', marginBottom: 10, fontSize: 16 }}>
           {Math.abs(diff) < 0.05
             ? t('goalReached')
-            : `${diff > 0 ? '−' : '+'}${fmtKg(Math.abs(diff), locale)} kg ${t('toGoal')}`}
+            : `${t('goal')} ${fmtKg(goalNum, locale)} kg · ${fmtKg(Math.abs(diff), locale)} kg ${t('toGoal')}`}
         </p>
       )}
 

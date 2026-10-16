@@ -4,24 +4,29 @@
   box-sizing: border-box;
 }
 
+/* Tema escuro no estilo openGym (preto + cartões cinza), com o azul do Moviq como única cor de destaque */
 :root {
-  --bg: #0e0f13;
-  --card: #1a1c23;
-  --card2: #23262f;
-  --border: #2e3240;
-  --text: #f2f3f5;
-  --muted: #9aa0ae;
+  --bg: #000000;
+  --card: #1c1c1e;
+  --card2: #2c2c2e;
+  --card3: #3a3a3c;
+  --border: #2c2c2e;
+  --text: #ffffff;
+  --muted: #8e8e93;
   --accent: #3b82f6;
   --accent-dark: #2563eb;
-  --green: #22c55e;
+  --accent-soft: rgba(59, 130, 246, 0.16);
+  --green: #3b82f6;
   --red: #ef4444;
+  --radius: 20px;
 }
 
 html,
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
   min-height: 100%;
   font-size: 17px;
 }
@@ -50,17 +55,24 @@ textarea {
 }
 
 .page-title {
-  font-size: 28px;
+  font-size: 38px;
   font-weight: 800;
-  margin: 8px 0 16px;
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+  margin: 12px 0 18px;
+}
+
+.page-sub {
+  color: var(--muted);
+  font-size: 19px;
+  margin-top: 2px;
 }
 
 .card {
   background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 16px;
-  margin-bottom: 12px;
+  border-radius: var(--radius);
+  padding: 18px;
+  margin-bottom: 14px;
 }
 
 .muted {
@@ -77,8 +89,8 @@ textarea {
   color: #fff;
   font-weight: 700;
   font-size: 17px;
-  border-radius: 10px;
-  padding: 14px 16px;
+  border-radius: 16px;
+  padding: 15px 16px;
   width: 100%;
   transition: background 0.15s;
 }
@@ -90,7 +102,6 @@ textarea {
 .btn.secondary {
   background: var(--card2);
   color: var(--text);
-  border: 1px solid var(--border);
 }
 
 .btn.danger {
@@ -108,8 +119,8 @@ textarea {
 .input {
   width: 100%;
   background: var(--card2);
-  border: 1px solid var(--border);
-  border-radius: 10px;
+  border: 1px solid transparent;
+  border-radius: 14px;
   color: var(--text);
   padding: 13px;
   font-size: 17px;
@@ -134,8 +145,9 @@ textarea {
   bottom: 0;
   left: 0;
   right: 0;
-  background: rgba(20, 22, 28, 0.97);
-  border-top: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.96);
+  border-top: 1px solid #1c1c1e;
+  backdrop-filter: blur(12px);
   display: flex;
   justify-content: space-around;
   /* No computador as abas ficam na largura do conteúdo (560px), não esticadas */
@@ -147,8 +159,8 @@ textarea {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  font-size: 11px;
+  gap: 3px;
+  font-size: 12px;
   color: var(--muted);
   font-weight: 600;
   width: 20%;
@@ -290,7 +302,7 @@ textarea {
 .chip {
   flex-shrink: 0;
   background: var(--card2);
-  border: 1px solid var(--border);
+  border: 1px solid transparent;
   color: var(--text);
   border-radius: 999px;
   padding: 8px 15px;
@@ -327,10 +339,10 @@ textarea {
 .check-btn {
   width: 46px;
   height: 46px;
-  border-radius: 10px;
-  background: var(--card2);
-  border: 1px solid var(--border);
-  color: var(--muted);
+  border-radius: 50%;
+  background: transparent;
+  border: 2px solid var(--card3);
+  color: transparent;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -390,15 +402,55 @@ textarea {
 
 .stat {
   background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 16px 10px;
+  border-radius: var(--radius);
+  padding: 16px 12px;
   text-align: center;
 }
 
 .stat b {
   display: block;
-  font-size: 24px;
+  font-size: 26px;
+  font-weight: 800;
+}
+
+/* Bloco de número no estilo openGym: ícone + rótulo em cima, número grande embaixo */
+.tile {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  min-width: 0;
+}
+
+.tile-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 15px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tile-value {
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  margin-top: 4px;
+}
+
+.tile-value small {
+  font-size: 18px;
+  color: var(--muted);
+  font-weight: 700;
+  margin-left: 4px;
+}
+
+.tile-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 14px;
 }
 
 .error-msg {
@@ -419,9 +471,8 @@ textarea {
   width: fit-content;
   gap: 4px;
   padding: 4px;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 12px;
+  background: var(--card2);
+  border-radius: 14px;
 }
 
 .lang-switch button {
@@ -435,13 +486,13 @@ textarea {
 }
 
 .lang-switch button.active {
-  background: var(--accent);
+  background: var(--bg);
   color: #fff;
 }
 
 /* Linha de série concluída */
 .set-grid.set-done .input {
-  border-color: rgba(34, 197, 94, 0.5);
+  border-color: rgba(59, 130, 246, 0.55);
 }
 
 /* Desempenho anterior (toque para copiar) */
@@ -586,26 +637,25 @@ textarea {
   color: var(--text);
   font-size: 11px;
   font-weight: 700;
-  margin-top: -22px;
+  margin-top: -30px;
   white-space: nowrap;
 }
 
 .nav-start-circle {
-  width: 52px;
-  height: 52px;
+  width: 62px;
+  height: 62px;
   border-radius: 50%;
   background: var(--accent);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding-left: 3px;
   border: 4px solid var(--bg);
-  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.45);
+  box-shadow: 0 0 22px rgba(59, 130, 246, 0.55);
 }
 
 .nav-start.rec .nav-start-circle {
-  background: var(--green);
-  box-shadow: 0 4px 14px rgba(34, 197, 94, 0.45);
+  background: var(--accent);
+  box-shadow: 0 0 22px rgba(59, 130, 246, 0.8);
   animation: pulse 2s ease-in-out infinite;
 }
 
@@ -926,8 +976,8 @@ textarea {
   display: flex;
   gap: 6px;
   align-items: flex-start;
-  background: rgba(34, 197, 94, 0.1);
-  color: #86efac;
+  background: var(--accent-soft);
+  color: #93c5fd;
   border-radius: 10px;
   padding: 8px 10px;
   font-size: 13px;
@@ -1005,6 +1055,269 @@ textarea {
   gap: 8px;
 }
 
+/* ---------- Visual no estilo openGym ---------- */
+
+.page-head.big {
+  align-items: flex-start;
+  margin: 12px 0 22px;
+}
+
+.page-head.big .round-btn {
+  width: 52px;
+  height: 52px;
+  margin-top: 4px;
+  border: none;
+  background: var(--card);
+}
+
+/* Faixa da semana no Início */
+.week-strip {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  margin: 6px 0 14px;
+}
+
+.week-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.wd-name {
+  color: var(--muted);
+  font-size: 13px;
+  text-transform: uppercase;
+}
+
+.wd-num {
+  font-size: 22px;
+  font-weight: 500;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.week-day.today .wd-num {
+  background: var(--accent);
+  font-weight: 800;
+}
+
+.wd-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.wd-dot.on {
+  background: var(--accent);
+}
+
+/* Linha "Hoje · Iniciar" */
+.today-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  background: var(--card2);
+  border-radius: 18px;
+  padding: 14px 16px;
+  color: var(--text);
+  text-align: left;
+}
+
+.today-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  background: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.today-kicker {
+  color: var(--muted);
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.pill {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-radius: 10px;
+  padding: 7px 14px;
+  font-weight: 700;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+/* Cartão de sequência */
+.streak-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 28px;
+  font-weight: 800;
+}
+
+/* Etiquetas (músculo, equipamento, melhor carga) */
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.tag-chip {
+  background: var(--card2);
+  color: #d1d1d6;
+  border-radius: 10px;
+  padding: 5px 11px;
+  font-size: 14px;
+}
+
+/* Mapa do corpo */
+.body-map {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  min-height: 240px;
+  margin-top: 10px;
+}
+
+.body-view {
+  width: 100%;
+  height: auto;
+  max-height: 360px;
+}
+
+.seg {
+  display: flex;
+  background: var(--card2);
+  border-radius: 14px;
+  padding: 4px;
+  gap: 4px;
+}
+
+.seg button {
+  flex: 1;
+  background: none;
+  color: var(--muted);
+  font-size: 15px;
+  font-weight: 600;
+  padding: 9px 4px;
+  border-radius: 11px;
+}
+
+.seg button.active {
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* Tela de treino: cabeçalho com X, título, tempo e ✓ */
+.workout-head {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0 12px;
+}
+
+.workout-head .round-btn {
+  width: 48px;
+  height: 48px;
+  border: none;
+  background: var(--card);
+}
+
+.workout-head .round-btn.ok {
+  color: var(--accent);
+}
+
+.workout-title {
+  flex: 1;
+  text-align: center;
+  min-width: 0;
+}
+
+.workout-title b {
+  display: block;
+  font-size: 21px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.progress {
+  height: 6px;
+  background: var(--card);
+  border-radius: 99px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.progress span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  border-radius: 99px;
+  transition: width 0.3s;
+}
+
+.ex-kicker {
+  color: var(--muted);
+  font-size: 15px;
+  margin: 4px 0 8px;
+}
+
+.ex-media {
+  background: #fff;
+  border-radius: var(--radius);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 0;
+}
+
+.ex-media img {
+  width: 100%;
+  max-height: 300px;
+  object-fit: contain;
+}
+
+.ex-title {
+  font-size: 25px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  margin-top: 14px;
+}
+
+.last-line {
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.4;
+  margin: 4px 0;
+}
+
+.sets-box {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 14px 12px 12px;
+  margin: 12px 0 28px;
+}
+
 @keyframes fade-in {
   from {
     opacity: 0;
@@ -1012,4 +1325,13 @@ textarea {
   to {
     opacity: 1;
   }
+}
+
+.today-kicker,
+.today-row .ellipsis {
+  display: block;
+}
+
+.ex-block.in-ss .sets-box {
+  border-left: 4px solid var(--accent);
 }

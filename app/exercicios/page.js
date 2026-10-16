@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import exercises from '@/data/exercises.json';
 import AuthGuard from '@/components/AuthGuard';
 import BottomNav from '@/components/BottomNav';
+import PageHeader from '@/components/PageHeader';
 import { useI18n, exKey } from '@/lib/i18n';
 import { fetchAllWorkouts } from '@/lib/data';
 import { doneSets } from '@/lib/stats';
@@ -18,7 +19,7 @@ export default function ExerciciosPage() {
 
 function Biblioteca() {
   const router = useRouter();
-  const { t, lang, catName, muscleName } = useI18n();
+  const { t, tf, lang, locale, catName, muscleName } = useI18n();
   const [search, setSearch] = useState('');
   const [cat, setCat] = useState('all');
   const [limit, setLimit] = useState(60);
@@ -55,7 +56,7 @@ function Biblioteca() {
 
   return (
     <div className="page">
-      <h1 className="page-title">{t('tabExercises')}</h1>
+      <PageHeader title={t('tabExercises')} sub={tf('exercisesSub', { n: exercises.length.toLocaleString(locale) })} />
 
       <div style={{ position: 'relative' }}>
         <span style={{ position: 'absolute', left: 14, top: 14, color: 'var(--muted)' }}>

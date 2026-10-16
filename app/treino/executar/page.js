@@ -7,7 +7,8 @@ import ExercisePicker from '@/components/ExercisePicker';
 import ExerciseDetail from '@/components/ExerciseDetail';
 import { useDialog } from '@/components/Dialog';
 import { supabase } from '@/lib/supabase';
-import { useI18n, exKey } from '@/lib/i18n';
+import { useI18n, exKey, findExercise } from '@/lib/i18n';
+import { muscleOf } from '@/lib/muscles';
 import { loadActive, saveActive, clearActive } from '@/lib/activeWorkout';
 import { fetchAllWorkouts } from '@/lib/data';
 import { bestByExercise, findRecords, fmtKg, isSetRecord, workoutSets, workoutVolume } from '@/lib/stats';
@@ -16,7 +17,7 @@ import { applySuggestion, suggestNext } from '@/lib/progression';
 import { afterSetDone, cleanLinks, supersetLabels } from '@/lib/superset';
 import { loadEffortScale } from '@/lib/prefs';
 import PlateCalculator from '@/components/PlateCalculator';
-import { IconCheck, IconPlus, IconRest, IconTrash, IconTrophy, IconPlate, IconChart } from '@/components/Icons';
+import { IconCheck, IconPlus, IconRest, IconTrash, IconTrophy, IconPlate, IconClose, IconArrowUp } from '@/components/Icons';
 
 const TYPE_LABEL = { normal: 'setNormal', warmup: 'setWarmup', drop: 'setDrop', failure: 'setFailure' };
 const TYPE_TAG = { normal: '1', warmup: 'W', drop: 'D', failure: 'F' };
@@ -39,7 +40,7 @@ function Seance({ user }) {
   const params = useSearchParams();
   const routineId = params.get('id');
   const livre = !routineId && params.get('livre') === '1'; // treino sem rotina
-  const { t, tf, exName } = useI18n();
+  const { t, tf, locale, exName, muscleName } = useI18n();
   const dialog = useDialog();
 
   const [lastLog, setLastLog] = useState(null); // exKey -> registro do exercício no último treino
@@ -152,7 +153,7 @@ function Seance({ user }) {
             const done = (e.sets || []).filter((s) => s.done);
             if (k && !map[k] && done.length) {
               map[k] = done.map((s) => ({ weight: s.weight, reps: s.reps }));
-              last[k] = e;
+              last[k] = { ...e, date: w.started_at };
             }
           })
         );
@@ -348,11 +349,28 @@ function Seance({ user }) {
   const ssLabels = supersetLabels(exs);
   const menuSet = setMenu ? exs[setMenu.ei]?.sets[setMenu.si] : null;
 
+  const totalSets = exs.reduce((n, e) => n + e.sets.length, 0);
+  const doneCount = exs.reduce((n, e) => n + e.sets.filter((s) => s.done).length, 0);
+
   return (
     <div className="page" style={{ paddingBottom: 130 }}>
-      <div className="session-head">
-        <h1 style={{ fontSize: 24, fontWeight: 800 }}>{routine.name || t('defaultSession')}</h1>
-        <span style={{ fontWeight: 700, color: 'var(--accent)', fontSize: 20 }}>{fmt(seconds)}</span>
+      {/* Cabeçalho: ✕ descarta · título, tempo e séries · ✓ finaliza */}
+      <div className="workout-head">
+        <button className="round-btn" onClick={abandonner} aria-label={t('discard')}>
+          <IconClose />
+        </button>
+        <div className="workout-title">
+          <b>{routine.name || t('defaultSession')}</b>
+          <span className="muted" style={{ fontSize: 16 }}>
+            {fmt(seconds)} · {tf('setsProgress', { done: doneCount, total: totalSets })}
+          </span>
+        </div>
+        <button className="round-btn ok" onClick={terminer} disabled={saving} aria-label={t('finishWorkout')}>
+          <IconCheck size={22} />
+        </button>
+      </div>
+      <div className="progress">
+        <span style={{ width: `${totalSets ? (doneCount / totalSets) * 100 : 0}%` }} />
       </div>
 
       {exs.map((ex, ei) => {
@@ -361,35 +379,57 @@ function Seance({ user }) {
         const ss = ssLabels[ei];
         const sug = suggestionOf(ex);
         const grid = `set-grid ${effort !== 'off' ? 'with-effort' : ''}`;
+        const cat = findExercise(ex);
+        const muscle = muscleOf(cat);
+        const best = bests.get(exKey(ex));
+        const last = lastLog?.[exKey(ex)];
+        const lastSets = last ? (last.sets || []).filter((s) => s.done) : [];
         return (
-          <div key={exKey(ex) + ei} id={`ex-${ei}`} className={`card ${ss ? 'in-superset' : ''}`}>
-            <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 6 }}>
-              {ex.gif && (
-                <button className="thumb-btn" onClick={() => setDetail(ex)} aria-label={exName(ex)}>
-                  <img src={ex.gif} alt="" className="ex-thumb big" />
-                </button>
-              )}
-              <div style={{ flex: 1 }}>
-                {ss && <span className="ss-badge">{t('superset')} {ss}</span>}
-                <b style={{ fontSize: 17, display: 'block' }}>{exName(ex)}</b>
-                {ex.rest > 0 && (
-                  <p className="muted" style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 4 }}>
-                    <IconRest size={14} /> {t('rest')}: {ex.rest}s
-                  </p>
-                )}
-              </div>
-              <button className="icon-btn" onClick={() => removeExercise(ei)} aria-label={t('removeExercise')}>
-                <IconTrash />
+          <section key={exKey(ex) + ei} id={`ex-${ei}`} className={`ex-block ${ss ? 'in-ss' : ''}`}>
+            <p className="ex-kicker">
+              {ss && <span className="ss-badge" style={{ marginRight: 8 }}>{t('superset')} {ss}</span>}
+              {tf('exerciseOf', { i: ei + 1, n: exs.length })}
+            </p>
+            {ex.gif && (
+              <button className="ex-media" onClick={() => setDetail(ex)} aria-label={exName(ex)}>
+                <img src={ex.gif} alt="" />
+              </button>
+            )}
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+              <h2 className="ex-title" style={{ flex: 1 }}>{exName(ex)}</h2>
+              <button className="round-btn" style={{ marginTop: 12, border: 'none', background: 'var(--card)' }} onClick={() => removeExercise(ei)} aria-label={t('removeExercise')}>
+                <IconTrash size={18} />
               </button>
             </div>
+
+            <div className="tags">
+              {muscle && <span className="tag-chip">{muscleName(muscle)}</span>}
+              {best && <span className="tag-chip">{t('bestLabel')}: {fmtKg(best.est, locale)} kg</span>}
+              {ex.rest > 0 && (
+                <span className="tag-chip" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                  <IconRest size={14} /> {ex.rest}s
+                </span>
+              )}
+            </div>
+
+            {lastSets.length > 0 && (
+              <p className="last-line">
+                {tf('lastTime', { date: new Date(last.date).toLocaleDateString(locale, { day: 'numeric', month: 'short' }) })}:{' '}
+                {lastSets.map((s) => `${fmtKg(s.weight || 0, locale)}×${s.reps || 0}${s.rpe ? ` @${s.rpe}` : ''}`).join(', ')}
+              </p>
+            )}
 
             {/* Sugestão da progressão, explicada em uma linha */}
             {sug && (
               <p className="suggest-line">
-                <IconChart size={15} /> <span>{tf(sug.reason, sug.params)}</span>
+                <IconArrowUp size={15} />
+                <span>
+                  <b>{t(ex.progression?.type === 'double' ? 'progDouble' : 'progLinear')}</b> · {tf(sug.reason, sug.params)}
+                </span>
               </p>
             )}
 
+            <div className="sets-box">
             <div className={`${grid} muted`} style={{ fontSize: 12, fontWeight: 700 }}>
               <span style={{ textAlign: 'center' }}>#</span>
               <span style={{ textAlign: 'center' }}>{t('prevCol')}</span>
@@ -472,7 +512,8 @@ function Seance({ user }) {
                 </button>
               )}
             </div>
-          </div>
+            </div>
+          </section>
         );
       })}
 
@@ -480,7 +521,7 @@ function Seance({ user }) {
         <IconPlus /> {t('addExercise')}
       </button>
 
-      <button className="btn" style={{ background: 'var(--green)' }} onClick={terminer} disabled={saving}>
+      <button className="btn" onClick={terminer} disabled={saving}>
         {saving ? t('saving') : t('finishWorkout')}
       </button>
       <button className="btn danger" style={{ marginTop: 10 }} onClick={abandonner}>

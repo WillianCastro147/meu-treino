@@ -7,9 +7,19 @@ import BottomNav from '@/components/BottomNav';
 import BodyWeightCard from '@/components/BodyWeightCard';
 import { BarChart, Heatmap } from '@/components/Charts';
 import { useI18n, exKey, findExercise } from '@/lib/i18n';
+import PageHeader from '@/components/PageHeader';
+import BodyMap from '@/components/BodyMap';
+import { regionLevels, setsByMuscle } from '@/lib/muscles';
 import { fetchAllWorkouts } from '@/lib/data';
 import { activityByDay, bestByExercise, fmtDuration, fmtKg, totals, weekStreak, weeklySummary } from '@/lib/stats';
-import { IconTrophy } from '@/components/Icons';
+import { IconTrophy, IconDumbbell, IconCalendar, IconFlame, IconVolume } from '@/components/Icons';
+
+const RANGES = [
+  ['range7', 7],
+  ['range30', 30],
+  ['range90', 90],
+  ['rangeAll', 0],
+];
 
 export default function EstatisticasPage() {
   return <AuthGuard>{(user) => <Stats user={user} />}</AuthGuard>;
@@ -17,11 +27,12 @@ export default function EstatisticasPage() {
 
 function Stats({ user }) {
   const router = useRouter();
-  const { t, locale, exName } = useI18n();
+  const { t, locale, exName, muscleName } = useI18n();
   const [workouts, setWorkouts] = useState(null);
   const [error, setError] = useState('');
   const [metric, setMetric] = useState('volume');
   const [showAllPrs, setShowAllPrs] = useState(false);
+  const [range, setRange] = useState(30);
 
   useEffect(() => {
     fetchAllWorkouts()
@@ -38,7 +49,11 @@ function Stats({ user }) {
     const prs = [...bestByExercise(workouts, exKey).entries()]
       .map(([key, b]) => ({ key, ...b }))
       .sort((a, b) => b.est - a.est);
+    const monthStart = new Date();
+    monthStart.setDate(1);
+    monthStart.setHours(0, 0, 0, 0);
     return {
+      month: workouts.filter((w) => new Date(w.started_at) >= monthStart).length,
       total: totals(workouts),
       streak: weekStreak(workouts),
       byDay: activityByDay(workouts),
@@ -47,33 +62,43 @@ function Stats({ user }) {
     };
   }, [workouts]);
 
+  const muscles = useMemo(() => {
+    if (!workouts) return null;
+    const since = range ? Date.now() - range * 864e5 : 0;
+    const by = setsByMuscle(workouts, since, findExercise);
+    return { by, levels: regionLevels(by) };
+  }, [workouts, range]);
+
   const weekLabel = (d) => d.toLocaleDateString(locale, { day: '2-digit', month: '2-digit' });
 
   return (
     <div className="page">
-      <h1 className="page-title">{t('tabStats')}</h1>
+      <PageHeader title={t('tabStats')} sub={t('statsSub')} />
 
       {!data && <p className="muted">{t('loading')}</p>}
       {error && <p className="error-msg">{t('errPrefix') + error}</p>}
 
       {data && (
         <>
-          <div className="stat-grid two">
-            <div className="stat">
-              <b>{data.total.workouts}</b>
-              <span className="muted">{t('sessions')}</span>
+          <div className="tile-grid">
+            <div className="tile">
+              <span className="tile-label"><IconDumbbell size={17} /> {t('sessions')}</span>
+              <div className="tile-value">{data.total.workouts}</div>
             </div>
-            <div className="stat">
-              <b>{fmtDuration(data.total.minutes)}</b>
-              <span className="muted">{t('trainingTime')}</span>
+            <div className="tile">
+              <span className="tile-label"><IconCalendar size={17} /> {t('thisMonth')}</span>
+              <div className="tile-value">{data.month}</div>
             </div>
-            <div className="stat">
-              <b>{fmtKg(data.total.volume / 1000, locale)} t</b>
-              <span className="muted">{t('totalVolume')}</span>
+            <div className="tile">
+              <span className="tile-label"><IconFlame size={17} /> {t('weekStreak')}</span>
+              <div className="tile-value">{data.streak}</div>
             </div>
-            <div className="stat">
-              <b>{data.streak}</b>
-              <span className="muted">{t('weekStreak')}</span>
+            <div className="tile">
+              <span className="tile-label"><IconVolume size={17} /> {t('totalVolume')}</span>
+              <div className="tile-value">
+                {fmtKg(data.total.volume / 1000, locale)}
+                <small>t</small>
+              </div>
             </div>
           </div>
 
@@ -88,6 +113,33 @@ function Stats({ user }) {
               {t('activity')} <span className="muted">{t('lastMonths')}</span>
             </p>
             <Heatmap byDay={data.byDay} weeks={26} t={t} />
+          </div>
+
+          <div className="card">
+            <p className="card-title">
+              {t('muscleBalance')} <span className="muted">{t('bySets')}</span>
+            </p>
+            <div className="seg">
+              {RANGES.map(([key, days]) => (
+                <button key={key} className={range === days ? 'active' : ''} onClick={() => setRange(days)}>
+                  {t(key)}
+                </button>
+              ))}
+            </div>
+            <BodyMap levels={muscles.levels} />
+            {Object.keys(muscles.by).length === 0 ? (
+              <p className="muted" style={{ textAlign: 'center' }}>{t('noMuscleData')}</p>
+            ) : (
+              <div className="tags" style={{ justifyContent: 'center' }}>
+                {Object.entries(muscles.by)
+                  .sort((x, y) => y[1] - x[1])
+                  .map(([m, n]) => (
+                    <span key={m} className="tag-chip">
+                      {muscleName(m)} · {n}
+                    </span>
+                  ))}
+              </div>
+            )}
           </div>
 
           <div className="card">
