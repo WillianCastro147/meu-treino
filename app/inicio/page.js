@@ -8,7 +8,8 @@ import { supabase } from '@/lib/supabase';
 import { useI18n } from '@/lib/i18n';
 import { useDialog } from '@/components/Dialog';
 import ActiveBanner from '@/components/ActiveBanner';
-import { fmtDuration, fmtKg, weekStreak, weeklySummary } from '@/lib/stats';
+import { fmtDuration, fmtKg, weekStreak, weeklySummary, workoutSets, workoutVolume } from '@/lib/stats';
+import { setLabels } from '@/lib/sets';
 import { IconTimer, IconSets, IconVolume, IconDumbbell, IconTrash, IconGear } from '@/components/Icons';
 
 export default function InicioPage() {
@@ -97,15 +98,8 @@ function Accueil({ user }) {
       {workouts &&
         workouts.map((w) => {
           const exs = w.exercises || [];
-          const volume = exs.reduce(
-            (t, ex) =>
-              t +
-              ex.sets
-                .filter((set) => set.done)
-                .reduce((s, set) => s + (Number(set.weight) || 0) * (Number(set.reps) || 0), 0),
-            0
-          );
-          const totalSets = exs.reduce((t, ex) => t + ex.sets.filter((s) => s.done).length, 0);
+          const volume = workoutVolume(w);
+          const totalSets = workoutSets(w);
           const isOpen = expanded === w.id;
 
           return (
@@ -145,10 +139,14 @@ function Accueil({ user }) {
                       <div>
                         <p className="ex-name">{exName(ex)}</p>
                         <p className="muted">
-                          {ex.sets
-                            .filter((s) => s.done)
-                            .map((s) => `${s.weight || 0}kg × ${s.reps || 0}`)
-                            .join('  ·  ') || t('noSetsDone')}
+                          {(() => {
+                            const labels = setLabels(ex.sets);
+                            // W / D / F na frente das séries especiais (aquecimento, drop, falha)
+                            return ex.sets
+                              .map((s, si) => (s.done ? `${/\d/.test(labels[si]) ? '' : labels[si] + ' '}${s.weight || 0}kg × ${s.reps || 0}` : null))
+                              .filter(Boolean)
+                              .join('  ·  ');
+                          })() || t('noSetsDone')}
                         </p>
                       </div>
                     </div>

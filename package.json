@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test": "node --no-warnings --test lib/stats.test.mjs"
+    "test": "node --no-warnings --test lib/stats.test.mjs lib/fase2.test.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",

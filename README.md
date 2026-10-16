@@ -51,6 +51,16 @@ Navegação inspirada no openGym (código escrito do zero para o Moviq):
 - **Progresso** — totais, mapa de atividade dos últimos 6 meses, volume e treinos por semana, recordes pessoais (1RM estimado) e peso corporal com gráfico e meta.
 - **Exercícios** — biblioteca com busca e filtro "Que já fiz"; cada exercício mostra melhor 1RM estimado, maior carga, gráfico de evolução e histórico de séries.
 
+### Fase 2: progressão e séries
+
+- **Tipos de série:** toque no número da série para marcar **W** (aquecimento), **D** (drop set) ou **F** (até a falha), ou remover aquela série. Aquecimento não conta para volume, recordes nem 1RM.
+- **Esforço (RPE/RIR):** opcional, ligado em Configurações → Treino. Fica guardado como RPE em cada série.
+- **Progressão automática** por exercício na rotina: **Linear** (sobe X kg quando todas as séries batem as repetições) ou **Dupla** (sobe repetições até o topo da faixa, depois a carga). No treino, a carga e as repetições sugeridas já vêm preenchidas, com uma linha explicando o porquê.
+- **Calculadora de anilhas:** toque em **KG ⦿** no cabeçalho das séries. Barra e anilhas disponíveis ficam salvas no aparelho.
+- **Supersets:** no editor de rotina, "Superset com o próximo" junta exercícios. No treino, ao concluir uma série o app vai para o próximo exercício do grupo e só descansa no fim da rodada.
+
+Tudo fica no JSON das rotinas e treinos que já existe: **não precisa de migração** no Supabase. Lógica em `lib/sets.js`, `lib/progression.js`, `lib/plates.js` e `lib/superset.js`, com testes em `lib/fase2.test.mjs`.
+
 O 1RM estimado usa a fórmula de Epley (até 12 repetições). A lógica fica em `lib/stats.js`, com testes em `lib/stats.test.mjs` (`npm test`).
 
 Tecnologias: Next.js 14 + Supabase (autenticação e banco de dados) + Vercel (hospedagem).

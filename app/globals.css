@@ -837,6 +837,174 @@ textarea {
   justify-content: center;
 }
 
+/* Supersets */
+.card.in-superset {
+  border-left: 4px solid var(--accent);
+}
+
+.ss-badge {
+  display: inline-block;
+  background: rgba(59, 130, 246, 0.16);
+  color: var(--accent);
+  border-radius: 6px;
+  padding: 2px 7px;
+  font-size: 11px;
+  font-weight: 800;
+  margin-bottom: 4px;
+  letter-spacing: 0.3px;
+}
+
+.link-row {
+  display: flex;
+  justify-content: center;
+  padding: 6px 0;
+}
+
+.link-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg);
+  color: var(--muted);
+  border: 1px dashed var(--border);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.link-toggle.on {
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  background: rgba(59, 130, 246, 0.1);
+}
+
+/* Tela de treino: tipo de série, esforço, sugestão */
+.set-grid.with-effort {
+  grid-template-columns: 30px 56px 1fr 1fr 52px 46px;
+}
+
+.set-label {
+  background: none;
+  font-weight: 800;
+  font-size: 15px;
+  color: var(--muted);
+  padding: 8px 0;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 100%;
+}
+
+.set-label:active {
+  background: var(--card2);
+}
+
+.set-label.warmup {
+  color: #f59e0b;
+}
+
+.set-label.drop {
+  color: #a855f7;
+}
+
+.set-label.failure {
+  color: var(--red);
+}
+
+.set-grid select.input {
+  padding: 10px 2px;
+  text-align: center;
+  text-align-last: center;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.suggest-line {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  background: rgba(34, 197, 94, 0.1);
+  color: #86efac;
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 13px;
+  margin: 4px 0 10px;
+  line-height: 1.35;
+}
+
+.col-btn {
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  width: 100%;
+}
+
+.menu-list button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  background: none;
+  color: var(--text);
+  font-size: 16px;
+  padding: 13px 4px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+
+.menu-list button:last-child {
+  border-bottom: none;
+}
+
+.menu-list .tag {
+  width: 30px;
+  font-weight: 800;
+  text-align: center;
+}
+
+/* Calculadora de anilhas */
+.plate-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-height: 96px;
+  margin: 10px 0;
+}
+
+.plate-bar .bar {
+  height: 10px;
+  width: 70px;
+  background: #9ca3af;
+  border-radius: 3px;
+}
+
+.plate-bar .plate {
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+
+.plate-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 @keyframes fade-in {
   from {
     opacity: 0;

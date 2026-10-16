@@ -11,7 +11,15 @@ import { useI18n, exKey } from '@/lib/i18n';
 import { loadActive, saveActive, clearActive } from '@/lib/activeWorkout';
 import { fetchAllWorkouts } from '@/lib/data';
 import { bestByExercise, findRecords, fmtKg, isSetRecord, workoutSets, workoutVolume } from '@/lib/stats';
-import { IconCheck, IconPlus, IconRest, IconTrash, IconTrophy } from '@/components/Icons';
+import { RPE_VALUES, rpeToRir, rirToRpe, setLabels, setType, SET_TYPES } from '@/lib/sets';
+import { applySuggestion, suggestNext } from '@/lib/progression';
+import { afterSetDone, cleanLinks, supersetLabels } from '@/lib/superset';
+import { loadEffortScale } from '@/lib/prefs';
+import PlateCalculator from '@/components/PlateCalculator';
+import { IconCheck, IconPlus, IconRest, IconTrash, IconTrophy, IconPlate, IconChart } from '@/components/Icons';
+
+const TYPE_LABEL = { normal: 'setNormal', warmup: 'setWarmup', drop: 'setDrop', failure: 'setFailure' };
+const TYPE_TAG = { normal: '1', warmup: 'W', drop: 'D', failure: 'F' };
 
 export default function ExecutarPage() {
   const { t } = useI18n();
@@ -31,9 +39,15 @@ function Seance({ user }) {
   const params = useSearchParams();
   const routineId = params.get('id');
   const livre = !routineId && params.get('livre') === '1'; // treino sem rotina
-  const { t, exName } = useI18n();
+  const { t, tf, exName } = useI18n();
   const dialog = useDialog();
 
+  const [lastLog, setLastLog] = useState(null); // exKey -> registro do exercício no último treino
+  const [effort, setEffort] = useState('off'); // escala de esforço: off | rpe | rir
+  const [setMenu, setSetMenu] = useState(null); // { ei, si } da série com o menu aberto
+  const [plates, setPlates] = useState(null); // { ei, si, weight } da calculadora de anilhas
+  const fresh = useRef(false); // treino novo (não restaurado): recebe a sugestão de carga
+  const prefilled = useRef(false);
   const [routine, setRoutine] = useState(null);
   const [exs, setExs] = useState([]); // [{id, name, gif, rest, sets: [{weight, reps, done}]}]
   const [startedAt, setStartedAt] = useState(null); // ms
@@ -92,13 +106,17 @@ function Seance({ user }) {
         setStartedAt(saved.startedAt);
         setRestEndsAt(saved.restEndsAt && saved.restEndsAt > Date.now() ? saved.restEndsAt : null);
       } else {
+        fresh.current = true;
         setStartedAt(Date.now());
         setExs(
-          (data.exercises || []).map((e) => ({
+          cleanLinks(data.exercises || []).map((e) => ({
             id: e.id,
             name: e.name,
             gif: e.gif,
             rest: e.rest ?? 60,
+            plan: { sets: e.sets || 3, reps: e.reps || 10 },
+            ...(e.progression ? { progression: e.progression } : {}),
+            ...(e.linkNext ? { linkNext: true } : {}),
             sets: Array.from({ length: e.sets || 3 }, () => ({
               weight: '',
               reps: e.reps || 10,
@@ -127,19 +145,37 @@ function Seance({ user }) {
     fetchAllWorkouts()
       .then((data) => {
         const map = {};
+        const last = {};
         data.forEach((w) =>
           (w.exercises || []).forEach((e) => {
             const k = exKey(e);
             const done = (e.sets || []).filter((s) => s.done);
-            if (k && !map[k] && done.length) map[k] = done.map((s) => ({ weight: s.weight, reps: s.reps }));
+            if (k && !map[k] && done.length) {
+              map[k] = done.map((s) => ({ weight: s.weight, reps: s.reps }));
+              last[k] = e;
+            }
           })
         );
         setPrevious(map);
+        setLastLog(last);
         setHistory(data);
         setBests(bestByExercise(data, exKey));
       })
       .catch(() => {});
   }, []);
+
+  useEffect(() => setEffort(loadEffortScale()), []);
+
+  // Sugestão da regra de progressão para cada exercício (a partir do último treino)
+  const suggestionOf = (ex) => (lastLog ? suggestNext(ex.progression, ex.plan, lastLog[exKey(ex)]) : null);
+
+  // Treino novo: pré-preenche carga e repetições sugeridas, uma vez, quando o histórico chega
+  useEffect(() => {
+    if (!fresh.current || prefilled.current || !lastLog || !exs.length) return;
+    prefilled.current = true;
+    setExs((cur) => cur.map((ex) => ({ ...ex, sets: applySuggestion(ex.sets, suggestionOf(ex)) })));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lastLog, exs.length]);
 
   // Salva no aparelho a cada alteração
   useEffect(() => {
@@ -188,9 +224,39 @@ function Seance({ user }) {
       const prev = previous[exKey(copy[ei])]?.[si];
       // Se não digitou o peso, usa o da última vez
       if (s.weight === '' && prev?.weight) s.weight = prev.weight;
-      if (copy[ei].rest > 0) setRestEndsAt(Date.now() + copy[ei].rest * 1000);
+      // Superset: vai direto ao próximo exercício e só descansa no fim da rodada
+      const { rest, next } = afterSetDone(copy, ei, si);
+      setRestEndsAt(rest > 0 ? Date.now() + rest * 1000 : null);
+      if (next && next.ei !== ei) {
+        setTimeout(() => document.getElementById(`ex-${next.ei}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
+      }
     }
     setExs(copy);
+  }
+
+  function setSetType(ei, si, type) {
+    const copy = clone();
+    if (type === 'normal') delete copy[ei].sets[si].type;
+    else copy[ei].sets[si].type = type;
+    setExs(copy);
+    setSetMenu(null);
+  }
+
+  function removeSetAt(ei, si) {
+    const copy = clone();
+    if (copy[ei].sets.length <= 1) return setSetMenu(null);
+    copy[ei].sets.splice(si, 1);
+    setExs(copy);
+    setSetMenu(null);
+  }
+
+  // Abre a calculadora com a carga da próxima série não concluída
+  function openPlates(ei) {
+    const sets = exs[ei].sets;
+    let si = sets.findIndex((s) => !s.done);
+    if (si < 0) si = sets.length - 1;
+    const prev = previous[exKey(exs[ei])]?.[si];
+    setPlates({ ei, si, weight: sets[si].weight !== '' ? sets[si].weight : prev?.weight || '' });
   }
 
   function applyPrevious(ei, si) {
@@ -218,7 +284,7 @@ function Seance({ user }) {
 
   async function removeExercise(ei) {
     if (!(await dialog.confirm(t('confirmRemoveExercise'), { danger: true, confirmLabel: t('remove') }))) return;
-    setExs(exs.filter((_, i) => i !== ei));
+    setExs(cleanLinks(exs.filter((_, i) => i !== ei)));
   }
 
   function addExercise(ex) {
@@ -279,6 +345,8 @@ function Seance({ user }) {
   if (!routine || !startedAt) return <div className="page"><p className="muted">{t('loading')}</p></div>;
 
   const seconds = Math.max(0, Math.floor((now - startedAt) / 1000));
+  const ssLabels = supersetLabels(exs);
+  const menuSet = setMenu ? exs[setMenu.ei]?.sets[setMenu.si] : null;
 
   return (
     <div className="page" style={{ paddingBottom: 130 }}>
@@ -289,8 +357,12 @@ function Seance({ user }) {
 
       {exs.map((ex, ei) => {
         const prevSets = previous[exKey(ex)] || [];
+        const labels = setLabels(ex.sets);
+        const ss = ssLabels[ei];
+        const sug = suggestionOf(ex);
+        const grid = `set-grid ${effort !== 'off' ? 'with-effort' : ''}`;
         return (
-          <div key={exKey(ex) + ei} className="card">
+          <div key={exKey(ex) + ei} id={`ex-${ei}`} className={`card ${ss ? 'in-superset' : ''}`}>
             <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 6 }}>
               {ex.gif && (
                 <button className="thumb-btn" onClick={() => setDetail(ex)} aria-label={exName(ex)}>
@@ -298,7 +370,8 @@ function Seance({ user }) {
                 </button>
               )}
               <div style={{ flex: 1 }}>
-                <b style={{ fontSize: 17 }}>{exName(ex)}</b>
+                {ss && <span className="ss-badge">{t('superset')} {ss}</span>}
+                <b style={{ fontSize: 17, display: 'block' }}>{exName(ex)}</b>
                 {ex.rest > 0 && (
                   <p className="muted" style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 4 }}>
                     <IconRest size={14} /> {t('rest')}: {ex.rest}s
@@ -310,28 +383,38 @@ function Seance({ user }) {
               </button>
             </div>
 
-            <div className="set-grid muted" style={{ fontSize: 12, fontWeight: 700 }}>
+            {/* Sugestão da progressão, explicada em uma linha */}
+            {sug && (
+              <p className="suggest-line">
+                <IconChart size={15} /> <span>{tf(sug.reason, sug.params)}</span>
+              </p>
+            )}
+
+            <div className={`${grid} muted`} style={{ fontSize: 12, fontWeight: 700 }}>
               <span style={{ textAlign: 'center' }}>#</span>
               <span style={{ textAlign: 'center' }}>{t('prevCol')}</span>
-              <span style={{ textAlign: 'center' }}>{t('kgCol')}</span>
+              <button className="col-btn" onClick={() => openPlates(ei)} aria-label={t('plateCalc')} title={t('plateCalc')}>
+                {t('kgCol')} <IconPlate size={13} />
+              </button>
               <span style={{ textAlign: 'center' }}>{t('repsCol')}</span>
+              {effort !== 'off' && <span style={{ textAlign: 'center' }}>{effort === 'rir' ? 'RIR' : 'RPE'}</span>}
               <span></span>
             </div>
 
             {ex.sets.map((s, si) => {
               const prev = prevSets[si];
+              const type = setType(s);
               const record = isSetRecord(s, bests.get(exKey(ex))?.est ?? null, ex.sets.slice(0, si));
               return (
-                <div key={si} className={`set-grid ${s.done ? 'set-done' : ''}`}>
-                  <span className="set-num">
-                    {record ? (
-                      <span className="pr-badge" title={t('newRecord')}>
-                        {t('newRecord')}
-                      </span>
-                    ) : (
-                      si + 1
-                    )}
-                  </span>
+                <div key={si} className={`${grid} ${s.done ? 'set-done' : ''}`}>
+                  <button
+                    className={`set-label ${type}`}
+                    onClick={() => setSetMenu({ ei, si })}
+                    aria-label={`${t('setTypeTitle')}: ${t(TYPE_LABEL[type])}`}
+                  >
+                    {labels[si]}
+                    {record && <span className="pr-badge">{t('newRecord')}</span>}
+                  </button>
                   <button className="prev-cell" onClick={() => applyPrevious(ei, si)} disabled={!prev}>
                     {prev ? `${prev.weight || 0}×${prev.reps || 0}` : '—'}
                   </button>
@@ -350,6 +433,24 @@ function Seance({ user }) {
                     value={s.reps}
                     onChange={(e) => updateSet(ei, si, 'reps', e.target.value)}
                   />
+                  {effort !== 'off' && (
+                    <select
+                      className="input"
+                      value={effort === 'rir' ? rpeToRir(s.rpe) : s.rpe ?? ''}
+                      onChange={(e) => {
+                        const v = e.target.value === '' ? '' : Number(e.target.value);
+                        updateSet(ei, si, 'rpe', effort === 'rir' ? rirToRpe(v) : v);
+                      }}
+                      aria-label={effort === 'rir' ? 'RIR' : 'RPE'}
+                    >
+                      <option value="">–</option>
+                      {(effort === 'rir' ? [4, 3, 2, 1, 0] : RPE_VALUES).map((v) => (
+                        <option key={v} value={v}>
+                          {v}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                   <button
                     className={`check-btn ${s.done ? 'done' : ''}`}
                     onClick={() => updateSet(ei, si, 'done', !s.done)}
@@ -417,6 +518,51 @@ function Seance({ user }) {
         <ExercisePicker onSelect={addExercise} onClose={() => setShowPicker(false)} />
       )}
       {detail && <ExerciseDetail exercise={detail} onClose={() => setDetail(null)} />}
+
+      {/* Menu da série: tipo (normal, aquecimento, drop, falha) e remover */}
+      {menuSet && (
+        <div className="modal-overlay" onClick={() => setSetMenu(null)}>
+          <div className="modal sheet" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <b style={{ fontSize: 18 }}>{t('setTypeTitle')}</b>
+              <button onClick={() => setSetMenu(null)} style={{ background: 'none', color: 'var(--muted)', fontSize: 24 }} aria-label={t('close')}>
+                ✕
+              </button>
+            </div>
+            <div className="modal-body menu-list">
+              {SET_TYPES.map((type) => (
+                <button key={type} onClick={() => setSetType(setMenu.ei, setMenu.si, type)}>
+                  <span className={`tag set-label ${type}`} style={{ width: 30, padding: 0 }}>
+                    {TYPE_TAG[type]}
+                  </span>
+                  <span style={{ flex: 1 }}>{t(TYPE_LABEL[type])}</span>
+                  {setType(menuSet) === type && <IconCheck color="var(--accent)" />}
+                </button>
+              ))}
+              <p className="muted" style={{ padding: '8px 4px' }}>{t('warmupHint')}</p>
+              {exs[setMenu.ei].sets.length > 1 && (
+                <button onClick={() => removeSetAt(setMenu.ei, setMenu.si)} style={{ color: 'var(--red)' }}>
+                  <span className="tag">
+                    <IconTrash />
+                  </span>
+                  {t('removeThisSet')}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {plates && (
+        <PlateCalculator
+          initialWeight={plates.weight}
+          onClose={() => setPlates(null)}
+          onUse={(w) => {
+            updateSet(plates.ei, plates.si, 'weight', w);
+            setPlates(null);
+          }}
+        />
+      )}
     </div>
   );
 }

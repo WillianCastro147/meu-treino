@@ -9,7 +9,8 @@ import { supabase } from '@/lib/supabase';
 import { useI18n } from '@/lib/i18n';
 import { useDialog } from '@/components/Dialog';
 import ExerciseDetail from '@/components/ExerciseDetail';
-import { IconPlus, IconRest } from '@/components/Icons';
+import { IconPlus, IconRest, IconLink } from '@/components/Icons';
+import { cleanLinks, supersetLabels } from '@/lib/superset';
 
 export default function NovaRotinaPage() {
   const { t } = useI18n();
@@ -67,12 +68,25 @@ function NouvelleRoutine({ user }) {
     setItems(copy);
   }
 
+  // Regra de progressão: { type, increment, repMin, repMax } (campo opcional na rotina)
+  function updateRule(idx, patch) {
+    const it = items[idx];
+    const cur = it.progression || { type: 'none' };
+    let next = { ...cur, ...patch };
+    if (patch.type === 'double' && cur.type !== 'double') {
+      const base = Number(it.reps) || 8;
+      next = { ...next, repMin: next.repMin || base, repMax: next.repMax || base + 4 };
+    }
+    if (patch.type && next.increment == null) next.increment = 2.5;
+    updateItem(idx, 'progression', next.type === 'none' ? null : next);
+  }
+
   function move(idx, dir) {
     const copy = [...items];
     const j = idx + dir;
     if (j < 0 || j >= copy.length) return;
     [copy[idx], copy[j]] = [copy[j], copy[idx]];
-    setItems(copy);
+    setItems(cleanLinks(copy));
   }
 
   async function sauvegarder() {
@@ -80,7 +94,7 @@ function NouvelleRoutine({ user }) {
     if (items.length === 0) return dialog.alert(t('alertAddExercise'));
     setSaving(true);
 
-    const payload = { user_id: user.id, name: name.trim(), exercises: items };
+    const payload = { user_id: user.id, name: name.trim(), exercises: cleanLinks(items) };
     const { error } = editId
       ? await supabase.from('routines').update(payload).eq('id', editId)
       : await supabase.from('routines').insert(payload);
@@ -89,6 +103,8 @@ function NouvelleRoutine({ user }) {
     if (error) dialog.alert(t('saveError') + error.message);
     else router.push('/treino');
   }
+
+  const labels = supersetLabels(items);
 
   return (
     <div className="page">
@@ -103,13 +119,18 @@ function NouvelleRoutine({ user }) {
       />
 
       <div style={{ marginTop: 16 }}>
-        {items.map((it, idx) => (
-          <div key={it.id} className="card">
+        {items.map((it, idx) => {
+          const ss = labels[idx];
+          const rule = it.progression || { type: 'none' };
+          return (
+          <div key={it.id}>
+          <div className={`card ${ss ? 'in-superset' : ''}`} style={{ marginBottom: idx < items.length - 1 ? 0 : 12 }}>
             <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
               <button className="thumb-btn" onClick={() => setDetail(it)} aria-label={exName(it)}>
                 <img src={it.gif} alt="" className="ex-thumb" loading="lazy" />
               </button>
               <div style={{ flex: 1 }}>
+                {ss && <span className="ss-badge">{t('superset')} {ss}</span>}
                 <p className="ex-name">{exName(it)}</p>
                 <p className="muted">{exMeta(it)}</p>
               </div>
@@ -155,16 +176,90 @@ function NouvelleRoutine({ user }) {
               </div>
             </div>
 
+            {/* Progressão automática */}
+            <label className="label" style={{ margin: '12px 0 6px' }}>{t('progression')}</label>
+            <div className="lang-switch">
+              {[
+                ['none', t('progNone')],
+                ['linear', t('progLinear')],
+                ['double', t('progDouble')],
+              ].map(([v, label]) => (
+                <button key={v} className={rule.type === v ? 'active' : ''} onClick={() => updateRule(idx, { type: v })}>
+                  {label}
+                </button>
+              ))}
+            </div>
+            {rule.type !== 'none' && (
+              <>
+                <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
+                  <div style={{ flex: 1 }}>
+                    <label className="label" style={{ margin: '0 0 4px' }}>{t('increment')}</label>
+                    <input
+                      className="input"
+                      type="number"
+                      inputMode="decimal"
+                      min={0}
+                      step={0.25}
+                      value={rule.increment ?? 2.5}
+                      onChange={(e) => updateRule(idx, { increment: e.target.value === '' ? '' : Number(e.target.value) })}
+                    />
+                  </div>
+                  {rule.type === 'double' && (
+                    <>
+                      <div style={{ flex: 1 }}>
+                        <label className="label" style={{ margin: '0 0 4px' }}>{t('repMinLabel')}</label>
+                        <input
+                          className="input"
+                          type="number"
+                          min={1}
+                          value={rule.repMin ?? ''}
+                          onChange={(e) => updateRule(idx, { repMin: Number(e.target.value) })}
+                        />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <label className="label" style={{ margin: '0 0 4px' }}>{t('repMaxLabel')}</label>
+                        <input
+                          className="input"
+                          type="number"
+                          min={1}
+                          value={rule.repMax ?? ''}
+                          onChange={(e) => updateRule(idx, { repMax: Number(e.target.value) })}
+                        />
+                      </div>
+                    </>
+                  )}
+                </div>
+                <p className="muted" style={{ marginTop: 6, fontSize: 13 }}>
+                  {rule.type === 'linear' ? t('progLinearHint') : t('progDoubleHint')}
+                </p>
+              </>
+            )}
+
             <button
               className="btn danger small"
               style={{ marginTop: 10 }}
-              onClick={() => setItems(items.filter((_, i) => i !== idx))}
+              onClick={() => setItems(cleanLinks(items.filter((_, i) => i !== idx)))}
             >
               {t('remove')}
             </button>
           </div>
-        ))}
+
+          {/* Liga/desliga o superset com o exercício seguinte */}
+          {idx < items.length - 1 && (
+            <div className="link-row">
+              <button
+                className={`link-toggle ${it.linkNext ? 'on' : ''}`}
+                onClick={() => updateItem(idx, 'linkNext', !it.linkNext)}
+              >
+                <IconLink size={14} /> {it.linkNext ? t('unlinkSuperset') : t('linkSuperset')}
+              </button>
+            </div>
+          )}
+          </div>
+          );
+        })}
       </div>
+      {labels.some(Boolean) && <p className="muted" style={{ marginBottom: 8 }}>{t('supersetHint')}</p>}
 
       <button className="btn secondary" style={{ marginTop: 8 }} onClick={() => setShowPicker(true)}>
         <IconPlus /> {t('addExercise')}

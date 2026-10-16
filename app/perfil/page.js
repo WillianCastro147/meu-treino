@@ -9,6 +9,7 @@ import LangSwitcher from '@/components/LangSwitcher';
 import Link from 'next/link';
 import { IconBack } from '@/components/Icons';
 import { fmtDuration } from '@/lib/stats';
+import { loadEffortScale, saveEffortScale } from '@/lib/prefs';
 
 export default function PerfilPage() {
   return (
@@ -25,7 +26,10 @@ function Profil({ user }) {
   const [stats, setStats] = useState({ total: 0, minutes: 0 });
   const [msg, setMsg] = useState('');
   const [msgErr, setMsgErr] = useState(false);
+  const [effort, setEffort] = useState('off');
   const { t } = useI18n();
+
+  useEffect(() => setEffort(loadEffortScale()), []);
 
   useEffect(() => {
     supabase
@@ -133,6 +137,30 @@ function Profil({ user }) {
       <div className="card">
         <label className="label" style={{ marginTop: 0 }}>{t('language')}</label>
         <LangSwitcher style={{ marginTop: 6 }} />
+      </div>
+
+      <p className="section-title" style={{ marginTop: 8 }}>{t('trainingSettings')}</p>
+      <div className="card">
+        <label className="label" style={{ marginTop: 0 }}>{t('effortScale')}</label>
+        <div className="lang-switch" style={{ marginTop: 6 }}>
+          {[
+            ['off', t('effortOff')],
+            ['rpe', 'RPE'],
+            ['rir', 'RIR'],
+          ].map(([v, label]) => (
+            <button
+              key={v}
+              className={effort === v ? 'active' : ''}
+              onClick={() => {
+                setEffort(v);
+                saveEffortScale(v);
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <p className="muted" style={{ marginTop: 8 }}>{t('effortHint')}</p>
       </div>
 
       <button className="btn danger" onClick={() => supabase.auth.signOut()}>
