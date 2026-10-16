@@ -1,6 +1,7 @@
 // Coach com IA: gera um plano semanal com a API da OpenAI.
 // Roda só no servidor (Vercel): a chave OPENAI_API_KEY nunca vai para o aparelho do usuário.
-// Variáveis na Vercel: OPENAI_API_KEY (obrigatória), OPENAI_MODEL (opcional, padrão gpt-6.1-sol).
+// Variáveis na Vercel: OPENAI_API_KEY (obrigatória), OPENAI_MODEL (opcional, padrão gpt-6.1-sol),
+// OPENAI_REASONING (opcional: low | medium | high; padrão low, que responde bem mais rápido).
 import { createClient } from '@supabase/supabase-js';
 import catalogRaw from '@/public/catalog/exercises.json';
 import { buildCandidates, buildMessages, DAILY_LIMIT, EQUIPMENT_PRESETS, GOALS, LEVELS, MINUTES, outputText, PLAN_SCHEMA, validatePlan } from '@/lib/coach';
@@ -78,6 +79,7 @@ export async function POST(req) {
       headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: process.env.OPENAI_MODEL || 'gpt-6.1-sol',
+        reasoning: { effort: process.env.OPENAI_REASONING || 'low' },
         instructions: system.content,
         input: userMsg.content,
         text: { format: { type: 'json_schema', name: 'workout_plan', schema: PLAN_SCHEMA, strict: true } },

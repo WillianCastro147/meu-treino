@@ -79,7 +79,7 @@ Plano → **Criar plano com o Coach (IA)**. O usuário responde objetivo, experi
 
 Configuração (uma vez):
 1. Crie uma chave em platform.openai.com → API keys.
-2. Na Vercel: Project → Settings → Environment Variables → `OPENAI_API_KEY` = a chave (Production e Preview). Opcional: `OPENAI_MODEL` (padrão `gpt-6.1-sol`; `gpt-6-luna` é mais barato).
+2. Na Vercel: Project → Settings → Environment Variables → `OPENAI_API_KEY` = a chave (Production e Preview). Opcional: `OPENAI_MODEL` (padrão `gpt-6.1-sol`; `gpt-6-luna` é mais barato) e `OPENAI_REASONING` (`low` por padrão, mais rápido; `medium` pensa mais e demora mais).
 3. Rode `supabase/migrations/004_coach.sql` no SQL Editor (limite de 5 planos por usuário a cada 24 h).
 4. Faça um novo deploy (Deployments → Redeploy) para a Vercel ler a variável.
 
