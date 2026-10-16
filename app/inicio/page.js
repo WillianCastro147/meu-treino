@@ -12,7 +12,8 @@ import BodyWeightCard from '@/components/BodyWeightCard';
 import { supabase } from '@/lib/supabase';
 import { useI18n } from '@/lib/i18n';
 import { useDialog } from '@/components/Dialog';
-import { fetchAllWorkouts } from '@/lib/data';
+import { fetchAllWorkouts, fetchPlan } from '@/lib/data';
+import { todaysRoutine } from '@/lib/plan';
 import { loadActive, activeUrl } from '@/lib/activeWorkout';
 import { activityByDay, fmtKg, weekStreak, weeklySummary, workoutSets, workoutVolume } from '@/lib/stats';
 import { setLabels } from '@/lib/sets';
@@ -32,6 +33,7 @@ function Accueil({ user }) {
   const [expanded, setExpanded] = useState(null);
   const [active, setActive] = useState(null);
   const [showStart, setShowStart] = useState(false);
+  const [planInfo, setPlanInfo] = useState(null);
   const { t, tf, locale, exName } = useI18n();
   const dialog = useDialog();
 
@@ -39,6 +41,10 @@ function Accueil({ user }) {
     fetchAllWorkouts()
       .then(setWorkouts)
       .catch(() => setWorkouts([]));
+    // Rotina de hoje pelo plano (semana fixa ou rotação)
+    Promise.all([fetchPlan(user.id).catch(() => ({ plan: null })), supabase.from('routines').select('id, name')])
+      .then(([p, r]) => setPlanInfo({ plan: p.plan, routines: r.data || [] }))
+      .catch(() => {});
     const a = loadActive();
     if (a && a.userId === user.id) setActive(a);
   }, [user.id]);
@@ -50,6 +56,12 @@ function Accueil({ user }) {
   }
 
   const week = workouts ? weeklySummary(workouts, 1)[0] : null;
+  const todayId =
+    planInfo?.plan && workouts
+      ? todaysRoutine(planInfo.plan, { workouts, routineIds: planInfo.routines.map((r) => r.id) })
+      : null;
+  const todayRoutine = planInfo?.routines.find((r) => r.id === todayId) || null;
+  const isRestDay = !!planInfo?.plan && planInfo.plan.mode !== 'rotation' && !todayRoutine;
   const streak = workouts ? weekStreak(workouts) : 0;
   const today = new Date().toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' });
 
@@ -71,7 +83,9 @@ function Accueil({ user }) {
         <WeekStrip byDay={workouts ? activityByDay(workouts) : new Map()} locale={locale} />
         <button
           className="today-row"
-          onClick={() => (active ? router.push(activeUrl(active)) : setShowStart(true))}
+          onClick={() =>
+            active ? router.push(activeUrl(active)) : todayRoutine ? router.push(`/treino/executar?id=${todayRoutine.id}`) : setShowStart(true)
+          }
         >
           <span className="today-icon">
             <IconDumbbell size={24} color="#fff" />
@@ -79,7 +93,7 @@ function Accueil({ user }) {
           <span style={{ flex: 1, minWidth: 0 }}>
             <span className="today-kicker">{active ? t('workoutInProgress') : t('today')}</span>
             <span className="ellipsis" style={{ fontSize: 19, fontWeight: 600 }}>
-              {active ? active.routineName : t('noRoutineToday')}
+              {active ? active.routineName : todayRoutine ? todayRoutine.name : isRestDay ? t('restDayToday') : t('noRoutineToday')}
             </span>
           </span>
           <span className="pill">{active ? t('continueWorkout') : t('startPill')}</span>
@@ -174,6 +188,9 @@ function Accueil({ user }) {
                   ))}
                   <button className="btn danger small" style={{ marginTop: 10 }} onClick={() => supprimer(w.id)}>
                     <IconTrash /> {t('delete')}
+                  </button>
+                  <button className="btn secondary small" style={{ marginTop: 10, marginLeft: 8 }} onClick={() => router.push(`/treino/registro?id=${w.id}`)}>
+                    {t('edit')}
                   </button>
                 </div>
               )}

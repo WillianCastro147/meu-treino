@@ -10,7 +10,7 @@ import { supabase } from '@/lib/supabase';
 import { useI18n, exKey, findExercise } from '@/lib/i18n';
 import { muscleOf } from '@/lib/muscles';
 import { loadActive, saveActive, clearActive } from '@/lib/activeWorkout';
-import { fetchAllWorkouts } from '@/lib/data';
+import { fetchAllWorkouts, insertWorkout } from '@/lib/data';
 import { bestByExercise, findRecords, fmtKg, isSetRecord, workoutSets, workoutVolume } from '@/lib/stats';
 import { RPE_VALUES, rpeToRir, rirToRpe, setLabels, setType, SET_TYPES } from '@/lib/sets';
 import { applySuggestion, suggestNext } from '@/lib/progression';
@@ -318,7 +318,7 @@ function Seance({ user }) {
       duration_min: Math.max(1, Math.round(seconds / 60)),
       exercises: exs,
     };
-    const { error } = await supabase.from('workouts').insert(workout);
+    const { error } = await insertWorkout({ ...workout, routine_id: routineId || null });
     setSaving(false);
 
     if (error) {

@@ -104,3 +104,11 @@ create policy "body_weights_all" on public.body_weights
 -- 9) Faltava: apagar o próprio perfil (a conta já apaga em cascata)
 drop policy if exists "profiles_delete" on public.profiles;
 create policy "profiles_delete" on public.profiles for delete using (auth.uid() = id);
+
+-- ============================================================
+-- Fase 3 (igual a migrations/003_plano.sql)
+-- ============================================================
+
+alter table public.profiles add column if not exists plan jsonb;
+alter table public.workouts add column if not exists routine_id uuid references public.routines (id) on delete set null;
+create index if not exists workouts_routine on public.workouts (routine_id);

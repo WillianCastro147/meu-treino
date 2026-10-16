@@ -6,6 +6,7 @@ import BottomNav from '@/components/BottomNav';
 import { supabase } from '@/lib/supabase';
 import { useI18n } from '@/lib/i18n';
 import LangSwitcher from '@/components/LangSwitcher';
+import DataTools from '@/components/DataTools';
 import Link from 'next/link';
 import { IconBack } from '@/components/Icons';
 import { fmtDuration } from '@/lib/stats';
@@ -162,6 +163,13 @@ function Profil({ user }) {
         </div>
         <p className="muted" style={{ marginTop: 8 }}>{t('effortHint')}</p>
       </div>
+
+      <p className="section-title" style={{ marginTop: 8 }}>{t('dataTitle')}</p>
+      <DataTools user={user} />
+
+      <a className="btn secondary" style={{ marginBottom: 12 }} href="https://github.com/WillianCastro147/meu-treino" target="_blank" rel="noreferrer">
+        {t('sourceCode')}
+      </a>
 
       <button className="btn danger" onClick={() => supabase.auth.signOut()}>
         {t('logout')}

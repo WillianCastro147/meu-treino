@@ -61,7 +61,21 @@ Navegação inspirada no openGym (código escrito do zero para o Moviq):
 
 Tudo fica no JSON das rotinas e treinos que já existe: **não precisa de migração** no Supabase. Lógica em `lib/sets.js`, `lib/progression.js`, `lib/plates.js` e `lib/superset.js`, com testes em `lib/fase2.test.mjs`.
 
-O 1RM estimado usa a fórmula de Epley (até 12 repetições). A lógica fica em `lib/stats.js`, com testes em `lib/stats.test.mjs` (`npm test`).
+### Fase 3: catálogo do openGym, plano e dados
+
+- **5.632 exercícios** do catálogo do openGym, com animação, nomes em EN/PT/ES/FR e passo a passo. Busca por nome (no idioma ou em inglês), parte do corpo e equipamento. Os 1.062 exercícios antigos ficam escondidos da biblioteca, mas rotinas e treinos antigos continuam mostrando nome e GIF.
+  - Para regenerar: `node scripts/build-catalog.mjs <pasta>/openGym/catalogue`.
+- **Plano:** semana fixa (uma rotina por dia) ou **rotação** (A, B, C... o próximo é o seguinte ao último feito). O Início mostra a rotina de hoje.
+- **Planos prontos:** Push/Pull/Legs, Superior/Inferior, Corpo inteiro e 5×5, já com progressão linear.
+- **Editar treino salvo** (botão Editar no histórico) e **registrar treino passado** (Plano → Registrar treino passado).
+- **Dados** (Configurações): exportar tudo em JSON e importar o histórico do **Hevy** ou do **Strong** (CSV). Treinos repetidos são ignorados.
+- Precisa rodar **uma vez** `supabase/migrations/003_plano.sql` no SQL Editor (coluna `plan` no perfil e `routine_id` nos treinos). Sem ela o app funciona, só o plano mostra o aviso.
+
+O 1RM estimado usa a fórmula de Epley (até 12 repetições). A lógica fica em `lib/`, com testes em `lib/*.test.mjs` (`npm test`).
+
+## Licença
+
+O Moviq é software livre sob a **GNU AGPL v3.0** (`LICENSE`), porque usa o catálogo do openGym. Quem usa o app pela internet tem direito ao código-fonte: o link "Código-fonte" nas Configurações aponta para este repositório, que precisa estar **público** para cumprir a licença. As animações dos exercícios (Gym visual) **não** são AGPL; ver `THIRD_PARTY_NOTICES.md`.
 
 Tecnologias: Next.js 14 + Supabase (autenticação e banco de dados) + Vercel (hospedagem).
 

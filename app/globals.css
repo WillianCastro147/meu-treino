@@ -1357,3 +1357,38 @@ textarea {
 .steps li {
   margin-bottom: 8px;
 }
+
+/* Plano semanal / rotação */
+.plan-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 0;
+}
+
+.plan-day {
+  width: 110px;
+  flex-shrink: 0;
+  color: var(--muted);
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.plan-day.today {
+  color: var(--accent);
+}
+
+.plan-row select.input {
+  padding: 10px 12px;
+  font-size: 16px;
+}
+
+.tile.starter {
+  text-align: left;
+  color: var(--text);
+  border: none;
+}
+
+.tile.starter:active {
+  background: var(--card2);
+}
