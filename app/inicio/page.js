@@ -92,7 +92,7 @@ function Accueil({ user }) {
       {workouts && workouts.length > 0 && (
         <div className="card">
           <p className="streak-title">
-            <IconFlame size={26} color="var(--accent)" /> {streak} {t('weekStreak')}
+            <IconFlame size={26} color="var(--accent)" /> {tf(streak === 1 ? 'streakOne' : 'streakMany', { n: streak })}
           </p>
           <p className="muted" style={{ fontSize: 16, marginTop: 4 }}>
             {tf('streakSub', { week: week.workouts, total: workouts.length })} · {fmtKg(week.volume, locale)} kg

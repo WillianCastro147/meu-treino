@@ -82,7 +82,7 @@ function Stats({ user }) {
         <>
           <div className="tile-grid">
             <div className="tile">
-              <span className="tile-label"><IconDumbbell size={17} /> {t('sessions')}</span>
+              <span className="tile-label"><IconDumbbell size={17} /> {t('tileWorkouts')}</span>
               <div className="tile-value">{data.total.workouts}</div>
             </div>
             <div className="tile">
@@ -90,11 +90,11 @@ function Stats({ user }) {
               <div className="tile-value">{data.month}</div>
             </div>
             <div className="tile">
-              <span className="tile-label"><IconFlame size={17} /> {t('weekStreak')}</span>
+              <span className="tile-label"><IconFlame size={17} /> {t('tileStreak')}</span>
               <div className="tile-value">{data.streak}</div>
             </div>
             <div className="tile">
-              <span className="tile-label"><IconVolume size={17} /> {t('totalVolume')}</span>
+              <span className="tile-label"><IconVolume size={17} /> {t('tileVolume')}</span>
               <div className="tile-value">
                 {fmtKg(data.total.volume / 1000, locale)}
                 <small>t</small>
