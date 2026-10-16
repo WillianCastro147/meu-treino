@@ -1392,3 +1392,9 @@ textarea {
 .tile.starter:active {
   background: var(--card2);
 }
+
+.detail-gif video,
+.ex-media video {
+  width: min(100%, 360px);
+  margin: 0 auto;
+}

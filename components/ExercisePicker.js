@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import { useCatalog } from '@/lib/catalog';
 import { useI18n } from '@/lib/i18n';
-import { BODY_PARTS, COMMON_EQUIPMENT, filterExercises } from '@/lib/exerciseFilter';
+import { BODY_PARTS, COMMON_EQUIPMENT, filterExercises, sortByName } from '@/lib/exerciseFilter';
 import { IconSearch } from '@/components/Icons';
 import ExerciseDetail from '@/components/ExerciseDetail';
 
@@ -17,7 +17,8 @@ export default function ExercisePicker({ onSelect, onClose }) {
   const [limit, setLimit] = useState(60);
   const [detail, setDetail] = useState(null);
 
-  const filtered = useMemo(() => filterExercises(list, { q: search, bp, eq, lang }), [list, search, bp, eq, lang]);
+  const sorted = useMemo(() => sortByName(list, lang), [list, lang]);
+  const filtered = useMemo(() => filterExercises(sorted, { q: search, bp, eq, lang }), [sorted, search, bp, eq, lang]);
   const reset = (fn) => (v) => {
     fn(v);
     setLimit(60);

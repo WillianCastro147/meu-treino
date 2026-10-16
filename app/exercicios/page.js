@@ -9,7 +9,7 @@ import { useI18n, exKey } from '@/lib/i18n';
 import { useCatalog } from '@/lib/catalog';
 import { fetchAllWorkouts } from '@/lib/data';
 import { doneSets } from '@/lib/stats';
-import { BODY_PARTS, COMMON_EQUIPMENT, filterExercises } from '@/lib/exerciseFilter';
+import { BODY_PARTS, COMMON_EQUIPMENT, filterExercises, sortByName } from '@/lib/exerciseFilter';
 import { IconSearch } from '@/components/Icons';
 
 export default function ExerciciosPage() {
@@ -19,7 +19,7 @@ export default function ExerciciosPage() {
 function Biblioteca() {
   const router = useRouter();
   const { t, tf, lang, locale, bodyPartName, equipName, exMeta } = useI18n();
-  const { ready, list } = useCatalog();
+  const { ready, list, legacy } = useCatalog();
   const [search, setSearch] = useState('');
   const [bp, setBp] = useState('all');
   const [eq, setEq] = useState('all');
@@ -42,11 +42,14 @@ function Biblioteca() {
       .catch(() => {});
   }, [ready]);
 
+  const sorted = useMemo(() => sortByName(list, lang), [list, lang]);
   const filtered = useMemo(() => {
-    const out = filterExercises(list, { q: search, bp, eq, lang, only: onlyDone ? new Set(counts.keys()) : null });
+    // Com "Que já fiz", entram também os exercícios antigos do Moviq que você fez
+    const source = onlyDone ? [...list, ...legacy.filter((e) => counts.has(e.id))] : sorted;
+    const out = filterExercises(source, { q: search, bp, eq, lang, only: onlyDone ? new Set(counts.keys()) : null });
     if (onlyDone) out.sort((a, b) => counts.get(b.id) - counts.get(a.id));
     return out;
-  }, [list, search, bp, eq, lang, onlyDone, counts]);
+  }, [list, legacy, sorted, search, bp, eq, lang, onlyDone, counts]);
 
   const reset = (fn) => (v) => {
     fn(v);
