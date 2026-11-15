@@ -1409,3 +1409,59 @@ textarea.input {
   resize: vertical;
   line-height: 1.4;
 }
+
+/* ============================================================
+   Tela /preparando (primeira entrada depois do quiz)
+   ============================================================ */
+.quiz-title {
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.3px;
+  text-align: center;
+  margin: 6px 0 8px;
+}
+
+.quiz-sub {
+  color: var(--muted);
+  text-align: center;
+  margin-bottom: 18px;
+}
+
+.quiz-steps {
+  list-style: none;
+  display: grid;
+  gap: 12px;
+  padding: 0;
+}
+
+.quiz-steps li {
+  color: var(--card3);
+  font-weight: 600;
+  padding-left: 30px;
+  position: relative;
+}
+
+.quiz-steps li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 1px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--card3);
+}
+
+.quiz-steps li.doing {
+  color: var(--muted);
+}
+
+.quiz-steps li.done {
+  color: var(--text);
+}
+
+.quiz-steps li.done::before {
+  background: var(--accent);
+  border-color: var(--accent);
+}
