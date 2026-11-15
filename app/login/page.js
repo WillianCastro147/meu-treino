@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useI18n } from '@/lib/i18n';
@@ -17,6 +17,16 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [msg, setMsg] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Link vindo do checkout/e-mail de acesso: /login?email=...&modo=cadastro
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search);
+    const e = p.get('email');
+    if (e) setEmail(e);
+    if (p.get('modo') === 'cadastro') setMode('signup');
+    const n = p.get('name') || p.get('nome');
+    if (n) setName(n);
+  }, []);
 
   function translateError(message = '') {
     if (message.includes('Invalid login credentials')) return t('errInvalid');
@@ -43,7 +53,7 @@ export default function LoginPage() {
       if (mode === 'login') {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) setError(translateError(error.message));
-        else router.replace('/inicio');
+        else router.replace('/preparando');
       } else if (mode === 'signup') {
         const { data, error } = await supabase.auth.signUp({
           email,
@@ -53,7 +63,7 @@ export default function LoginPage() {
         if (error) {
           setError(translateError(error.message));
         } else if (data.session) {
-          router.replace('/inicio');
+          router.replace('/preparando');
         } else {
           setMsg(t('accountCreated'));
         }

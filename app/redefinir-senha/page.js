@@ -40,7 +40,7 @@ export default function RedefinirSenhaPage() {
       setError(error.message.includes('at least 6') ? t('errShort') : t('errPrefix') + error.message);
     } else {
       setDone(true);
-      setTimeout(() => router.replace('/inicio'), 1500);
+      setTimeout(() => router.replace('/preparando'), 1500);
     }
   }
 
