@@ -1577,3 +1577,363 @@ textarea.input {
   font-weight: 700;
   margin: 4px 0 2px;
 }
+
+/* ---------- Tela de treino: um exercício por vez ---------- */
+.pill-btn {
+  background: var(--accent);
+  color: #fff;
+  font-weight: 800;
+  font-size: 16px;
+  border-radius: 999px;
+  padding: 12px 18px;
+  flex-shrink: 0;
+}
+
+.focus-page .workout-head {
+  gap: 8px;
+}
+
+.progress-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  font-size: 14px;
+}
+
+.ex-rail {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 4px 2px 12px;
+  scrollbar-width: none;
+}
+
+.ex-rail::-webkit-scrollbar {
+  display: none;
+}
+
+/* Bolinha com anel de progresso (conic-gradient) */
+.rail-dot {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  padding: 3px;
+  background: conic-gradient(var(--accent) var(--p), var(--card2) 0);
+  color: var(--text);
+  font-weight: 800;
+  font-size: 16px;
+}
+
+.rail-dot span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: var(--card);
+}
+
+.rail-dot.on span {
+  background: var(--accent-soft);
+  color: var(--accent);
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.rail-dot.full span {
+  background: var(--accent);
+  color: #fff;
+}
+
+.focus-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.focus-thumb {
+  position: relative;
+  width: 76px;
+  height: 76px;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #fff;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.focus-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.focus-expand {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.focus-ex .ex-title {
+  font-size: 24px;
+  line-height: 1.15;
+}
+
+.focus-ex.in-ss .sets-box {
+  border-left: 4px solid var(--accent);
+}
+
+.last-line.as-link {
+  background: none;
+  text-align: left;
+  padding: 0;
+  display: block;
+  width: 100%;
+}
+
+.set-head,
+.set-row {
+  display: grid;
+  grid-template-columns: 40px 1fr 1fr 48px;
+  gap: 8px;
+  align-items: center;
+}
+
+.set-head.with-effort,
+.set-row.with-effort {
+  grid-template-columns: 40px 1fr 1fr 58px 48px;
+}
+
+.set-head {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.set-card {
+  border-radius: 16px;
+  padding: 6px 4px;
+  margin-bottom: 4px;
+}
+
+.set-card.done {
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.set-num {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--card2);
+  color: var(--text);
+  font-weight: 800;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.set-card.done .set-num {
+  background: var(--accent);
+  color: #fff;
+}
+
+.set-num.warmup {
+  color: #f59e0b;
+}
+
+.set-num.drop {
+  color: #a855f7;
+}
+
+.set-num.failure {
+  color: var(--red);
+}
+
+.set-card.done .set-num.warmup,
+.set-card.done .set-num.drop,
+.set-card.done .set-num.failure {
+  color: #fff;
+}
+
+.set-num .vs {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--card);
+}
+
+.set-num .vs.up {
+  background: #22c55e;
+  color: #fff;
+}
+
+.set-num .vs.down {
+  background: var(--card3);
+  color: #fca5a5;
+}
+
+.num-stepper {
+  display: flex;
+  align-items: center;
+  background: var(--card2);
+  border-radius: 14px;
+  min-width: 0;
+}
+
+.num-stepper button {
+  width: 34px;
+  height: 46px;
+  background: none;
+  color: var(--muted);
+  font-size: 22px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.num-stepper button:active {
+  color: var(--accent);
+}
+
+.num-stepper input {
+  width: 100%;
+  min-width: 0;
+  background: none;
+  border: none;
+  color: var(--text);
+  font-size: 19px;
+  font-weight: 700;
+  text-align: center;
+  outline: none;
+  font-family: inherit;
+  -moz-appearance: textfield;
+}
+
+.num-stepper input::-webkit-outer-spin-button,
+.num-stepper input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.set-card.done .num-stepper input {
+  color: var(--muted);
+}
+
+.effort-box {
+  padding: 12px 2px;
+  text-align: center;
+  text-align-last: center;
+  appearance: none;
+  -webkit-appearance: none;
+  font-size: 15px;
+}
+
+.set-note {
+  font-size: 14px;
+  color: var(--muted);
+  padding: 6px 0 2px 48px;
+}
+
+.set-note.record b {
+  color: #facc15;
+}
+
+.add-set {
+  background: none;
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 17px;
+  padding: 12px 8px 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.focus-nav {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 6px 10px;
+}
+
+.focus-nav .link-btn {
+  font-size: 18px;
+  padding: 10px 4px;
+}
+
+.focus-nav .link-btn:disabled {
+  opacity: 0.3;
+}
+
+/* Descanso preso no rodapé */
+.rest-dock {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 560px;
+  background: var(--card);
+  border-radius: 22px 22px 0 0;
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.5);
+  z-index: 60;
+  overflow: hidden;
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+}
+
+.rest-dock-bar {
+  height: 4px;
+  background: var(--card2);
+}
+
+.rest-dock-bar span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.5s linear;
+}
+
+.rest-dock-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 16px 0;
+}
+
+.rest-dock-time {
+  font-size: 38px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.rest-dock-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.rest-dock-actions .btn.small {
+  padding: 11px 12px;
+}

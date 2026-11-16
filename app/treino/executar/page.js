@@ -18,7 +18,8 @@ import { afterSetDone, cleanLinks, supersetLabels } from '@/lib/superset';
 import { loadEffortScale } from '@/lib/prefs';
 import PlateCalculator from '@/components/PlateCalculator';
 import ExerciseMedia from '@/components/ExerciseMedia';
-import { IconCheck, IconPlus, IconRest, IconTrash, IconTrophy, IconPlate, IconClose, IconArrowUp } from '@/components/Icons';
+import { IconCheck, IconPlus, IconTrash, IconTrophy, IconPlate, IconArrowUp } from '@/components/Icons';
+import { setVsLast } from '@/lib/engage';
 
 const TYPE_LABEL = { normal: 'setNormal', warmup: 'setWarmup', drop: 'setDrop', failure: 'setFailure' };
 const TYPE_TAG = { normal: '1', warmup: 'W', drop: 'D', failure: 'F' };
@@ -41,7 +42,7 @@ function Seance({ user }) {
   const params = useSearchParams();
   const routineId = params.get('id');
   const livre = !routineId && params.get('livre') === '1'; // treino sem rotina
-  const { t, tf, locale, exName, muscleName } = useI18n();
+  const { t, tf, locale, exName, muscleName, equipName } = useI18n();
   const dialog = useDialog();
 
   const [lastLog, setLastLog] = useState(null); // exKey -> registro do exercício no último treino
@@ -62,6 +63,11 @@ function Seance({ user }) {
   const [detail, setDetail] = useState(null);
   const [saving, setSaving] = useState(false);
   const [summary, setSummary] = useState(null); // resumo exibido ao finalizar
+  const [cur, setCur] = useState(0); // exercício em foco
+  const [exMenu, setExMenu] = useState(null); // menu ⋯ do exercício
+  const [headMenu, setHeadMenu] = useState(false); // menu ⋯ do treino
+  const [restStart, setRestStart] = useState(null); // quando o descanso começou (barra do rodapé)
+  const [topWeights, setTopWeights] = useState({}); // exKey -> maior carga já usada
   const audioRef = useRef(null);
   const ready = useRef(false);
 
@@ -107,6 +113,7 @@ function Seance({ user }) {
         setExs(saved.exs);
         setStartedAt(saved.startedAt);
         setRestEndsAt(saved.restEndsAt && saved.restEndsAt > Date.now() ? saved.restEndsAt : null);
+        setCur(saved.cur || 0);
       } else {
         fresh.current = true;
         setStartedAt(Date.now());
@@ -162,6 +169,15 @@ function Seance({ user }) {
         setLastLog(last);
         setHistory(data);
         setBests(bestByExercise(data, exKey));
+        const top = {};
+        data.forEach((w) =>
+          (w.exercises || []).forEach((e) =>
+            (e.sets || []).forEach((st) => {
+              if (st.done && st.type !== 'warmup' && Number(st.weight) > (top[exKey(e)] || 0)) top[exKey(e)] = Number(st.weight);
+            })
+          )
+        );
+        setTopWeights(top);
       })
       .catch(() => {});
   }, []);
@@ -189,9 +205,10 @@ function Seance({ user }) {
       startedAt,
       restEndsAt,
       exs,
+      cur,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [exs, restEndsAt, startedAt, routine, routineId, user.id]);
+  }, [exs, restEndsAt, startedAt, routine, routineId, user.id, cur]);
 
   // Fim do descanso: bipe + vibração
   const restLeft = restEndsAt ? Math.max(0, Math.ceil((restEndsAt - now) / 1000)) : null;
@@ -229,8 +246,14 @@ function Seance({ user }) {
       // Superset: vai direto ao próximo exercício e só descansa no fim da rodada
       const { rest, next } = afterSetDone(copy, ei, si);
       setRestEndsAt(rest > 0 ? Date.now() + rest * 1000 : null);
-      if (next && next.ei !== ei) {
-        setTimeout(() => document.getElementById(`ex-${next.ei}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
+      setRestStart(rest > 0 ? Date.now() : null);
+      if (next && next.ei !== ei) setCur(next.ei);
+      else if (copy[ei].sets.every((x) => x.done)) {
+        // Exercício terminado: vai para o próximo que ainda tem séries
+        const after = copy.findIndex((e, i) => i > ei && e.sets.some((x) => !x.done));
+        const any = copy.findIndex((e) => e.sets.some((x) => !x.done));
+        const to = after >= 0 ? after : any;
+        if (to >= 0) setTimeout(() => setCur(to), 600);
       }
     }
     setExs(copy);
@@ -261,6 +284,24 @@ function Seance({ user }) {
     setPlates({ ei, si, weight: sets[si].weight !== '' ? sets[si].weight : prev?.weight || '' });
   }
 
+  // − / +: peso de 2,5 em 2,5 kg (1 kg abaixo de 10 kg), reps de 1 em 1
+  function stepValue(ei, si, field, dir) {
+    const s0 = exs[ei].sets[si];
+    const prev = previous[exKey(exs[ei])]?.[si];
+    const base = s0[field] === '' || s0[field] == null ? Number(field === 'weight' ? prev?.weight : prev?.reps) || 0 : Number(s0[field]) || 0;
+    const step = field === 'weight' ? (base < 10 ? 1 : 2.5) : 1;
+    const v = Math.max(0, Math.round((base + dir * step) * 100) / 100);
+    updateSet(ei, si, field, v);
+  }
+
+  // Copia o que foi feito da última vez nas séries ainda não concluídas
+  function copyLast(ei) {
+    const prev = previous[exKey(exs[ei])] || [];
+    const copy = clone();
+    copy[ei].sets = copy[ei].sets.map((st, i) => (st.done || !prev[i] ? st : { ...st, weight: prev[i].weight ?? st.weight, reps: prev[i].reps ?? st.reps }));
+    setExs(copy);
+  }
+
   function applyPrevious(ei, si) {
     const prev = previous[exKey(exs[ei])]?.[si];
     if (!prev) return;
@@ -287,6 +328,7 @@ function Seance({ user }) {
   async function removeExercise(ei) {
     if (!(await dialog.confirm(t('confirmRemoveExercise'), { danger: true, confirmLabel: t('remove') }))) return;
     setExs(cleanLinks(exs.filter((_, i) => i !== ei)));
+    setCur((c) => Math.max(0, Math.min(c, exs.length - 2)));
   }
 
   function addExercise(ex) {
@@ -303,6 +345,7 @@ function Seance({ user }) {
         sets: Array.from({ length: 3 }, () => ({ weight: '', reps: 10, done: false })),
       },
     ]);
+    setCur(exs.length);
   }
 
   async function terminer() {
@@ -352,72 +395,116 @@ function Seance({ user }) {
 
   const totalSets = exs.reduce((n, e) => n + e.sets.length, 0);
   const doneCount = exs.reduce((n, e) => n + e.sets.filter((s) => s.done).length, 0);
+  const volumeToday = workoutVolume({ exercises: exs });
+
+  const ci = Math.min(cur, Math.max(0, exs.length - 1));
+  const ex = exs[ci];
+  const restTotal = restEndsAt && restStart ? Math.max(1, (restEndsAt - restStart) / 1000) : 1;
+  const nextEx = exs.find((e, i) => i > ci && e.sets.some((s) => !s.done)) || null;
 
   return (
-    <div className="page" style={{ paddingBottom: 130 }}>
-      {/* Cabeçalho: ✕ descarta · título, tempo e séries · ✓ finaliza */}
+    <div className="page focus-page" style={{ paddingBottom: restLeft !== null ? 150 : 40 }}>
+      {/* Cabeçalho: minimizar · título, tempo e séries · ⋯ · Concluir */}
       <div className="workout-head">
-        <button className="round-btn" onClick={abandonner} aria-label={t('discard')}>
-          <IconClose />
+        <button className="round-btn" onClick={() => router.push('/inicio')} aria-label={t('minimize')} title={t('minimize')}>
+          <IconChevronDown />
         </button>
         <div className="workout-title">
           <b>{routine.name || t('defaultSession')}</b>
-          <span className="muted" style={{ fontSize: 16 }}>
+          <span className="muted" style={{ fontSize: 15 }}>
             {fmt(seconds)} · {tf('setsProgress', { done: doneCount, total: totalSets })}
           </span>
         </div>
-        <button className="round-btn ok" onClick={terminer} disabled={saving} aria-label={t('finishWorkout')}>
-          <IconCheck size={22} />
+        <button className="round-btn" onClick={() => setHeadMenu(true)} aria-label={t('moreOptions')}>
+          <IconDots />
+        </button>
+        <button className="pill-btn" onClick={terminer} disabled={saving}>
+          {saving ? '…' : t('finishShort')}
         </button>
       </div>
-      <div className="progress">
-        <span style={{ width: `${totalSets ? (doneCount / totalSets) * 100 : 0}%` }} />
+      <div className="progress-row">
+        <div className="progress" style={{ flex: 1, margin: 0 }}>
+          <span style={{ width: `${totalSets ? (doneCount / totalSets) * 100 : 0}%` }} />
+        </div>
+        <span className="muted">{fmtKg(volumeToday, locale)} kg</span>
       </div>
 
-      {exs.map((ex, ei) => {
+      {/* Trilho de exercícios: cada bolinha mostra o progresso do exercício */}
+      {exs.length > 0 && (
+        <div className="ex-rail" role="tablist">
+          {exs.map((e, i) => {
+            const done = e.sets.filter((s) => s.done).length;
+            const pct = e.sets.length ? done / e.sets.length : 0;
+            return (
+              <button
+                key={exKey(e) + i}
+                role="tab"
+                aria-selected={i === ci}
+                aria-label={exName(e)}
+                className={`rail-dot ${i === ci ? 'on' : ''} ${pct === 1 ? 'full' : ''}`}
+                style={{ '--p': `${Math.round(pct * 360)}deg` }}
+                onClick={() => setCur(i)}
+              >
+                <span>{pct === 1 ? '✓' : i + 1}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {!ex && (
+        <div className="card" style={{ textAlign: 'center' }}>
+          <p className="muted" style={{ marginBottom: 12 }}>{t('emptyWorkoutHint')}</p>
+          <button className="btn" onClick={() => setShowPicker(true)}>
+            <IconPlus /> {t('addExercise')}
+          </button>
+        </div>
+      )}
+
+      {ex && (() => {
+        const ei = ci;
         const prevSets = previous[exKey(ex)] || [];
         const labels = setLabels(ex.sets);
         const ss = ssLabels[ei];
         const sug = suggestionOf(ex);
-        const grid = `set-grid ${effort !== 'off' ? 'with-effort' : ''}`;
         const cat = findExercise(ex);
         const muscle = muscleOf(cat);
         const best = bests.get(exKey(ex));
         const last = lastLog?.[exKey(ex)];
         const lastSets = last ? (last.sets || []).filter((s) => s.done) : [];
+        const lastWork = lastSets.filter((s) => s.type !== 'warmup');
+        const topEver = topWeights[exKey(ex)] || 0;
         return (
-          <section key={exKey(ex) + ei} id={`ex-${ei}`} className={`ex-block ${ss ? 'in-ss' : ''}`}>
-            <p className="ex-kicker">
-              {ss && <span className="ss-badge" style={{ marginRight: 8 }}>{t('superset')} {ss}</span>}
-              {tf('exerciseOf', { i: ei + 1, n: exs.length })}
-            </p>
-            {ex.gif && (
-              <button className="ex-media" onClick={() => setDetail(ex)} aria-label={exName(ex)}>
-                <ExerciseMedia ex={ex} alt={exName(ex)} />
+          <section className={`focus-ex ${ss ? 'in-ss' : ''}`} key={exKey(ex) + ei}>
+            <div className="focus-head">
+              <button className="focus-thumb" onClick={() => setDetail(ex)} aria-label={exName(ex)}>
+                {(cat?.gif || ex.gif) && <img src={cat?.gif || ex.gif} alt="" />}
+                <span className="focus-expand"><IconExpand /></span>
               </button>
-            )}
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-              <h2 className="ex-title" style={{ flex: 1 }}>{exName(ex)}</h2>
-              <button className="round-btn" style={{ marginTop: 12, border: 'none', background: 'var(--card)' }} onClick={() => removeExercise(ei)} aria-label={t('removeExercise')}>
-                <IconTrash size={18} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                {ss && <span className="ss-badge">{t('superset')} {ss}</span>}
+                <h2 className="ex-title" style={{ margin: 0 }}>{exName(ex)}</h2>
+              </div>
+              <button className="round-btn" onClick={() => setExMenu(ei)} aria-label={t('moreOptions')}>
+                <IconDots />
               </button>
             </div>
 
             <div className="tags">
               {muscle && <span className="tag-chip">{muscleName(muscle)}</span>}
+              {cat?.eq && <span className="tag-chip">{equipName(cat.eq)}</span>}
               {best && <span className="tag-chip">{t('bestLabel')}: {fmtKg(best.est, locale)} kg</span>}
-              {ex.rest > 0 && (
-                <span className="tag-chip" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                  <IconRest size={14} /> {ex.rest}s
-                </span>
-              )}
             </div>
 
+            <p className="last-line">
+              {tf('planLine', { sets: ex.sets.filter((s) => s.type !== 'warmup').length, reps: ex.plan?.reps || ex.sets[0]?.reps || 10 })}
+              {ex.rest > 0 ? ` · ${t('rest')} ${ex.rest}s` : ''}
+            </p>
             {lastSets.length > 0 && (
-              <p className="last-line">
+              <button className="last-line as-link" onClick={() => copyLast(ei)} title={t('copyLast')}>
                 {tf('lastTime', { date: new Date(last.date).toLocaleDateString(locale, { day: 'numeric', month: 'short' }) })}:{' '}
                 {lastSets.map((s) => `${fmtKg(s.weight || 0, locale)}×${s.reps || 0}${s.rpe ? ` @${s.rpe}` : ''}`).join(', ')}
-              </p>
+              </button>
             )}
 
             {/* Sugestão da progressão, explicada em uma linha */}
@@ -431,168 +518,180 @@ function Seance({ user }) {
             )}
 
             <div className="sets-box">
-            <div className={`${grid} muted`} style={{ fontSize: 12, fontWeight: 700 }}>
-              <span style={{ textAlign: 'center' }}>#</span>
-              <span style={{ textAlign: 'center' }}>{t('prevCol')}</span>
-              <button className="col-btn" onClick={() => openPlates(ei)} aria-label={t('plateCalc')} title={t('plateCalc')}>
-                {t('kgCol')} <IconPlate size={13} />
+              <div className={`set-head ${effort !== 'off' ? 'with-effort' : ''}`}>
+                <span />
+                <button className="col-btn" onClick={() => openPlates(ei)} title={t('plateCalc')}>
+                  {t('weightCol')} <IconPlate size={13} />
+                </button>
+                <span>{t('repsCol')}</span>
+                {effort !== 'off' && <span>{effort === 'rir' ? 'RIR' : 'RPE'}</span>}
+                <span />
+              </div>
+
+              {ex.sets.map((s, si) => {
+                const type = setType(s);
+                const record = isSetRecord(s, best?.est ?? null, ex.sets.slice(0, si));
+                const vs = s.done ? setVsLast(s, lastWork[labels.slice(0, si).filter((l) => /\d/.test(l)).length]) : null;
+                const heavier = !s.done && type !== 'warmup' && topEver > 0 && Number(s.weight) > topEver;
+                return (
+                  <div key={si} className={`set-card ${s.done ? 'done' : ''}`}>
+                    <div className={`set-row ${effort !== 'off' ? 'with-effort' : ''}`}>
+                      <button className={`set-num ${type}`} onClick={() => setSetMenu({ ei, si })} aria-label={`${t('setTypeTitle')}: ${t(TYPE_LABEL[type])}`}>
+                        {labels[si]}
+                        {vs === 'up' && <span className="vs up" aria-label={t('betterThanLast')}>↑</span>}
+                        {vs === 'down' && <span className="vs down" aria-label={t('worseThanLast')}>↓</span>}
+                      </button>
+                      <Stepper
+                        value={s.weight}
+                        placeholder={prevSets[si]?.weight ? String(prevSets[si].weight) : '0'}
+                        mode="decimal"
+                        onChange={(v) => updateSet(ei, si, 'weight', v)}
+                        onStep={(d) => stepValue(ei, si, 'weight', d)}
+                      />
+                      <Stepper value={s.reps} mode="numeric" onChange={(v) => updateSet(ei, si, 'reps', v)} onStep={(d) => stepValue(ei, si, 'reps', d)} />
+                      {effort !== 'off' && (
+                        <select
+                          className="input effort-box"
+                          value={effort === 'rir' ? rpeToRir(s.rpe) : s.rpe ?? ''}
+                          onChange={(e) => {
+                            const v = e.target.value === '' ? '' : Number(e.target.value);
+                            updateSet(ei, si, 'rpe', effort === 'rir' ? rirToRpe(v) : v);
+                          }}
+                          aria-label={effort === 'rir' ? 'RIR' : 'RPE'}
+                        >
+                          <option value="">{effort === 'rir' ? 'RIR' : 'RPE'}</option>
+                          {(effort === 'rir' ? [4, 3, 2, 1, 0] : RPE_VALUES).map((v) => (
+                            <option key={v} value={v}>
+                              {v}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                      <button className={`check-btn ${s.done ? 'done' : ''}`} onClick={() => updateSet(ei, si, 'done', !s.done)} aria-label={t('setDone')}>
+                        <IconCheck />
+                      </button>
+                    </div>
+                    {record && (
+                      <p className="set-note record">
+                        <IconTrophy size={14} color="#facc15" /> <b>{t('recordBang')}</b> {t('recordWhat')}
+                      </p>
+                    )}
+                    {heavier && <p className="set-note">{t('heavierEver')}</p>}
+                  </div>
+                );
+              })}
+
+              <button className="add-set" onClick={() => addSet(ei)}>
+                <IconPlus size={16} /> {t('addSetLong')}
               </button>
-              <span style={{ textAlign: 'center' }}>{t('repsCol')}</span>
-              {effort !== 'off' && <span style={{ textAlign: 'center' }}>{effort === 'rir' ? 'RIR' : 'RPE'}</span>}
-              <span></span>
             </div>
 
-            {ex.sets.map((s, si) => {
-              const prev = prevSets[si];
-              const type = setType(s);
-              const record = isSetRecord(s, bests.get(exKey(ex))?.est ?? null, ex.sets.slice(0, si));
-              return (
-                <div key={si} className={`${grid} ${s.done ? 'set-done' : ''}`}>
-                  <button
-                    className={`set-label ${type}`}
-                    onClick={() => setSetMenu({ ei, si })}
-                    aria-label={`${t('setTypeTitle')}: ${t(TYPE_LABEL[type])}`}
-                  >
-                    {labels[si]}
-                    {record && <span className="pr-badge">{t('newRecord')}</span>}
-                  </button>
-                  <button className="prev-cell" onClick={() => applyPrevious(ei, si)} disabled={!prev}>
-                    {prev ? `${prev.weight || 0}×${prev.reps || 0}` : '—'}
-                  </button>
-                  <input
-                    className="input"
-                    type="number"
-                    inputMode="decimal"
-                    placeholder={prev?.weight ? String(prev.weight) : '0'}
-                    value={s.weight}
-                    onChange={(e) => updateSet(ei, si, 'weight', e.target.value)}
-                  />
-                  <input
-                    className="input"
-                    type="number"
-                    inputMode="numeric"
-                    value={s.reps}
-                    onChange={(e) => updateSet(ei, si, 'reps', e.target.value)}
-                  />
-                  {effort !== 'off' && (
-                    <select
-                      className="input"
-                      value={effort === 'rir' ? rpeToRir(s.rpe) : s.rpe ?? ''}
-                      onChange={(e) => {
-                        const v = e.target.value === '' ? '' : Number(e.target.value);
-                        updateSet(ei, si, 'rpe', effort === 'rir' ? rirToRpe(v) : v);
-                      }}
-                      aria-label={effort === 'rir' ? 'RIR' : 'RPE'}
-                    >
-                      <option value="">–</option>
-                      {(effort === 'rir' ? [4, 3, 2, 1, 0] : RPE_VALUES).map((v) => (
-                        <option key={v} value={v}>
-                          {v}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                  <button
-                    className={`check-btn ${s.done ? 'done' : ''}`}
-                    onClick={() => updateSet(ei, si, 'done', !s.done)}
-                    aria-label={t('setDone')}
-                  >
-                    <IconCheck />
-                  </button>
-                </div>
-              );
-            })}
-
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button className="btn secondary small" style={{ flex: 1 }} onClick={() => addSet(ei)}>
-                <IconPlus size={14} /> {t('addSet')}
+            <div className="focus-nav">
+              <button className="link-btn" onClick={() => setCur(Math.max(0, ci - 1))} disabled={ci === 0}>
+                ‹ {t('prevEx')}
               </button>
-              {ex.sets.length > 1 && (
-                <button className="btn secondary small" onClick={() => removeSet(ei)} aria-label="−">
-                  − {t('removeSet')}
+              {ci < exs.length - 1 ? (
+                <button className="link-btn" onClick={() => setCur(ci + 1)}>
+                  {t('nextEx')} ›
+                </button>
+              ) : (
+                <button className="link-btn" onClick={terminer} disabled={saving}>
+                  {t('finishWorkout')} ›
                 </button>
               )}
-            </div>
             </div>
           </section>
         );
-      })}
+      })()}
 
-      <button className="btn secondary" style={{ marginBottom: 12 }} onClick={() => setShowPicker(true)}>
-        <IconPlus /> {t('addExercise')}
-      </button>
-
-      <button className="btn" onClick={terminer} disabled={saving}>
-        {saving ? t('saving') : t('finishWorkout')}
-      </button>
-      <button className="btn danger" style={{ marginTop: 10 }} onClick={abandonner}>
-        {t('discard')}
-      </button>
-
-      {/* Barra de descanso */}
+      {/* Descanso preso no rodapé */}
       {restLeft !== null && (
-        <div className="rest-bar">
-          <div className="rest-info">
-            <IconRest size={22} color="var(--accent)" />
-            <div>
-              <b style={{ fontSize: 22 }}>{fmt(restLeft)}</b>
-              <p className="muted" style={{ fontSize: 12 }}>{t('resting')}</p>
-            </div>
+        <div className="rest-dock">
+          <div className="rest-dock-bar">
+            <span style={{ width: `${Math.max(0, Math.min(100, (restLeft / restTotal) * 100))}%` }} />
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button
-              className="btn secondary small"
-              onClick={() => {
-                unlockAudio();
-                setRestEndsAt((r) => (r || Date.now()) + 15000);
-              }}
-            >
-              +15s
-            </button>
-            <button className="btn small" onClick={() => setRestEndsAt(null)}>
-              {t('skip')}
-            </button>
+          <div className="rest-dock-row">
+            <div>
+              <b className="rest-dock-time">{fmt(restLeft)}</b>
+              <p className="muted" style={{ fontSize: 13 }}>
+                {t('resting')}
+                {nextEx ? ` · ${exName(nextEx)}` : ''}
+              </p>
+            </div>
+            <div className="rest-dock-actions">
+              <button className="btn secondary small" onClick={() => setRestEndsAt((r) => Math.max(Date.now() + 1000, (r || Date.now()) - 15000))}>
+                −15s
+              </button>
+              <button
+                className="btn secondary small"
+                onClick={() => {
+                  unlockAudio();
+                  setRestEndsAt((r) => (r || Date.now()) + 15000);
+                }}
+              >
+                +15s
+              </button>
+              <button className="btn small" onClick={() => setRestEndsAt(null)}>
+                {t('skip')}
+              </button>
+            </div>
           </div>
         </div>
       )}
 
-      {showPicker && (
-        <ExercisePicker onSelect={addExercise} onClose={() => setShowPicker(false)} />
-      )}
+      {showPicker && <ExercisePicker onSelect={addExercise} onClose={() => setShowPicker(false)} />}
       {detail && <ExerciseDetail exercise={detail} onClose={() => setDetail(null)} />}
+
+      {/* Menu do treino */}
+      {headMenu && (
+        <Sheet title={routine.name || t('defaultSession')} onClose={() => setHeadMenu(false)}>
+          <button onClick={() => { setHeadMenu(false); setShowPicker(true); }}>
+            <span className="tag"><IconPlus /></span> {t('addExercise')}
+          </button>
+          <button onClick={() => { setHeadMenu(false); terminer(); }}>
+            <span className="tag"><IconCheck /></span> {t('finishWorkout')}
+          </button>
+          <button onClick={() => { setHeadMenu(false); abandonner(); }} style={{ color: 'var(--red)' }}>
+            <span className="tag"><IconTrash /></span> {t('discard')}
+          </button>
+        </Sheet>
+      )}
+
+      {/* Menu do exercício */}
+      {exMenu != null && exs[exMenu] && (
+        <Sheet title={exName(exs[exMenu])} onClose={() => setExMenu(null)}>
+          <button onClick={() => { setDetail(exs[exMenu]); setExMenu(null); }}>
+            <span className="tag"><IconExpand /></span> {t('viewExercise')}
+          </button>
+          <button onClick={() => { openPlates(exMenu); setExMenu(null); }}>
+            <span className="tag"><IconPlate /></span> {t('plateCalc')}
+          </button>
+          <button onClick={() => { const i = exMenu; setExMenu(null); removeExercise(i); }} style={{ color: 'var(--red)' }}>
+            <span className="tag"><IconTrash /></span> {t('removeExercise')}
+          </button>
+        </Sheet>
+      )}
 
       {/* Menu da série: tipo (normal, aquecimento, drop, falha) e remover */}
       {menuSet && (
-        <div className="modal-overlay" onClick={() => setSetMenu(null)}>
-          <div className="modal sheet" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <b style={{ fontSize: 18 }}>{t('setTypeTitle')}</b>
-              <button onClick={() => setSetMenu(null)} style={{ background: 'none', color: 'var(--muted)', fontSize: 24 }} aria-label={t('close')}>
-                ✕
-              </button>
-            </div>
-            <div className="modal-body menu-list">
-              {SET_TYPES.map((type) => (
-                <button key={type} onClick={() => setSetType(setMenu.ei, setMenu.si, type)}>
-                  <span className={`tag set-label ${type}`} style={{ width: 30, padding: 0 }}>
-                    {TYPE_TAG[type]}
-                  </span>
-                  <span style={{ flex: 1 }}>{t(TYPE_LABEL[type])}</span>
-                  {setType(menuSet) === type && <IconCheck color="var(--accent)" />}
-                </button>
-              ))}
-              <p className="muted" style={{ padding: '8px 4px' }}>{t('warmupHint')}</p>
-              {exs[setMenu.ei].sets.length > 1 && (
-                <button onClick={() => removeSetAt(setMenu.ei, setMenu.si)} style={{ color: 'var(--red)' }}>
-                  <span className="tag">
-                    <IconTrash />
-                  </span>
-                  {t('removeThisSet')}
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
+        <Sheet title={t('setTypeTitle')} onClose={() => setSetMenu(null)}>
+          {SET_TYPES.map((type) => (
+            <button key={type} onClick={() => setSetType(setMenu.ei, setMenu.si, type)}>
+              <span className={`tag set-num ${type}`} style={{ width: 30, padding: 0 }}>
+                {TYPE_TAG[type]}
+              </span>
+              <span style={{ flex: 1 }}>{t(TYPE_LABEL[type])}</span>
+              {setType(menuSet) === type && <IconCheck color="var(--accent)" />}
+            </button>
+          ))}
+          <p className="muted" style={{ padding: '8px 4px' }}>{t('warmupHint')}</p>
+          {exs[setMenu.ei].sets.length > 1 && (
+            <button onClick={() => removeSetAt(setMenu.ei, setMenu.si)} style={{ color: 'var(--red)' }}>
+              <span className="tag"><IconTrash /></span>
+              {t('removeThisSet')}
+            </button>
+          )}
+        </Sheet>
       )}
 
       {plates && (
@@ -608,6 +707,57 @@ function Seance({ user }) {
     </div>
   );
 }
+
+// Campo numérico com − e + (o número continua digitável)
+function Stepper({ value, onChange, onStep, placeholder, mode }) {
+  return (
+    <div className="num-stepper">
+      <button onClick={() => onStep(-1)} aria-label="−" tabIndex={-1}>
+        −
+      </button>
+      <input type="number" inputMode={mode} value={value} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} />
+      <button onClick={() => onStep(1)} aria-label="+" tabIndex={-1}>
+        +
+      </button>
+    </div>
+  );
+}
+
+// Folha simples de opções
+function Sheet({ title, onClose, children }) {
+  const { t } = useI18n();
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal sheet" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <b style={{ fontSize: 18 }} className="ellipsis">{title}</b>
+          <button onClick={onClose} style={{ background: 'none', color: 'var(--muted)', fontSize: 24 }} aria-label={t('close')}>
+            ✕
+          </button>
+        </div>
+        <div className="modal-body menu-list">{children}</div>
+      </div>
+    </div>
+  );
+}
+
+const IconChevronDown = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+    <path d="m6 9 6 6 6-6" />
+  </svg>
+);
+const IconDots = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+    <circle cx="5" cy="12" r="2" />
+    <circle cx="12" cy="12" r="2" />
+    <circle cx="19" cy="12" r="2" />
+  </svg>
+);
+const IconExpand = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+  </svg>
+);
 
 // Tela de fim de treino: duração, volume, séries e recordes batidos
 function Summary({ summary, onDone }) {
