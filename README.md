@@ -74,6 +74,14 @@ Tudo fica no JSON das rotinas e treinos que já existe: **não precisa de migra�
 
 O 1RM estimado usa a fórmula de Epley (até 12 repetições). A lógica fica em `lib/`, com testes em `lib/*.test.mjs` (`npm test`).
 
+### Circuitos, AMRAP, EMOM e intervalos (Tabata)
+
+No editor de rotina, **Tipo da rotina**: Normal, Circuito (rodadas, descanso entre estações e entre rodadas), AMRAP (tempo total), EMOM (a cada X s, N vezes) ou Intervalos (trabalho/descanso × rodadas, com atalho Tabata 20/10 × 8). Cada exercício pode ser por repetições ou por tempo.
+
+O **Iniciar** dessas rotinas abre um player em tela cheia: relógio grande, estação atual com animação, a próxima, Pausar, Feito e Pular, bipes no 3-2-1 e na troca de etapa, tela sempre acesa. O relógio segue o horário real (com o celular bloqueado ele continua certo) e a execução fica salva no aparelho se a página recarregar.
+
+Cada estação feita vira uma série normal do treino (histórico, recordes e estatísticas funcionam igual). O treino guarda o resultado (rodadas, placar do AMRAP, tempo de cada rodada), compara com a última vez e sugere +1 rep ou +5 s, com um toque para aplicar na rotina. Não precisa de migração: o tipo fica no JSON da rotina. Motor em `lib/circuit.js` (adaptado do openGym), com testes em `lib/circuit.test.mjs`.
+
 ### Coach com IA (OpenAI)
 
 Plano → **Criar plano com o Coach (IA)**. O usuário responde objetivo, experiência, dias por semana, tempo por treino, onde treina e observações (lesões, foco). O GPT monta uma rotina por dia **usando só exercícios do catálogo**. O servidor confere cada id, limita séries/reps/descanso e só então mostra a proposta. "Salvar plano" cria as rotinas (com progressão) e já monta a semana.

@@ -11,6 +11,8 @@ import { useDialog } from '@/components/Dialog';
 import ExerciseDetail from '@/components/ExerciseDetail';
 import { IconPlus, IconRest, IconLink } from '@/components/Icons';
 import { cleanLinks, supersetLabels } from '@/lib/superset';
+import { circuitOfRoutine, cleanCircuit, plannedLength, setRoutineCircuit, stationsFrom } from '@/lib/circuit';
+import CircuitConfig from '@/components/CircuitConfig';
 
 export default function NovaRotinaPage() {
   const { t } = useI18n();
@@ -37,6 +39,7 @@ function NouvelleRoutine({ user }) {
   const [items, setItems] = useState([]); // [{id, name, gif, category, muscle, sets, reps, rest}]
   const [showPicker, setShowPicker] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [circuit, setCircuit] = useState(null); // tipo da rotina: null = normal; senão { mode, ... }
 
   useEffect(() => {
     if (!editId) return;
@@ -49,6 +52,7 @@ function NouvelleRoutine({ user }) {
         if (data) {
           setName(data.name);
           setItems(data.exercises || []);
+          setCircuit(circuitOfRoutine(data.exercises));
         }
       });
   }, [editId]);
@@ -94,7 +98,9 @@ function NouvelleRoutine({ user }) {
     if (items.length === 0) return dialog.alert(t('alertAddExercise'));
     setSaving(true);
 
-    const payload = { user_id: user.id, name: name.trim(), exercises: cleanLinks(items) };
+    // Circuito: o tipo vai em todos os exercícios; normal: tira o tipo e arruma os supersets
+    const exercises = circuit ? setRoutineCircuit(items, circuit) : cleanLinks(setRoutineCircuit(items, null));
+    const payload = { user_id: user.id, name: name.trim(), exercises };
     const { error } = editId
       ? await supabase.from('routines').update(payload).eq('id', editId)
       : await supabase.from('routines').insert(payload);
@@ -104,7 +110,8 @@ function NouvelleRoutine({ user }) {
     else router.push('/treino');
   }
 
-  const labels = supersetLabels(items);
+  const labels = circuit ? items.map(() => null) : supersetLabels(items);
+  const total = circuit && items.length ? plannedLength(cleanCircuit(circuit), stationsFrom(items)) : null;
 
   return (
     <div className="page">
@@ -117,6 +124,9 @@ function NouvelleRoutine({ user }) {
         onChange={(e) => setName(e.target.value)}
         placeholder={t('routineNamePlaceholder')}
       />
+
+      {/* Tipo da rotina: normal (série por série) ou no relógio */}
+      <CircuitConfig value={circuit} onChange={setCircuit} total={total} />
 
       <div style={{ marginTop: 16 }}>
         {items.map((it, idx) => {
@@ -140,6 +150,32 @@ function NouvelleRoutine({ user }) {
               </div>
             </div>
 
+            {circuit ? (
+            <div style={{ display: 'flex', gap: 10, marginTop: 10 }}>
+              <div style={{ flex: 1 }}>
+                <label className="label" style={{ margin: '0 0 4px' }}>{t('repsLabel')}</label>
+                <input
+                  className="input"
+                  type="number"
+                  min={0}
+                  value={it.reps ?? ''}
+                  onChange={(e) => updateItem(idx, 'reps', Number(e.target.value))}
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label className="label" style={{ margin: '0 0 4px' }}>{t('stationTime')}</label>
+                <input
+                  className="input"
+                  type="number"
+                  min={0}
+                  step={5}
+                  placeholder="–"
+                  value={it.sec || ''}
+                  onChange={(e) => updateItem(idx, 'sec', Number(e.target.value) || 0)}
+                />
+              </div>
+            </div>
+            ) : (
             <div style={{ display: 'flex', gap: 10, marginTop: 10 }}>
               <div style={{ flex: 1 }}>
                 <label className="label" style={{ margin: '0 0 4px' }}>{t('setsLabel')}</label>
@@ -175,6 +211,8 @@ function NouvelleRoutine({ user }) {
                 />
               </div>
             </div>
+            )}
+            {circuit && it.sec > 0 && <p className="muted" style={{ marginTop: 6, fontSize: 13 }}>{t('stationTimeHint')}</p>}
 
             {/* Progressão automática */}
             <label className="label" style={{ margin: '12px 0 6px' }}>{t('progression')}</label>
@@ -245,7 +283,7 @@ function NouvelleRoutine({ user }) {
           </div>
 
           {/* Liga/desliga o superset com o exercício seguinte */}
-          {idx < items.length - 1 && (
+          {!circuit && idx < items.length - 1 && (
             <div className="link-row">
               <button
                 className={`link-toggle ${it.linkNext ? 'on' : ''}`}
@@ -259,7 +297,7 @@ function NouvelleRoutine({ user }) {
           );
         })}
       </div>
-      {labels.some(Boolean) && <p className="muted" style={{ marginBottom: 8 }}>{t('supersetHint')}</p>}
+      {!circuit && labels.some(Boolean) && <p className="muted" style={{ marginBottom: 8 }}>{t('supersetHint')}</p>}
 
       <button className="btn secondary" style={{ marginTop: 8 }} onClick={() => setShowPicker(true)}>
         <IconPlus /> {t('addExercise')}

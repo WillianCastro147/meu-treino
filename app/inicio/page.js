@@ -14,6 +14,8 @@ import { useI18n } from '@/lib/i18n';
 import { useDialog } from '@/components/Dialog';
 import { fetchAllWorkouts, fetchPlan } from '@/lib/data';
 import { todaysRoutine } from '@/lib/plan';
+import { startUrl, resultOfWorkout } from '@/lib/circuit';
+import { useCircuitText } from '@/lib/circuitText';
 import { loadActive, activeUrl } from '@/lib/activeWorkout';
 import { activityByDay, fmtKg, weekStreak, weeklySummary, workoutSets, workoutVolume } from '@/lib/stats';
 import { setLabels } from '@/lib/sets';
@@ -36,13 +38,14 @@ function Accueil({ user }) {
   const [planInfo, setPlanInfo] = useState(null);
   const { t, tf, locale, exName } = useI18n();
   const dialog = useDialog();
+  const ctext = useCircuitText();
 
   useEffect(() => {
     fetchAllWorkouts()
       .then(setWorkouts)
       .catch(() => setWorkouts([]));
     // Rotina de hoje pelo plano (semana fixa ou rotação)
-    Promise.all([fetchPlan(user.id).catch(() => ({ plan: null })), supabase.from('routines').select('id, name')])
+    Promise.all([fetchPlan(user.id).catch(() => ({ plan: null })), supabase.from('routines').select('id, name, exercises')])
       .then(([p, r]) => setPlanInfo({ plan: p.plan, routines: r.data || [] }))
       .catch(() => {});
     const a = loadActive();
@@ -90,7 +93,7 @@ function Accueil({ user }) {
         <button
           className="today-row"
           onClick={() =>
-            active ? router.push(activeUrl(active)) : todayRoutine ? router.push(`/treino/executar?id=${todayRoutine.id}`) : setShowStart(true)
+            active ? router.push(activeUrl(active)) : todayRoutine ? router.push(startUrl(todayRoutine)) : setShowStart(true)
           }
         >
           <span className="today-icon">
@@ -159,6 +162,7 @@ function Accueil({ user }) {
                   <IconSets /> {totalSets} {t('sets')}
                   <IconVolume /> {fmtKg(volume, locale)} kg
                 </p>
+                {resultOfWorkout(w) && <span className="circuit-badge">{ctext.result(resultOfWorkout(w))}</span>}
 
                 {/* Miniatures des exercices de la routine */}
                 <div className="thumb-strip">

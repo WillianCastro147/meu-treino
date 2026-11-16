@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useI18n } from '@/lib/i18n';
+import { startUrl } from '@/lib/circuit';
 import { IconPlay, IconPlus } from '@/components/Icons';
 
 // Folha do botão central "Iniciar": treino livre ou uma das rotinas
@@ -50,7 +51,7 @@ export default function StartSheet({ onClose }) {
           {routines && routines.length === 0 && <p className="muted">{t('noRoutines')}</p>}
           {routines &&
             routines.map((r) => (
-              <button key={r.id} className="start-option" onClick={() => go(`/treino/executar?id=${r.id}`)}>
+              <button key={r.id} className="start-option" onClick={() => go(startUrl(r))}>
                 <span className="start-option-icon accent">
                   <IconPlay size={18} color="#fff" />
                 </span>

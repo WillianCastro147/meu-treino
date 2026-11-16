@@ -13,6 +13,8 @@ import { useDialog } from '@/components/Dialog';
 import { loadActive, clearActive } from '@/lib/activeWorkout';
 import { fetchPlan, savePlan } from '@/lib/data';
 import { normalizePlan, prunePlan, isoDay } from '@/lib/plan';
+import { circuitOfRoutine, startUrl } from '@/lib/circuit';
+import { useCircuitText } from '@/lib/circuitText';
 import { buildStarterPlan, STARTER_PLANS } from '@/lib/starter';
 import { IconPlus, IconTrash, IconCalendar, IconChart } from '@/components/Icons';
 
@@ -31,6 +33,7 @@ function Plano({ user }) {
   const router = useRouter();
   const { t, tf, lang, locale, exName } = useI18n();
   const dialog = useDialog();
+  const ctext = useCircuitText();
   const [routines, setRoutines] = useState(null);
   const [plan, setPlan] = useState(normalizePlan(null));
   const [planMissing, setPlanMissing] = useState(false);
@@ -83,7 +86,7 @@ function Plano({ user }) {
       if (!ok) return;
       clearActive();
     }
-    router.push(`/treino/executar?id=${id}`);
+    router.push(startUrl(routines.find((r) => r.id === id) || { id }));
   }
 
   // Plano pronto: cria as rotinas e monta a semana
@@ -207,6 +210,7 @@ function Plano({ user }) {
         routines.map((r) => (
           <div key={r.id} className="card">
             <b style={{ fontSize: 18 }}>{r.name}</b>
+            {circuitOfRoutine(r.exercises) && <span className="circuit-badge" style={{ display: 'table' }}>{ctext.line(circuitOfRoutine(r.exercises))}</span>}
             <p className="muted" style={{ margin: '4px 0 10px' }}>
               {(r.exercises || []).map((e) => exName(e)).join(' · ')}
             </p>
