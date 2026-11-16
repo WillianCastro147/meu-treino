@@ -2190,3 +2190,222 @@ textarea.input {
 .muscle-bar b {
   text-align: right;
 }
+
+/* ---------- Biblioteca: busca com contagem, botão de filtros, melhor carga ---------- */
+.lib-search {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.lib-input {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--card);
+  border-radius: 14px;
+  padding: 0 12px 0 14px;
+  color: var(--muted);
+  min-width: 0;
+}
+.lib-input input {
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-size: 17px;
+  padding: 13px 0;
+  font-family: inherit;
+}
+.lib-count {
+  font-size: 14px;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+.lib-clear {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--card3);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.lib-filter {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: var(--card);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.lib-filter.on {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.lib-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.tag-chip.removable {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: none;
+}
+.lib-done {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+.best-badge {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 13px;
+  border-radius: 8px;
+  padding: 2px 8px;
+}
+.filter-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--card2);
+  color: var(--text);
+  border-radius: 14px;
+  padding: 12px 14px;
+  text-align: left;
+}
+.filter-toggle small {
+  display: block;
+  font-size: 14px;
+}
+.filter-check {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  border: 2px solid var(--card3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.filter-toggle.on .filter-check {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+/* ---------- Plano: como você treina, semana em linhas, folha de escolha ---------- */
+.mode-pick {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.mode-pick button {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: var(--card2);
+  color: var(--text);
+  border-radius: 14px;
+  padding: 12px 14px;
+  text-align: left;
+  border: 2px solid transparent;
+}
+.mode-pick button.on {
+  border-color: var(--accent);
+}
+.mode-pick small {
+  display: block;
+  font-size: 14px;
+  margin-top: 2px;
+}
+.mode-radio {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--card3);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.mode-pick button.on .mode-radio {
+  border: 6px solid var(--accent);
+}
+.day-row,
+.pick-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  background: none;
+  color: var(--text);
+  text-align: left;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.day-row:last-child,
+.pick-row:last-of-type {
+  border-bottom: none;
+}
+.day-badge {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--card2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+.day-row.today .day-badge {
+  background: var(--accent);
+  color: #fff;
+}
+.day-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.day-icon.rest {
+  background: var(--card2);
+  color: var(--muted);
+}
+.pick-row.on {
+  color: var(--accent);
+}

@@ -8,13 +8,19 @@ import PageHeader from '@/components/PageHeader';
 import { useI18n, exKey } from '@/lib/i18n';
 import { useCatalog } from '@/lib/catalog';
 import { fetchAllWorkouts } from '@/lib/data';
-import { doneSets } from '@/lib/stats';
+import { doneSets, fmtKg } from '@/lib/stats';
 import { BODY_PARTS, COMMON_EQUIPMENT, filterExercises, sortByName } from '@/lib/exerciseFilter';
-import { IconSearch } from '@/components/Icons';
+import { IconSearch, IconClose, IconCheck } from '@/components/Icons';
 
 export default function ExerciciosPage() {
   return <AuthGuard>{() => <Biblioteca />}</AuthGuard>;
 }
+
+const IconFilter = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+    <path d="M4 6h16M7 12h10M10 18h4" />
+  </svg>
+);
 
 function Biblioteca() {
   const router = useRouter();
@@ -25,23 +31,31 @@ function Biblioteca() {
   const [eq, setEq] = useState('all');
   const [onlyDone, setOnlyDone] = useState(false);
   const [limit, setLimit] = useState(60);
-  const [counts, setCounts] = useState(new Map());
+  const [history, setHistory] = useState({ counts: new Map(), top: new Map() });
+  const [showFilters, setShowFilters] = useState(false);
 
-  // Quantas vezes cada exercício já foi feito
+  // Quantas vezes cada exercício já foi feito e a maior carga usada
   useEffect(() => {
     fetchAllWorkouts()
       .then((ws) => {
-        const m = new Map();
+        const counts = new Map();
+        const top = new Map();
         ws.forEach((w) =>
           (w.exercises || []).forEach((ex) => {
-            if (doneSets(ex).length) m.set(exKey(ex), (m.get(exKey(ex)) || 0) + 1);
+            const sets = doneSets(ex);
+            if (!sets.length) return;
+            const k = exKey(ex);
+            counts.set(k, (counts.get(k) || 0) + 1);
+            const best = Math.max(...sets.map((s) => Number(s.weight) || 0));
+            if (best > (top.get(k) || 0)) top.set(k, best);
           })
         );
-        setCounts(m);
+        setHistory({ counts, top });
       })
       .catch(() => {});
   }, [ready]);
 
+  const { counts, top } = history;
   const sorted = useMemo(() => sortByName(list, lang), [list, lang]);
   const filtered = useMemo(() => {
     // Com "Que já fiz", entram também os exercícios antigos do Moviq que você fez
@@ -55,63 +69,83 @@ function Biblioteca() {
     fn(v);
     setLimit(60);
   };
+  const activeFilters = (eq !== 'all' ? 1 : 0) + (onlyDone ? 1 : 0);
 
   return (
     <div className="page">
       <PageHeader title={t('tabExercises')} sub={tf('exercisesSub', { n: (list.length || 5632).toLocaleString(locale) })} />
 
-      <div style={{ position: 'relative' }}>
-        <span style={{ position: 'absolute', left: 14, top: 14, color: 'var(--muted)' }}>
+      {/* Busca (com contagem e limpar) + botão de filtros */}
+      <div className="lib-search">
+        <div className="lib-input">
           <IconSearch size={18} />
-        </span>
-        <input
-          className="input"
-          style={{ paddingLeft: 42 }}
-          placeholder={t('searchExercise')}
-          value={search}
-          onChange={(e) => reset(setSearch)(e.target.value)}
-        />
+          <input
+            placeholder={t('searchExercise')}
+            value={search}
+            onChange={(e) => reset(setSearch)(e.target.value)}
+            enterKeyHint="search"
+          />
+          {ready && <span className="lib-count">{filtered.length.toLocaleString(locale)}</span>}
+          {search && (
+            <button className="lib-clear" onClick={() => reset(setSearch)('')} aria-label={t('clearSearch')}>
+              <IconClose size={14} />
+            </button>
+          )}
+        </div>
+        <button className={`lib-filter ${activeFilters ? 'on' : ''}`} onClick={() => setShowFilters(true)} aria-label={t('filters')}>
+          <IconFilter />
+          {activeFilters > 0 && <span className="lib-badge">{activeFilters}</span>}
+        </button>
       </div>
 
-      <div className="chip-row" style={{ padding: '10px 0 4px', border: 'none' }}>
-        <button className={`chip ${onlyDone ? 'active' : ''}`} onClick={() => reset(setOnlyDone)(!onlyDone)}>
-          {t('onlyDone')}
-        </button>
+      {/* Parte do corpo: uma linha de chips */}
+      <div className="chip-row" style={{ padding: '10px 0', border: 'none' }}>
         {['all', ...BODY_PARTS].map((c) => (
           <button key={c} className={`chip ${bp === c ? 'active' : ''}`} onClick={() => reset(setBp)(c)}>
             {c === 'all' ? t('all') : bodyPartName(c)}
           </button>
         ))}
       </div>
-      <div className="chip-row" style={{ padding: '4px 0 10px', border: 'none' }}>
-        {['all', ...COMMON_EQUIPMENT].map((c) => (
-          <button key={c} className={`chip ${eq === c ? 'active' : ''}`} onClick={() => reset(setEq)(c)}>
-            {c === 'all' ? t('allEquipment') : equipName(c)}
-          </button>
-        ))}
-      </div>
+
+      {/* Filtros ativos visíveis (toque para remover) */}
+      {activeFilters > 0 && (
+        <div className="tags" style={{ marginTop: 0 }}>
+          {onlyDone && (
+            <button className="tag-chip removable" onClick={() => reset(setOnlyDone)(false)}>
+              {t('onlyDone')} <IconClose size={12} />
+            </button>
+          )}
+          {eq !== 'all' && (
+            <button className="tag-chip removable" onClick={() => reset(setEq)('all')}>
+              {equipName(eq)} <IconClose size={12} />
+            </button>
+          )}
+        </div>
+      )}
 
       {!ready && <p className="muted">{t('loading')}</p>}
-      {ready && (
-        <p className="muted" style={{ marginBottom: 6 }}>
-          {filtered.length} {t('exercisesCount')}
-        </p>
+      {ready && filtered.length === 0 && (
+        <div className="card" style={{ textAlign: 'center' }}>
+          <p className="muted">{t('noExerciseFound')}</p>
+        </div>
       )}
 
       {filtered.length > 0 && (
         <div className="card" style={{ padding: '4px 14px' }}>
           {filtered.slice(0, limit).map((e) => {
             const n = counts.get(e.id);
+            const best = top.get(e.id);
             return (
               <button key={e.id} className="row-link" onClick={() => router.push(`/exercicios/ver?id=${encodeURIComponent(e.id)}`)}>
                 <img src={e.gif} alt="" className="ex-thumb" loading="lazy" />
-                <span style={{ minWidth: 0 }}>
+                <span style={{ minWidth: 0, flex: 1 }}>
                   <span className="ex-name ellipsis">{e.name[lang]}</span>
                   <span className="muted">{exMeta(e)}</span>
                 </span>
                 {n > 0 && (
-                  <span className="row-right muted" title={`${n} ${t('timesDone')}`}>
-                    <b style={{ color: 'var(--text)' }}>{n}×</b>
+                  <span className="lib-done">
+                    {best > 0 && <span className="best-badge">{fmtKg(best, locale)} kg</span>}
+                    <small className="muted">{tf('timesDoneN', { n })}</small>
                   </span>
                 )}
               </button>
@@ -124,6 +158,51 @@ function Biblioteca() {
         <button className="btn secondary" onClick={() => setLimit(limit + 60)}>
           {t('showMore')}
         </button>
+      )}
+
+      {showFilters && (
+        <div className="modal-overlay" onClick={() => setShowFilters(false)}>
+          <div className="modal sheet" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <b style={{ fontSize: 18 }}>{t('filters')}</b>
+              <button onClick={() => setShowFilters(false)} style={{ background: 'none', color: 'var(--muted)', fontSize: 24 }} aria-label={t('close')}>
+                ✕
+              </button>
+            </div>
+            <div className="modal-body">
+              <button className={`filter-toggle ${onlyDone ? 'on' : ''}`} onClick={() => reset(setOnlyDone)(!onlyDone)}>
+                <span>
+                  <b>{t('onlyDone')}</b>
+                  <small className="muted">{t('onlyDoneHint')}</small>
+                </span>
+                <span className="filter-check">{onlyDone && <IconCheck size={16} />}</span>
+              </button>
+              <p className="section-title" style={{ margin: '16px 0 8px' }}>{t('equipmentLabel')}</p>
+              <div className="tags">
+                {['all', ...COMMON_EQUIPMENT].map((c) => (
+                  <button key={c} className={`chip ${eq === c ? 'active' : ''}`} onClick={() => reset(setEq)(c)}>
+                    {c === 'all' ? t('allEquipment') : equipName(c)}
+                  </button>
+                ))}
+              </div>
+              <div style={{ display: 'flex', gap: 10, marginTop: 18 }}>
+                <button
+                  className="btn secondary"
+                  style={{ flex: 1 }}
+                  onClick={() => {
+                    reset(setEq)('all');
+                    setOnlyDone(false);
+                  }}
+                >
+                  {t('clearFilters')}
+                </button>
+                <button className="btn" style={{ flex: 1 }} onClick={() => setShowFilters(false)}>
+                  {tf('showNResults', { n: filtered.length.toLocaleString(locale) })}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       <BottomNav />
