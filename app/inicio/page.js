@@ -47,7 +47,13 @@ function Accueil({ user }) {
       .catch(() => {});
     const a = loadActive();
     if (a && a.userId === user.id) setActive(a);
-  }, [user.id]);
+    // Quiz feito com este e-mail e ainda não usado (ex.: entrou pelo link de confirmação): monta o plano
+    Promise.resolve(supabase.rpc('get_my_quiz_lead'))
+      .then(({ data }) => {
+        if (Array.isArray(data) && data[0]) router.replace('/preparando');
+      })
+      .catch(() => {});
+  }, [user.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function supprimer(id) {
     if (!(await dialog.confirm(t('confirmDeleteWorkout'), { danger: true, confirmLabel: t('delete') }))) return;
