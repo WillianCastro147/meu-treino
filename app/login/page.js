@@ -58,7 +58,9 @@ export default function LoginPage() {
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
-          options: { data: { name } },
+          // O link de confirmação do e-mail volta para /preparando (se a URL não estiver liberada
+          // no Supabase, ele cai na Site URL, que também passa por /preparando)
+          options: { data: { name }, emailRedirectTo: `${window.location.origin}/preparando` },
         });
         if (error) {
           setError(translateError(error.message));

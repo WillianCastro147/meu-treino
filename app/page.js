@@ -11,7 +11,9 @@ export default function Home() {
     supabase.auth
       .getSession()
       .then(({ data: { session } }) => {
-        router.replace(session ? '/inicio' : '/login');
+        // Logado: passa por /preparando, que monta o plano do quiz (se houver) e segue para o Início.
+        // É por aqui que chega quem confirma o e-mail do cadastro.
+        router.replace(session ? '/preparando' : '/login');
       })
       .catch(() => router.replace('/login'));
   }, [router]);
