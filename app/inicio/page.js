@@ -153,7 +153,9 @@ function Accueil({ user }) {
             ? left.left === 0
               ? t('weekAllDone')
               : tf(left.left === 1 ? 'weekLeftOne' : 'weekLeftMany', { n: left.left, total: left.planned })
-            : tf(shownWs.length === 1 ? 'weekDoneOne' : 'weekDoneMany', { n: shownWs.length })}
+            : weekOffset === 0
+              ? tf(shownWs.length === 1 ? 'weekDoneOne' : 'weekDoneMany', { n: shownWs.length })
+              : tf(shownWs.length === 1 ? 'nWorkoutsOne' : 'nWorkoutsMany', { n: shownWs.length })}
           {shownVolume > 0 && <span className="muted"> · {fmtKg(shownVolume, locale)} kg</span>}
         </p>
         {left && (

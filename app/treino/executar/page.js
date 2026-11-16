@@ -401,6 +401,15 @@ function Seance({ user }) {
   const ex = exs[ci];
   const restTotal = restEndsAt && restStart ? Math.max(1, (restEndsAt - restStart) / 1000) : 1;
   const nextEx = exs.find((e, i) => i > ci && e.sets.some((s) => !s.done)) || null;
+  // Próxima série (no rodapé do descanso): a do exercício em foco, senão a do próximo exercício
+  const upNext = (() => {
+    const order = ex ? [ex, ...(nextEx ? [nextEx] : []), ...exs] : exs;
+    for (const e of order) {
+      const si = e.sets.findIndex((s) => !s.done);
+      if (si >= 0) return { ex: e, n: si + 1 };
+    }
+    return null;
+  })();
 
   return (
     <div className="page focus-page" style={{ paddingBottom: restLeft !== null ? 150 : 40 }}>
@@ -528,11 +537,12 @@ function Seance({ user }) {
                 <span />
               </div>
 
-              {ex.sets.map((s, si) => {
+              {ex.sets.map((s, si, all) => {
+                const firstPending = all.findIndex((x) => !x.done && x.type !== 'warmup');
                 const type = setType(s);
                 const record = isSetRecord(s, best?.est ?? null, ex.sets.slice(0, si));
                 const vs = s.done ? setVsLast(s, lastWork[labels.slice(0, si).filter((l) => /\d/.test(l)).length]) : null;
-                const heavier = !s.done && type !== 'warmup' && topEver > 0 && Number(s.weight) > topEver;
+                const heavier = si === firstPending && type !== 'warmup' && topEver > 0 && Number(s.weight) > topEver;
                 return (
                   <div key={si} className={`set-card ${s.done ? 'done' : ''}`}>
                     <div className={`set-row ${effort !== 'off' ? 'with-effort' : ''}`}>
@@ -615,7 +625,7 @@ function Seance({ user }) {
               <b className="rest-dock-time">{fmt(restLeft)}</b>
               <p className="muted" style={{ fontSize: 13 }}>
                 {t('resting')}
-                {nextEx ? ` · ${exName(nextEx)}` : ''}
+                {upNext ? ` · ${tf('upNextSet', { name: exName(upNext.ex), n: upNext.n })}` : ''}
               </p>
             </div>
             <div className="rest-dock-actions">

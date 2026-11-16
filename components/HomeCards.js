@@ -3,6 +3,7 @@
 // Cartões do Início no mesmo formato: ícone, linha pequena, título e ações (fechar/recolher).
 import { useState } from 'react';
 import { useI18n } from '@/lib/i18n';
+import { fmtKg } from '@/lib/stats';
 import { IconCheck, IconClose } from '@/components/Icons';
 
 export function CardHead({ icon, tone = 'accent', kicker, title, sub, onClose, extra }) {
@@ -62,7 +63,7 @@ export function ChallengesCard({ list, locale, onClose }) {
   const [open, setOpen] = useState(true);
   if (!list?.length) return null;
   const done = list.filter((c) => c.done).length;
-  const month = new Date().toLocaleDateString(locale, { month: 'long', year: 'numeric' });
+  const month = new Date().toLocaleDateString(locale, { month: 'long' });
   return (
     <div className="card">
       <CardHead
@@ -83,7 +84,7 @@ export function ChallengesCard({ list, locale, onClose }) {
             <div className="challenge-top">
               <span>{tf('ch_' + c.key, { n: c.target })}</span>
               <span className={c.done ? 'ch-done' : 'muted'}>
-                {c.done && <IconCheck size={14} />} {c.key === 'tonnes' ? `${c.value} / ${c.target} t` : `${c.value} / ${c.target}`}
+                {c.done && <IconCheck size={14} />} {fmtKg(c.value, locale)} / {fmtKg(c.target, locale)}{c.key === 'tonnes' ? ' t' : ''}
               </span>
             </div>
             <div className="challenge-bar">
