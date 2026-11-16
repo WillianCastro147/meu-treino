@@ -1,6 +1,6 @@
 # Moviq
 
-App web estilo Hevy para registrar treinos, **em inglês (idioma principal), português, espanhol e francês**, com 5 abas (Início, Plano, ▶ Iniciar, Progresso e Exercícios), 1.062 exercícios com GIFs animados (nomes nos 4 idiomas), login e dados na nuvem via Supabase.
+App web estilo Hevy para registrar treinos, **em inglês (idioma principal), português, espanhol e francês**, com 5 abas (Início, Plano, ▶ Iniciar, Progresso e Exercícios), 5.632 exercícios do catálogo do openGym com animação e passo a passo (nomes nos 4 idiomas), login e dados na nuvem via Supabase.
 
 ## Idiomas (EN / PT / ES / FR)
 
@@ -65,6 +65,7 @@ Tudo fica no JSON das rotinas e treinos que já existe: **não precisa de migra�
 
 - **5.632 exercícios** do catálogo do openGym, com animação, nomes em EN/PT/ES/FR e passo a passo. Busca por nome (no idioma ou em inglês), parte do corpo e equipamento. Os 1.062 exercícios antigos ficam escondidos da biblioteca, mas rotinas e treinos antigos continuam mostrando nome e GIF.
   - Para regenerar: `node scripts/build-catalog.mjs <pasta>/openGym/catalogue`.
+  - Versão atual: catálogo do **openGym 1.4.5** (nov/2026). Nessa versão o openGym reclassificou o músculo principal de 1.286 exercícios (ombro dividido em deltoide frontal, lateral e posterior; oblíquos, flexores do quadril e canela à parte) e revisou instruções. Os ids não mudam, então rotinas e histórico continuam valendo.
 - **Plano:** semana fixa (uma rotina por dia) ou **rotação** (A, B, C... o próximo é o seguinte ao último feito). O Início mostra a rotina de hoje.
 - **Planos prontos:** Push/Pull/Legs, Superior/Inferior, Corpo inteiro e 5×5, já com progressão linear.
 - **Editar treino salvo** (botão Editar no histórico) e **registrar treino passado** (Plano → Registrar treino passado).

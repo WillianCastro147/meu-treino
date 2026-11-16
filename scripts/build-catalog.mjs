@@ -27,11 +27,16 @@ const i18n = Object.fromEntries(
 
 // Músculo principal -> grupo do Moviq (filtros e estatísticas) e regiões do desenho do corpo
 const TARGET = {
-  abs: ['abs', ['abs', 'obliques']],
+  abs: ['abs', ['abs']],
+  obliques: ['abs', ['obliques']],
   pectorals: ['chest', ['chest']],
   biceps: ['biceps', ['biceps']],
   glutes: ['glutes', ['gluteal']],
   delts: ['shoulders', ['deltoids']],
+  // openGym 1.4.x separa o ombro em três cabeças; o desenho do corpo tem uma região só
+  'front delts': ['shoulders', ['deltoids']],
+  'side delts': ['shoulders', ['deltoids']],
+  'rear delts': ['shoulders', ['deltoids']],
   triceps: ['triceps', ['triceps']],
   'upper back': ['back', ['upper-back', 'trapezius']],
   lats: ['back', ['upper-back']],
@@ -46,6 +51,8 @@ const TARGET = {
   'serratus anterior': ['abs', ['serratus']],
   abductors: ['glutes', ['gluteal']],
   'levator scapulae': ['traps', ['trapezius']],
+  'hip flexors': ['legs', ['hip-flexors']],
+  shins: ['calves', ['tibialis']],
 };
 
 const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
