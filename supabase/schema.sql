@@ -222,3 +222,48 @@ revoke all on function public.claim_quiz_lead(uuid) from public;
 grant execute on function public.save_quiz_lead(text, text, jsonb, boolean, jsonb) to anon, authenticated;
 grant execute on function public.get_my_quiz_lead() to authenticated;
 grant execute on function public.claim_quiz_lead(uuid) to authenticated;
+
+
+-- ============================================================
+-- Assinaturas Stripe (igual a migrations/006_assinaturas.sql)
+-- ============================================================
+create table if not exists public.assinaturas (
+  id uuid primary key default gen_random_uuid(),
+  email text not null,                          -- sempre em minúsculas
+  status text not null,                         -- da Stripe (active, trialing, past_due, canceled, unpaid...) ou 'cortesia'
+  plano text,                                   -- ex.: "3 month" (intervalo do preço na Stripe)
+  stripe_price_id text,
+  stripe_customer_id text,
+  stripe_subscription_id text unique,
+  current_period_end timestamptz,
+  cancel_at_period_end boolean not null default false,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists assinaturas_email_idx on public.assinaturas (email);
+
+-- Sem políticas: ninguém lê nem grava direto pelo app. O app só usa tem_acesso().
+alter table public.assinaturas enable row level security;
+
+-- A conta logada tem acesso?
+--   active / trialing: sim
+--   past_due: sim (a Stripe ainda está tentando cobrar)
+--   cortesia: sim (liberado à mão: você, testes, contas antigas)
+--   canceled / unpaid / incomplete...: não
+create or replace function public.tem_acesso()
+returns boolean
+language sql
+stable
+security definer set search_path = public
+as $$
+  select exists (
+    select 1
+    from public.assinaturas a
+    where a.email = lower(auth.jwt() ->> 'email')
+      and a.status in ('active', 'trialing', 'past_due', 'cortesia')
+  );
+$$;
+
+revoke all on function public.tem_acesso() from public;
+grant execute on function public.tem_acesso() to authenticated;

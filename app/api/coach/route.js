@@ -42,6 +42,12 @@ export async function POST(req) {
   const user = auth?.user;
   if (!user) return json({ error: 'unauthorized' }, 401);
 
+  // Assinatura ativa (só com NEXT_PUBLIC_EXIGIR_ASSINATURA=1; função da migração 006)
+  if (process.env.NEXT_PUBLIC_EXIGIR_ASSINATURA === '1') {
+    const { data: ok, error: accessError } = await supabase.rpc('tem_acesso');
+    if (!accessError && ok !== true) return json({ error: 'no_subscription' }, 402);
+  }
+
   // Pedido do usuário, sempre conferido no servidor
   let body;
   try {
