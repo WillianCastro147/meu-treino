@@ -12,14 +12,17 @@ import BodyWeightCard from '@/components/BodyWeightCard';
 import { supabase } from '@/lib/supabase';
 import { useI18n } from '@/lib/i18n';
 import { useDialog } from '@/components/Dialog';
-import { fetchAllWorkouts, fetchPlan } from '@/lib/data';
+import { fetchAllWorkouts, fetchBodyWeights, fetchPlan } from '@/lib/data';
+import { findExercise, useCatalog } from '@/lib/catalog';
+import { levelInfo, monthlyChallenges, recoveryNote, weekLeft } from '@/lib/engage';
+import { RecoveryCard, ChallengesCard } from '@/components/HomeCards';
 import { todaysRoutine } from '@/lib/plan';
 import { startUrl, resultOfWorkout } from '@/lib/circuit';
 import { useCircuitText } from '@/lib/circuitText';
 import { loadActive, activeUrl } from '@/lib/activeWorkout';
-import { activityByDay, fmtKg, weekStreak, weeklySummary, workoutSets, workoutVolume } from '@/lib/stats';
+import { activityByDay, dayKey, fmtKg, weekStart, weekStreak, workoutSets, workoutVolume } from '@/lib/stats';
 import { setLabels } from '@/lib/sets';
-import { IconTimer, IconSets, IconVolume, IconDumbbell, IconTrash, IconGear, IconFlame } from '@/components/Icons';
+import { IconTimer, IconSets, IconVolume, IconDumbbell, IconTrash, IconGear, IconFlame, IconChevron } from '@/components/Icons';
 
 export default function InicioPage() {
   return (
@@ -36,7 +39,11 @@ function Accueil({ user }) {
   const [active, setActive] = useState(null);
   const [showStart, setShowStart] = useState(false);
   const [planInfo, setPlanInfo] = useState(null);
+  const [weighins, setWeighins] = useState(null);
+  const [weekOffset, setWeekOffset] = useState(0);
+  const [hidden, setHidden] = useState({});
   const { t, tf, locale, exName } = useI18n();
+  const { ready: catalogReady } = useCatalog();
   const dialog = useDialog();
   const ctext = useCircuitText();
 
@@ -48,6 +55,11 @@ function Accueil({ user }) {
     Promise.all([fetchPlan(user.id).catch(() => ({ plan: null })), supabase.from('routines').select('id, name, exercises')])
       .then(([p, r]) => setPlanInfo({ plan: p.plan, routines: r.data || [] }))
       .catch(() => {});
+    // Pesagens (para o desafio "dias com pesagem"); sem a tabela, o desafio não aparece
+    fetchBodyWeights()
+      .then((r) => setWeighins(r.missing ? null : r.rows))
+      .catch(() => setWeighins(null));
+    setHidden(readHidden());
     const a = loadActive();
     if (a && a.userId === user.id) setActive(a);
     // Quiz feito com este e-mail e ainda não usado (ex.: entrou pelo link de confirmação): monta o plano
@@ -64,15 +76,55 @@ function Accueil({ user }) {
     setWorkouts(workouts.filter((w) => w.id !== id));
   }
 
-  const week = workouts ? weeklySummary(workouts, 1)[0] : null;
+  // Esconde um cartão até o próximo dia (recuperação) ou mês (desafios)
+  function hide(card) {
+    const next = { ...hidden, [card]: hideStamp(card) };
+    setHidden(next);
+    try {
+      localStorage.setItem(HIDE_KEY, JSON.stringify(next));
+    } catch {}
+  }
+
+  const plan = planInfo?.plan || null;
   const todayId =
-    planInfo?.plan && workouts
-      ? todaysRoutine(planInfo.plan, { workouts, routineIds: planInfo.routines.map((r) => r.id) })
-      : null;
+    plan && workouts ? todaysRoutine(plan, { workouts, routineIds: planInfo.routines.map((r) => r.id) }) : null;
   const todayRoutine = planInfo?.routines.find((r) => r.id === todayId) || null;
-  const isRestDay = !!planInfo?.plan && planInfo.plan.mode !== 'rotation' && !todayRoutine;
+  const isRestDay = !!plan && plan.mode !== 'rotation' && !todayRoutine;
   const streak = workouts ? weekStreak(workouts) : 0;
   const today = new Date().toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' });
+
+  // Semana mostrada (setas): resumo e rótulo
+  const shownStart = weekStart(new Date());
+  shownStart.setDate(shownStart.getDate() + weekOffset * 7);
+  const shownEnd = new Date(shownStart);
+  shownEnd.setDate(shownStart.getDate() + 7);
+  const shownWs = (workouts || []).filter((w) => {
+    const x = new Date(w.started_at).getTime();
+    return x >= shownStart.getTime() && x < shownEnd.getTime();
+  });
+  const shownVolume = shownWs.reduce((s, w) => s + workoutVolume(w), 0);
+  const lastDay = new Date(shownEnd);
+  lastDay.setDate(lastDay.getDate() - 1);
+  const weekLabel =
+    weekOffset === 0
+      ? t('thisWeek')
+      : weekOffset === -1
+        ? t('lastWeek')
+        : `${shownStart.toLocaleDateString(locale, { day: 'numeric', month: 'short' })} – ${lastDay.toLocaleDateString(locale, { day: 'numeric', month: 'short' })}`;
+  const left = weekOffset === 0 && workouts ? weekLeft(plan, workouts) : null;
+  const plannedDays = new Set(plan && plan.mode !== 'rotation' ? Object.keys(plan.week || {}).map(Number) : []);
+
+  // Recuperação e desafios (o catálogo diz o músculo de cada exercício)
+  const recovery =
+    workouts && catalogReady && hidden.recovery !== hideStamp('recovery')
+      ? recoveryNote(workouts, findExercise, { todayExercises: todayRoutine?.exercises || [] })
+      : null;
+  const challenges =
+    workouts && workouts.length > 0 && hidden.challenges !== hideStamp('challenges')
+      ? monthlyChallenges(workouts, weighins)
+      : null;
+
+  const todayCount = todayRoutine?.exercises?.length || 0;
 
   return (
     <div className="page">
@@ -86,41 +138,80 @@ function Accueil({ user }) {
         }
       />
 
-      {/* Semana atual + treino de hoje */}
+      {/* Semana (com setas) + treino de hoje */}
       <div className="card">
-        <p className="muted" style={{ textAlign: 'center', fontSize: 17 }}>{t('thisWeek')}</p>
-        <WeekStrip byDay={workouts ? activityByDay(workouts) : new Map()} locale={locale} />
-        <button
-          className="today-row"
-          onClick={() =>
-            active ? router.push(activeUrl(active)) : todayRoutine ? router.push(startUrl(todayRoutine)) : setShowStart(true)
-          }
-        >
-          <span className="today-icon">
-            <IconDumbbell size={24} color="#fff" />
-          </span>
-          <span style={{ flex: 1, minWidth: 0 }}>
-            <span className="today-kicker">{active ? t('workoutInProgress') : t('today')}</span>
-            <span className="ellipsis" style={{ fontSize: 19, fontWeight: 600 }}>
-              {active ? active.routineName : todayRoutine ? todayRoutine.name : isRestDay ? t('restDayToday') : t('noRoutineToday')}
-            </span>
-          </span>
-          <span className="pill">{active ? t('continueWorkout') : t('startPill')}</span>
-        </button>
+        <WeekStrip
+          byDay={workouts ? activityByDay(workouts) : new Map()}
+          locale={locale}
+          offset={weekOffset}
+          onOffset={setWeekOffset}
+          planned={plannedDays}
+          label={weekLabel}
+        />
+        <p className="week-line">
+          {left
+            ? left.left === 0
+              ? t('weekAllDone')
+              : tf(left.left === 1 ? 'weekLeftOne' : 'weekLeftMany', { n: left.left, total: left.planned })
+            : tf(shownWs.length === 1 ? 'weekDoneOne' : 'weekDoneMany', { n: shownWs.length })}
+          {shownVolume > 0 && <span className="muted"> · {fmtKg(shownVolume, locale)} kg</span>}
+        </p>
+        {left && (
+          <div className="week-bar">
+            <span style={{ width: `${((left.planned - left.left) / left.planned) * 100}%` }} />
+          </div>
+        )}
+        {weekOffset === 0 && (
+          <>
+            <button
+              className="today-row"
+              onClick={() =>
+                active ? router.push(activeUrl(active)) : todayRoutine ? router.push(startUrl(todayRoutine)) : setShowStart(true)
+              }
+            >
+              <span className="today-icon">
+                <IconDumbbell size={24} color="#fff" />
+              </span>
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <span className="today-kicker">{active ? t('workoutInProgress') : t('today')}</span>
+                <span className="ellipsis" style={{ fontSize: 19, fontWeight: 600 }}>
+                  {active ? active.routineName : todayRoutine ? todayRoutine.name : isRestDay ? t('restDayToday') : t('noRoutineToday')}
+                </span>
+                {!active && todayRoutine && todayCount > 0 && (
+                  <span className="muted" style={{ display: 'block', fontSize: 15 }}>
+                    {tf(todayCount === 1 ? 'nExercisesOne' : 'nExercisesMany', { n: todayCount })}
+                  </span>
+                )}
+              </span>
+              <span className="pill">{active ? t('continueWorkout') : t('startPill')}</span>
+            </button>
+            {!active && (todayRoutine || isRestDay) && (
+              <button className="link-btn" onClick={() => setShowStart(true)}>
+                {t('pickOtherWorkout')}
+              </button>
+            )}
+          </>
+        )}
       </div>
+
+      <RecoveryCard note={recovery} onClose={() => hide('recovery')} />
+      <ChallengesCard list={challenges} locale={locale} onClose={() => hide('challenges')} />
 
       <BodyWeightCard user={user} />
 
-      {/* Sequência de semanas */}
+      {/* Sequência de semanas: leva ao Progresso, onde estão medalhas e nível */}
       {workouts && workouts.length > 0 && (
-        <div className="card">
-          <p className="streak-title">
-            <IconFlame size={26} color="var(--accent)" /> {tf(streak === 1 ? 'streakOne' : 'streakMany', { n: streak })}
-          </p>
-          <p className="muted" style={{ fontSize: 16, marginTop: 4 }}>
-            {tf('streakSub', { week: week.workouts, total: workouts.length })} · {fmtKg(week.volume, locale)} kg
-          </p>
-        </div>
+        <Link href="/progresso" className="card streak-link">
+          <span style={{ flex: 1 }}>
+            <span className="streak-title">
+              <IconFlame size={26} color="var(--accent)" /> {tf(streak === 1 ? 'streakOne' : 'streakMany', { n: streak })}
+            </span>
+            <span className="muted" style={{ display: 'block', fontSize: 16, marginTop: 4 }}>
+              {tf('levelLine', { n: levelInfo(workouts).level })} · {tf('totalWorkouts', { n: workouts.length })}
+            </span>
+          </span>
+          <IconChevron size={20} color="var(--muted)" />
+        </Link>
       )}
 
       {workouts && workouts.length > 0 && <p className="section-title" style={{ marginTop: 8 }}>{t('recentWorkouts')}</p>}
@@ -221,4 +312,18 @@ function formatDate(iso, locale) {
     ' ' +
     d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
   );
+}
+
+// Cartões fechados: guardam o dia (recuperação) ou o mês (desafios) em que foram fechados
+const HIDE_KEY = 'moviq.home.hidden';
+function hideStamp(card) {
+  const k = dayKey(new Date());
+  return card === 'challenges' ? k.slice(0, 7) : k;
+}
+function readHidden() {
+  try {
+    return JSON.parse(localStorage.getItem(HIDE_KEY) || '{}') || {};
+  } catch {
+    return {};
+  }
 }

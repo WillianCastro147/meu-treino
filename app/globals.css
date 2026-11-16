@@ -1937,3 +1937,110 @@ textarea.input {
 .rest-dock-actions .btn.small {
   padding: 11px 12px;
 }
+
+/* ---------- Início: semana navegável, cartões de recuperação e desafios ---------- */
+.week-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: -4px -4px 2px;
+}
+.week-nav .icon-btn {
+  align-self: center;
+  color: var(--text);
+}
+.wd-dot.plan {
+  background: none;
+  box-shadow: inset 0 0 0 1.5px var(--accent);
+}
+.week-line {
+  text-align: center;
+  font-size: 16px;
+  font-weight: 600;
+  margin: -2px 0 8px;
+}
+.week-bar {
+  height: 4px;
+  border-radius: 4px;
+  background: var(--card2);
+  margin: 0 auto 14px;
+  max-width: 220px;
+  overflow: hidden;
+}
+.week-bar span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+.card > .link-btn {
+  display: block;
+  margin: 10px auto 0;
+  font-size: 15px;
+}
+.hcard-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+.hcard-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.hcard-icon.warm {
+  background: rgba(245, 158, 11, 0.16);
+  color: #f59e0b;
+}
+.hcard-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-top: 2px;
+}
+.hcard-head .icon-btn {
+  margin: -6px -8px 0 0;
+}
+.challenge {
+  margin-top: 14px;
+}
+.challenge-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 15px;
+  margin-bottom: 6px;
+}
+.challenge-top .ch-done {
+  color: var(--accent);
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.challenge-bar {
+  height: 6px;
+  border-radius: 6px;
+  background: var(--card2);
+  overflow: hidden;
+}
+.challenge-bar span {
+  display: block;
+  height: 100%;
+  background: #f59e0b;
+  border-radius: 6px;
+}
+.challenge-bar span.done {
+  background: var(--accent);
+}
+.streak-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
