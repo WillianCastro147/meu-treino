@@ -201,7 +201,7 @@ function Accueil({ user }) {
 
       {/* Sequência de semanas: leva ao Progresso, onde estão medalhas e nível */}
       {workouts && workouts.length > 0 && (
-        <Link href="/progresso" className="card streak-link">
+        <Link href="/estatisticas" className="card streak-link">
           <span style={{ flex: 1 }}>
             <span className="streak-title">
               <IconFlame size={26} color="var(--accent)" /> {tf(streak === 1 ? 'streakOne' : 'streakMany', { n: streak })}

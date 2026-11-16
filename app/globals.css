@@ -2044,3 +2044,149 @@ textarea.input {
   align-items: center;
   gap: 10px;
 }
+
+/* ---------- Progresso: abas, total levantado, sequência, medalhas e nível ---------- */
+.seg.stats-tabs {
+  margin-bottom: 14px;
+}
+.lifted-value {
+  font-size: 44px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  margin-top: 6px;
+  line-height: 1.1;
+}
+.lifted-value small {
+  font-size: 22px;
+  color: var(--muted);
+  font-weight: 600;
+}
+.lifted-fun {
+  font-size: 15px;
+  margin-top: 4px;
+}
+.lifted-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+.lifted-row b {
+  display: block;
+  font-size: 19px;
+}
+.lifted-row small {
+  color: var(--muted);
+  font-size: 12px;
+}
+.streak-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.freezes {
+  display: flex;
+  gap: 4px;
+  font-size: 18px;
+}
+.freezes span {
+  opacity: 0.25;
+  filter: grayscale(1);
+}
+.freezes span.on {
+  opacity: 1;
+  filter: none;
+  color: #7dd3fc;
+}
+.badges {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  margin-top: 14px;
+}
+.badge {
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--card2);
+  color: var(--muted);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.1;
+  max-width: 64px;
+  justify-self: center;
+  width: 100%;
+}
+.badge b {
+  font-size: 18px;
+}
+.badge small {
+  font-size: 11px;
+}
+.badge.earned {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.level-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+.level-chip {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 14px;
+  border-radius: 8px;
+  padding: 4px 10px;
+  flex-shrink: 0;
+}
+.level-bar {
+  flex: 1;
+  height: 6px;
+  border-radius: 6px;
+  background: var(--card2);
+  overflow: hidden;
+}
+.level-bar span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+}
+.muscle-bars {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.muscle-bar {
+  display: grid;
+  grid-template-columns: 110px 1fr 34px;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+}
+.muscle-bar > div {
+  height: 8px;
+  border-radius: 8px;
+  background: var(--card2);
+  overflow: hidden;
+}
+.muscle-bar > div span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  border-radius: 8px;
+}
+.muscle-bar b {
+  text-align: right;
+}

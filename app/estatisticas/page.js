@@ -11,8 +11,11 @@ import PageHeader from '@/components/PageHeader';
 import BodyMap from '@/components/BodyMap';
 import { regionLevelsFromWorkouts, setsByMuscle } from '@/lib/muscles';
 import { fetchAllWorkouts } from '@/lib/data';
-import { activityByDay, bestByExercise, fmtDuration, fmtKg, totals, weekStreak, weeklySummary } from '@/lib/stats';
-import { IconTrophy, IconDumbbell, IconCalendar, IconFlame, IconVolume } from '@/components/Icons';
+import { activityByDay, bestByExercise, fmtDuration, fmtKg, totals, weeklySummary } from '@/lib/stats';
+import { funComparison, levelInfo, MAX_FREEZES, streakInfo } from '@/lib/engage';
+import { IconTrophy, IconFlame, IconVolume } from '@/components/Icons';
+
+const TABS = ['overview', 'body', 'records'];
 
 const RANGES = [
   ['range7', 7],
@@ -27,14 +30,19 @@ export default function EstatisticasPage() {
 
 function Stats({ user }) {
   const router = useRouter();
-  const { t, locale, exName, muscleName } = useI18n();
+  const { t, tf, locale, exName, muscleName } = useI18n();
   const [workouts, setWorkouts] = useState(null);
   const [error, setError] = useState('');
   const [metric, setMetric] = useState('volume');
   const [showAllPrs, setShowAllPrs] = useState(false);
   const [range, setRange] = useState(30);
+  const [tab, setTab] = useState('overview');
 
   useEffect(() => {
+    try {
+      const saved = localStorage.getItem('moviq.stats.tab');
+      if (TABS.includes(saved)) setTab(saved);
+    } catch {}
     fetchAllWorkouts()
       .then(setWorkouts)
       .catch((e) => {
@@ -55,7 +63,8 @@ function Stats({ user }) {
     return {
       month: workouts.filter((w) => new Date(w.started_at) >= monthStart).length,
       total: totals(workouts),
-      streak: weekStreak(workouts),
+      streakInfo: streakInfo(workouts),
+      level: levelInfo(workouts),
       byDay: activityByDay(workouts),
       weeks,
       prs,
@@ -70,6 +79,16 @@ function Stats({ user }) {
   }, [workouts, range]);
 
   const weekLabel = (d) => d.toLocaleDateString(locale, { day: '2-digit', month: '2-digit' });
+  const fun = data ? funComparison(data.total.volume) : null;
+  const streak = data?.streakInfo;
+  const level = data?.level;
+
+  function pickTab(k) {
+    setTab(k);
+    try {
+      localStorage.setItem('moviq.stats.tab', k);
+    } catch {}
+  }
 
   return (
     <div className="page">
@@ -80,26 +99,12 @@ function Stats({ user }) {
 
       {data && (
         <>
-          <div className="tile-grid">
-            <div className="tile">
-              <span className="tile-label"><IconDumbbell size={17} /> {t('tileWorkouts')}</span>
-              <div className="tile-value">{data.total.workouts}</div>
-            </div>
-            <div className="tile">
-              <span className="tile-label"><IconCalendar size={17} /> {t('thisMonth')}</span>
-              <div className="tile-value">{data.month}</div>
-            </div>
-            <div className="tile">
-              <span className="tile-label"><IconFlame size={17} /> {t('tileStreak')}</span>
-              <div className="tile-value">{data.streak}</div>
-            </div>
-            <div className="tile">
-              <span className="tile-label"><IconVolume size={17} /> {t('tileVolume')}</span>
-              <div className="tile-value">
-                {fmtKg(data.total.volume / 1000, locale)}
-                <small>t</small>
-              </div>
-            </div>
+          <div className="seg stats-tabs">
+            {TABS.map((k) => (
+              <button key={k} className={tab === k ? 'active' : ''} onClick={() => pickTab(k)}>
+                {t('stab_' + k)}
+              </button>
+            ))}
           </div>
 
           {data.total.workouts === 0 && (
@@ -108,55 +113,131 @@ function Stats({ user }) {
             </div>
           )}
 
-          <div className="card">
-            <p className="card-title">
-              {t('activity')} <span className="muted">{t('lastMonths')}</span>
-            </p>
-            <Heatmap byDay={data.byDay} weeks={26} t={t} />
-          </div>
+          {tab === 'overview' && (
+            <>
+              {/* Total levantado, com uma comparação para dar escala */}
+              <div className="card">
+                <span className="tile-label"><IconVolume size={17} /> {t('liftedTotal')}</span>
+                <div className="lifted-value">
+                  {fmtKg(data.total.volume / 1000, locale)}
+                  <small> t</small>
+                </div>
+                {fun && <p className="muted lifted-fun">{tf('fun_' + fun.key, { n: fmtKg(fun.times, locale) })}</p>}
+                <div className="lifted-row">
+                  <span>
+                    <b>{data.total.workouts}</b>
+                    <small>{t('tileWorkouts')}</small>
+                  </span>
+                  <span>
+                    <b>{data.month}</b>
+                    <small>{t('thisMonth')}</small>
+                  </span>
+                  <span>
+                    <b>{fmtDuration(data.total.minutes)}</b>
+                    <small>{t('trainedTime')}</small>
+                  </span>
+                  <span>
+                    <b>{fmtKg(data.total.sets, locale)}</b>
+                    <small>{t('sets')}</small>
+                  </span>
+                </div>
+              </div>
 
-          <div className="card">
-            <p className="card-title">
-              {t('muscleBalance')} <span className="muted">{t('bySets')}</span>
-            </p>
-            <div className="seg">
-              {RANGES.map(([key, days]) => (
-                <button key={key} className={range === days ? 'active' : ''} onClick={() => setRange(days)}>
-                  {t(key)}
-                </button>
-              ))}
-            </div>
-            <BodyMap levels={muscles.levels} />
-            {Object.keys(muscles.by).length === 0 ? (
-              <p className="muted" style={{ textAlign: 'center' }}>{t('noMuscleData')}</p>
-            ) : (
-              <div className="tags" style={{ justifyContent: 'center' }}>
-                {Object.entries(muscles.by)
-                  .sort((x, y) => y[1] - x[1])
-                  .map(([m, n]) => (
-                    <span key={m} className="tag-chip">
-                      {muscleName(m)} · {n}
+              {/* Sequência: semanas seguidas, congelamentos, medalhas e nível */}
+              <div className="card">
+                <div className="streak-top">
+                  <p className="streak-title">
+                    <IconFlame size={26} color="var(--accent)" /> {tf(streak.current === 1 ? 'streakOne' : 'streakMany', { n: streak.current })}
+                  </p>
+                  <span className="freezes" aria-label={tf('freezesCount', { n: streak.freezes })}>
+                    {Array.from({ length: MAX_FREEZES }, (_, i) => (
+                      <span key={i} className={i < streak.freezes ? 'on' : ''}>❄</span>
+                    ))}
+                  </span>
+                </div>
+                <p className="muted" style={{ fontSize: 15, marginTop: 4 }}>
+                  {tf('bestStreak', { n: streak.best })}
+                  {streak.nextBadge ? ' · ' + tf('toNextBadge', { n: streak.nextBadge - streak.current }) : ''}
+                </p>
+                <div className="badges">
+                  {streak.badges.map((b) => (
+                    <span key={b.weeks} className={`badge ${b.earned ? 'earned' : ''}`}>
+                      <b>{b.weeks}</b>
+                      <small>{t('weeksShort')}</small>
                     </span>
                   ))}
+                </div>
+                <p className="muted" style={{ fontSize: 14, marginTop: 10 }}>{t('freezesHint')}</p>
+                <div className="level-row">
+                  <span className="level-chip">{tf('levelLine', { n: level.level })}</span>
+                  <div className="level-bar">
+                    <span style={{ width: `${Math.round(level.progress * 100)}%` }} />
+                  </div>
+                  <span className="muted" style={{ fontSize: 14 }}>{tf('levelToNext', { n: level.toNext })}</span>
+                </div>
               </div>
-            )}
-          </div>
 
-          <div className="card">
-            <div className="lang-switch" style={{ marginBottom: 12 }}>
-              <button className={metric === 'volume' ? 'active' : ''} onClick={() => setMetric('volume')}>
-                {t('weeklyVolume')}
-              </button>
-              <button className={metric === 'workouts' ? 'active' : ''} onClick={() => setMetric('workouts')}>
-                {t('weeklyWorkouts')}
-              </button>
-            </div>
-            <BarChart
-              bars={data.weeks.map((w) => ({ label: weekLabel(w.start), value: metric === 'volume' ? w.volume : w.workouts }))}
-              format={metric === 'volume' ? undefined : (v) => String(Math.round(v))}
-            />
-          </div>
+              <div className="card">
+                <p className="card-title">
+                  {t('activity')} <span className="muted">{t('lastMonths')}</span>
+                </p>
+                <Heatmap byDay={data.byDay} weeks={26} t={t} />
+              </div>
 
+              <div className="card">
+                <div className="lang-switch" style={{ marginBottom: 12 }}>
+                  <button className={metric === 'volume' ? 'active' : ''} onClick={() => setMetric('volume')}>
+                    {t('weeklyVolume')}
+                  </button>
+                  <button className={metric === 'workouts' ? 'active' : ''} onClick={() => setMetric('workouts')}>
+                    {t('weeklyWorkouts')}
+                  </button>
+                </div>
+                <BarChart
+                  bars={data.weeks.map((w) => ({ label: weekLabel(w.start), value: metric === 'volume' ? w.volume : w.workouts }))}
+                  format={metric === 'volume' ? undefined : (v) => String(Math.round(v))}
+                />
+              </div>
+            </>
+          )}
+
+          {tab === 'body' && (
+            <>
+              <div className="card">
+                <p className="card-title">
+                  {t('muscleBalance')} <span className="muted">{t('bySets')}</span>
+                </p>
+                <div className="seg">
+                  {RANGES.map(([key, days]) => (
+                    <button key={key} className={range === days ? 'active' : ''} onClick={() => setRange(days)}>
+                      {t(key)}
+                    </button>
+                  ))}
+                </div>
+                <BodyMap levels={muscles.levels} />
+                {Object.keys(muscles.by).length === 0 ? (
+                  <p className="muted" style={{ textAlign: 'center' }}>{t('noMuscleData')}</p>
+                ) : (
+                  <div className="muscle-bars">
+                    {Object.entries(muscles.by)
+                      .sort((x, y) => y[1] - x[1])
+                      .map(([m, n], i, arr) => (
+                        <div key={m} className="muscle-bar">
+                          <span className="ellipsis">{muscleName(m)}</span>
+                          <div>
+                            <span style={{ width: `${(n / arr[0][1]) * 100}%` }} />
+                          </div>
+                          <b>{n}</b>
+                        </div>
+                      ))}
+                  </div>
+                )}
+              </div>
+              <BodyWeightCard user={user} />
+            </>
+          )}
+
+          {tab === 'records' && (
           <div className="card">
             <p className="card-title">
               <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -193,8 +274,7 @@ function Stats({ user }) {
               </button>
             )}
           </div>
-
-          <BodyWeightCard user={user} />
+          )}
         </>
       )}
 
