@@ -488,7 +488,7 @@
             )
           : null,
         h('div', { class: 'pw-plans' }, cards),
-        h('button', { class: 'btn pw-cta', onclick: go }, 'Continuar'),
+        h('button', { class: 'btn pw-cta', onclick: go }, 'Garantir meu plano'),
         errBox,
         CFG.AVISO_ASSINATURA ? h('p', { class: 'muted pw-legal' }, CFG.AVISO_ASSINATURA) : null,
         legal.length ? h('p', { class: 'muted pw-links' }, legal) : null,
