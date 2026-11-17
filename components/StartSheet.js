@@ -5,20 +5,36 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useI18n } from '@/lib/i18n';
 import { startUrl } from '@/lib/circuit';
-import { IconPlay, IconPlus } from '@/components/Icons';
+import { fetchPlan } from '@/lib/data';
+import { normalizeChallenge, challengeProgress } from '@/lib/challenge';
+import { IconPlay, IconPlus, IconTrophy } from '@/components/Icons';
 
-// Folha do botão central "Iniciar": treino livre ou uma das rotinas
+// Folha do botão central "Iniciar": treino livre, o próximo dia do Desafio 21 dias (se houver) ou uma das rotinas.
+// As 21 rotinas do desafio não aparecem na lista: só o dia que está liberado.
 export default function StartSheet({ onClose }) {
   const router = useRouter();
-  const { t, exName } = useI18n();
+  const { t, tf, exName } = useI18n();
   const [routines, setRoutines] = useState(null);
+  const [challengeDay, setChallengeDay] = useState(null); // { n, routine }
 
   useEffect(() => {
-    supabase
-      .from('routines')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .then(({ data }) => setRoutines(data || []));
+    (async () => {
+      const [{ data }, session] = await Promise.all([
+        supabase.from('routines').select('*').order('created_at', { ascending: false }),
+        supabase.auth.getSession(),
+      ]);
+      const all = data || [];
+      const userId = session.data.session?.user?.id;
+      const plan = userId ? await fetchPlan(userId).catch(() => ({ plan: null })) : { plan: null };
+      const challenge = normalizeChallenge(plan.plan?.challenge);
+      if (!challenge) return setRoutines(all);
+      const ids = new Set(challenge.days.map((d) => d.id));
+      setRoutines(all.filter((r) => !ids.has(r.id)));
+      const { data: done } = await supabase.from('workouts').select('routine_id, started_at').in('routine_id', [...ids]);
+      const p = challengeProgress(challenge, done || []);
+      const routine = p && !p.finished ? all.find((r) => r.id === challenge.days[p.next].id) : null;
+      if (routine) setChallengeDay({ n: p.next + 1, routine });
+    })().catch(() => setRoutines((r) => r || []));
   }, []);
 
   const go = (url) => {
@@ -45,6 +61,18 @@ export default function StartSheet({ onClose }) {
               <span className="muted">{t('emptyWorkoutHint')}</span>
             </span>
           </button>
+
+          {challengeDay && (
+            <button className="start-option" onClick={() => go(startUrl(challengeDay.routine))}>
+              <span className="start-option-icon accent">
+                <IconTrophy size={18} color="#fff" />
+              </span>
+              <span style={{ textAlign: 'left', minWidth: 0 }}>
+                <b style={{ display: 'block' }}>{tf('chStartOption', { n: challengeDay.n })}</b>
+                <span className="muted ellipsis">{challengeDay.routine.name}</span>
+              </span>
+            </button>
+          )}
 
           <p className="section-title">{t('chooseRoutine')}</p>
           {routines === null && <p className="muted">{t('loading')}</p>}

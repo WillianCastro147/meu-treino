@@ -294,6 +294,18 @@
         { value: '8+', label: 'Mais de 8 h' },
       ],
     },
+    {
+      // Desafio 21 dias de calistenia: quem disser sim recebe o desafio além do plano semanal (app: lib/challenge.js)
+      id: 'desafio',
+      section: 2,
+      type: 'single',
+      title: 'Quer entrar no Desafio 21 dias de calistenia?',
+      sub: 'Um treino por dia com o peso do corpo, sem equipamento, para fazer em casa junto com o seu plano.',
+      options: [
+        { value: 'sim', label: 'Sim, quero o desafio' },
+        { value: 'nao', label: 'Agora não' },
+      ],
+    },
 
     // ---------- Medidas ----------
     { id: 'altura', section: 3, type: 'number', title: 'Qual é a sua altura?', unit: 'cm', min: 120, max: 230, placeholder: '175' },

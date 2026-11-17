@@ -5,6 +5,7 @@
 import { createClient } from '@supabase/supabase-js';
 import catalogRaw from '@/public/catalog/exercises.json';
 import { buildCandidates, buildMessages, DAILY_LIMIT, EQUIPMENT_PRESETS, GOALS, LEVELS, MINUTES, outputText, PLAN_SCHEMA, validatePlan } from '@/lib/coach';
+import { buildChallengeCandidates, buildChallengeMessages, CHALLENGE_MINUTES, CHALLENGE_SCHEMA, validateChallenge } from '@/lib/challenge';
 import { isMissingTable } from '@/lib/data';
 
 export const runtime = 'nodejs';
@@ -55,6 +56,7 @@ export async function POST(req) {
   } catch (e) {
     return json({ error: 'bad_request' }, 400);
   }
+  const challenge = body.kind === 'challenge'; // Desafio 21 dias de calistenia (lib/challenge.js)
   const input = {
     goal: GOALS.includes(body.goal) ? body.goal : 'hypertrophy',
     level: LEVELS.includes(body.level) ? body.level : 'beginner',
@@ -75,8 +77,14 @@ export async function POST(req) {
   input.weightKg = profile?.weight_kg || null;
   input.heightCm = profile?.height_cm || null;
 
-  const candidates = buildCandidates(catalog, { equipment: equipment.length ? equipment : EQUIPMENT_PRESETS.gym, goal: input.goal, level: input.level });
-  const [system, userMsg] = buildMessages(input, candidates, lang);
+  let system, userMsg;
+  if (challenge) {
+    input.minutes = CHALLENGE_MINUTES.includes(Number(body.minutes)) ? Number(body.minutes) : 30;
+    [system, userMsg] = buildChallengeMessages(input, buildChallengeCandidates(catalog), lang);
+  } else {
+    const candidates = buildCandidates(catalog, { equipment: equipment.length ? equipment : EQUIPMENT_PRESETS.gym, goal: input.goal, level: input.level });
+    [system, userMsg] = buildMessages(input, candidates, lang);
+  }
 
   let res;
   try {
@@ -88,7 +96,11 @@ export async function POST(req) {
         reasoning: { effort: process.env.OPENAI_REASONING || 'low' },
         instructions: system.content,
         input: userMsg.content,
-        text: { format: { type: 'json_schema', name: 'workout_plan', schema: PLAN_SCHEMA, strict: true } },
+        text: {
+          format: challenge
+            ? { type: 'json_schema', name: 'calisthenics_challenge', schema: CHALLENGE_SCHEMA, strict: true }
+            : { type: 'json_schema', name: 'workout_plan', schema: PLAN_SCHEMA, strict: true },
+        },
       }),
       signal: AbortSignal.timeout(55000),
     });
@@ -107,9 +119,17 @@ export async function POST(req) {
   } catch (e) {
     raw = null;
   }
+  const remaining = () => (limitOn ? Math.max(0, DAILY_LIMIT - (usage.count || 0) - 1) : null);
+  if (challenge) {
+    const built = validateChallenge(raw, (id) => byId.get(id));
+    if (!built) return json({ error: 'invalid_plan' }, 502);
+    if (limitOn) await supabase.from('coach_usage').insert({ user_id: user.id });
+    return json({ challenge: built, remaining: remaining() });
+  }
+
   const plan = validatePlan(raw, (id) => byId.get(id));
   if (!plan) return json({ error: 'invalid_plan' }, 502);
 
   if (limitOn) await supabase.from('coach_usage').insert({ user_id: user.id });
-  return json({ plan, remaining: limitOn ? Math.max(0, DAILY_LIMIT - (usage.count || 0) - 1) : null });
+  return json({ plan, remaining: remaining() });
 }
