@@ -15,7 +15,7 @@ Os valores abaixo ficam em **variáveis de ambiente da Vercel** (nada de chave n
 |-------|--------------|-------------|
 | mode | `subscription` | Já definido: os planos de 12, 3 e 1 mês são cobrança recorrente. Use `payment` só se um dia vender acesso avulso. |
 | success_url | `https://moviqapp.vercel.app/bem-vindo?session_id={CHECKOUT_SESSION_ID}` | Já é o endereço real do app. Se o domínio mudar, defina `NEXT_PUBLIC_APP_URL` na Vercel. Mantenha o `{CHECKOUT_SESSION_ID}`. |
-| cancel_url | `QUIZ_URL` (se vazio, volta para o app) | Na Vercel: `QUIZ_URL` = endereço do quiz na Hostinger (ex.: `https://quiz.seudominio.com.br/`). |
+| cancel_url | `QUIZ_URL` (padrão `https://quiz.moviqgym.app`) | Só defina `QUIZ_URL` na Vercel se o endereço do quiz mudar. |
 | line_items[].price (12 meses) | `STRIPE_PRICE_12M` (vazio) | Price ID do plano anual, ex.: `price_1Qabc...` |
 | line_items[].price (3 meses) | `STRIPE_PRICE_3M` (vazio) | Price ID do plano trimestral |
 | line_items[].price (1 mês) | `STRIPE_PRICE_1M` (vazio) | Price ID do plano mensal |
@@ -67,13 +67,13 @@ Além desses, a sessão leva `customer_email` (o e-mail digitado no quiz, para a
 | `STRIPE_WEBHOOK_SECRET` | `whsec_...` |
 | `STRIPE_PRICE_12M` / `STRIPE_PRICE_3M` / `STRIPE_PRICE_1M` | os Price IDs |
 | `SUPABASE_SERVICE_ROLE_KEY` | a chave service_role |
-| `QUIZ_URL` | endereço do quiz na Hostinger |
+| `QUIZ_URL` | opcional (padrão `https://quiz.moviqgym.app`) |
 | `NEXT_PUBLIC_PLANOS_URL` | o mesmo endereço do quiz (botão "Ver planos" de quem está sem assinatura) |
 | `NEXT_PUBLIC_EXIGIR_ASSINATURA` | **deixe sem** até testar tudo; depois `1` para ligar o bloqueio |
 
 Depois de criar ou alterar variáveis: *Deployments → Redeploy*.
 
-### 4. Quiz (Hostinger)
+### 4. Quiz (`public/quiz-site`, em quiz.moviqgym.app)
 Em `config.js` do quiz:
 - `STRIPE_CHECKOUT_URL` já aponta para `https://moviqapp.vercel.app/api/stripe/checkout`;
 - os `total` de `PLANOS` são **só o que aparece na tela**: precisam ser iguais aos preços cadastrados na Stripe.

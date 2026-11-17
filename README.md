@@ -96,7 +96,7 @@ A chave fica **só no servidor** (`app/api/coach/route.js`), nunca vai para o ap
 
 ### Quiz de entrada (anúncio → quiz → checkout → app)
 
-O quiz é uma **página estática hospedada na Hostinger** (fora deste repositório): cerca de 25 telas com objetivo, corpo, onde treina, experiência, dias, tempo, músculos prioritários, divisão, limitações, rotina, altura e peso. No fim, a pessoa informa **nome e e-mail**, as respostas vão para o Supabase (função `save_quiz_lead`) e ela segue para o checkout com o e-mail já preenchido.
+O quiz é uma **página estática** em `public/quiz-site/`, servida no subdomínio **`quiz.moviqgym.app`** (regra em `next.config.mjs`; o app fica em `www.moviqgym.app`): cerca de 25 telas com objetivo, corpo, onde treina, experiência, dias, tempo, músculos prioritários, divisão, limitações, rotina, altura e peso. No fim, a pessoa informa **nome e e-mail**, as respostas vão para o Supabase (função `save_quiz_lead`) e ela segue para o checkout com o e-mail já preenchido.
 
 Quando a pessoa compra e entra no app **com o mesmo e-mail**, a tela **`/preparando`** acha o quiz dela, preenche o perfil (nome, altura, peso, meta), monta a semana de treinos com o **Coach com IA** (ou um plano pronto, se a IA não estiver configurada) e leva para a aba Plano. Quem não tem quiz vai direto para o Início. Depois do login (e da troca de senha) o app passa sempre por `/preparando`.
 
@@ -105,7 +105,7 @@ Configuração (uma vez):
 2. Mantenha **Confirm email** ligado no Supabase em produção. É a confirmação que garante que só o dono do e-mail recebe o plano do quiz.
 3. Na página de obrigado do checkout (ou no e-mail de acesso), use o link `https://SEU-APP.vercel.app/login?email=EMAIL&modo=cadastro`, que abre o cadastro com o e-mail (e o nome, com `&name=`) preenchido.
 
-Perguntas e regras ficam em `lib/quiz.js` (com testes em `lib/quiz.test.mjs`). **A versão da Hostinger tem uma cópia dessas perguntas** (`quiz-dados.js`): ao mudar uma pergunta, mude nos dois lugares.
+Perguntas e regras ficam em `lib/quiz.js` (com testes em `lib/quiz.test.mjs`). **A página do quiz tem uma cópia dessas perguntas** (`public/quiz-site/quiz-dados.js`): ao mudar uma pergunta, mude nos dois lugares.
 
 ## Licença
 
