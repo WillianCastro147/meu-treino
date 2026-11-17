@@ -461,6 +461,8 @@
         { method: 'POST', action: CFG.STRIPE_CHECKOUT_URL, style: 'display:none' },
         h('input', { type: 'hidden', name: 'plano', value: `${p.meses}m` }),
         h('input', { type: 'hidden', name: 'email', value: String(answers.email || '').trim() }),
+        // nome digitado no quiz: é ele que vai no link de acesso (não o nome do titular do cartão)
+        h('input', { type: 'hidden', name: 'nome', value: String(answers.nome || '').trim() }),
         Object.entries(utms).map(([k, v]) => h('input', { type: 'hidden', name: k, value: String(v) }))
       );
       document.body.append(form);
