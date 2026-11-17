@@ -180,7 +180,8 @@
       type: 'single',
       title: 'Quantos dias por semana você consegue treinar?',
       sub: 'Escolha o que cabe de verdade na sua rotina.',
-      options: [2, 3, 4, 5, 6].map((n) => ({ value: n, label: `${n} dias` })),
+      // 7 = todos os dias: academia 4x por semana + Desafio 21 dias de calistenia (app: lib/quiz.js gymDays)
+      options: [...[2, 3, 4, 5, 6].map((n) => ({ value: n, label: `${n} dias` })), { value: 7, label: 'Todos os dias (com o Desafio 21 dias)' }],
     },
     {
       id: 'minutos',
@@ -299,6 +300,7 @@
       id: 'desafio',
       section: 2,
       type: 'single',
+      when: (a) => Number(a.dias) !== 7, // "todos os dias" já inclui o desafio
       title: 'Quer entrar no Desafio 21 dias de calistenia?',
       sub: 'Um treino por dia com o peso do corpo, sem equipamento, para fazer em casa junto com o seu plano.',
       options: [
@@ -398,7 +400,8 @@
 
   function suggestedSplit(a) {
     if (a && a.divisao && a.divisao !== 'auto') return a.divisao;
-    const d = Number(a && a.dias) || 3;
+    const raw = Math.round(Number(a && a.dias) || 3);
+    const d = raw >= 7 ? 4 : raw; // todos os dias = 4 de academia + desafio
     if (d <= 3) return 'fullbody';
     if (d === 4) return 'upper-lower';
     return 'ppl';
@@ -412,7 +415,7 @@
       objetivo: GOAL_LABEL[a.objetivo] || '',
       nivel: LEVEL_LABEL[estimateLevel(a)],
       divisao: SPLIT_LABEL[suggestedSplit(a)],
-      rotina: `${a.dias || 3} treinos por semana · ${a.minutos || 60} min`,
+      rotina: Number(a.dias) === 7 ? `Todos os dias · ${a.minutos || 60} min` : `${a.dias || 3} treinos por semana · ${a.minutos || 60} min`,
       foco: foco.length ? listJoin(foco) : 'corpo todo equilibrado',
       cuidados: hasLimits(a) ? listJoin(labelsOf('limites', a.limites, a)) : null,
       imc: imc ? Math.round(imc * 10) / 10 : null,

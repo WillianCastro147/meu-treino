@@ -290,7 +290,7 @@
       ['Rotina', s.rotina],
       ['Prioridade', s.foco],
       s.cuidados ? ['Cuidado com', s.cuidados] : null,
-      answers.desafio === 'sim' ? ['Bônus', 'Desafio 21 dias de calistenia'] : null,
+      answers.desafio === 'sim' || Number(answers.dias) === 7 ? ['Bônus', 'Desafio 21 dias de calistenia'] : null,
     ].filter(Boolean);
     body.append(
       ...[
