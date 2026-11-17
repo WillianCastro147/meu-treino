@@ -238,8 +238,7 @@
     {
       id: 'info-limite',
       section: 1,
-      type: 'info',
-      img: 'info-limite',
+      type: 'info', // sem imagem: só título e texto
       when: (a) => hasLimits(a),
       title: 'Anotado. Seu treino vai respeitar isso.',
       text: (a) =>
