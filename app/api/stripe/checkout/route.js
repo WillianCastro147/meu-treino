@@ -1,11 +1,19 @@
 // Cria a Checkout Session da Stripe (página de pagamento hospedada pela Stripe) e redireciona para ela.
-// Chamado pela tela de planos do quiz (Hostinger) com um <form method="POST">: plano=12m|3m|1m e email.
+// Chamado pela tela de planos do quiz (quiz.moviqgym.app) com um <form method="POST">: plano=12m|3m|1m, email e UTMs.
 import { stripe, PLAN_PRICES, APP_URL, QUIZ_URL } from '@/lib/stripe';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/;
+
+// Parâmetros do anúncio que o quiz repassa: vão para os metadados da sessão e da assinatura na Stripe
+// (é de lá que a Utmify lê a origem da venda).
+const TRACKING_KEYS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'src', 'sck', 'fbclid'];
+const trackingFrom = (body) =>
+  Object.fromEntries(
+    TRACKING_KEYS.filter((k) => typeof body[k] === 'string' && body[k].trim()).map((k) => [k, body[k].trim().slice(0, 450)])
+  );
 
 async function readBody(req) {
   const type = req.headers.get('content-type') || '';
@@ -22,6 +30,7 @@ export async function POST(req) {
   const price = PLAN_PRICES[plano];
   if (!price) return new Response('Plano inválido ou sem preço configurado.', { status: 400 });
   const email = String(body.email || '').trim().toLowerCase();
+  const metadata = { plano, origem: 'quiz', ...trackingFrom(body) };
 
   let session;
   try {
@@ -45,7 +54,8 @@ export async function POST(req) {
 
     // E-mail do quiz já preenchido: é por ele que o app libera o acesso e acha o plano do quiz
     ...(EMAIL_RE.test(email) && email.length <= 254 ? { customer_email: email } : {}),
-    metadata: { plano, origem: 'quiz' },
+    metadata,
+    subscription_data: { metadata }, // também na assinatura (renovações carregam a origem)
     });
   } catch (e) {
     console.error('Stripe checkout:', e.type, e.code, e.message);
