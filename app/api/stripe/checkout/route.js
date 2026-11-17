@@ -1,6 +1,6 @@
 // Cria a Checkout Session da Stripe (página de pagamento hospedada pela Stripe) e redireciona para ela.
 // Chamado pela tela de planos do quiz (Hostinger) com um <form method="POST">: plano=12m|3m|1m e email.
-import { stripe, PLAN_PRICES, APP_URL } from '@/lib/stripe';
+import { stripe, PLAN_PRICES, APP_URL, QUIZ_URL } from '@/lib/stripe';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -41,7 +41,7 @@ export async function POST(req) {
     mode: 'subscription',
     line_items: [{ price, quantity: 1 }],
     success_url: `${APP_URL}/bem-vindo?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: process.env.QUIZ_URL || APP_URL,
+    cancel_url: QUIZ_URL,
 
     // E-mail do quiz já preenchido: é por ele que o app libera o acesso e acha o plano do quiz
     ...(EMAIL_RE.test(email) && email.length <= 254 ? { customer_email: email } : {}),

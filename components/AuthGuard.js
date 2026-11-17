@@ -8,7 +8,7 @@ import { useI18n } from '@/lib/i18n';
 // Bloqueio por assinatura (Stripe): só vale com NEXT_PUBLIC_EXIGIR_ASSINATURA=1 na Vercel.
 // A conta precisa de uma linha ativa (ou 'cortesia') na tabela assinaturas (migração 006).
 const EXIGIR = process.env.NEXT_PUBLIC_EXIGIR_ASSINATURA === '1';
-const PLANOS_URL = process.env.NEXT_PUBLIC_PLANOS_URL || '';
+const PLANOS_URL = process.env.NEXT_PUBLIC_PLANOS_URL || 'https://quiz.moviqgym.app';
 const CACHE = 'moviq_acesso_v1'; // resultado positivo guardado por 10 min (evita checar a cada página)
 
 const TXT = {
