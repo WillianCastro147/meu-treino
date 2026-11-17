@@ -6,6 +6,7 @@ import { LangProvider } from '@/lib/i18n';
 import { CatalogProvider } from '@/lib/catalog';
 import { DialogProvider } from '@/components/Dialog';
 import { supabase } from '@/lib/supabase';
+import '@/lib/install'; // começa a escutar o "instalar app" do Android desde a abertura
 
 // Leva o usuário para a tela de nova senha quando ele abre o link de recuperação
 function RecoveryListener() {

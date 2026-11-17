@@ -9,6 +9,7 @@ import PageHeader from '@/components/PageHeader';
 import WeekStrip from '@/components/WeekStrip';
 import StartSheet from '@/components/StartSheet';
 import BodyWeightCard from '@/components/BodyWeightCard';
+import InstallBanner from '@/components/InstallBanner';
 import { supabase } from '@/lib/supabase';
 import { useI18n } from '@/lib/i18n';
 import { useDialog } from '@/components/Dialog';
@@ -137,6 +138,8 @@ function Accueil({ user }) {
           </Link>
         }
       />
+
+      <InstallBanner />
 
       {/* Semana (com setas) + treino de hoje */}
       <div className="card">

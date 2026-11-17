@@ -14,6 +14,10 @@ import { findExercise, loadCatalog } from '@/lib/catalog';
 import { buildStarterPlan, STARTER_PLANS } from '@/lib/starter';
 import { firstName, toCoachInput, starterFor } from '@/lib/quiz';
 import { IconLogo } from '@/components/Icons';
+import { isStandalone } from '@/lib/install';
+
+// Depois do plano pronto, quem ainda não instalou o app passa pela tela de instalação
+const afterPlan = (dest) => (isStandalone() ? dest : `/instalar?next=${encodeURIComponent(dest)}`);
 
 export default function PreparandoPage() {
   return <AuthGuard>{(user) => <Preparando user={user} />}</AuthGuard>;
@@ -140,7 +144,7 @@ function Preparando({ user }) {
         </ul>
         {error && <p className="error-msg">{error}</p>}
         {(phase === 'done' || phase === 'error') && (
-          <button className="btn" onClick={() => router.replace(phase === 'done' ? '/treino' : '/coach')}>
+          <button className="btn" onClick={() => router.replace(afterPlan(phase === 'done' ? '/treino' : '/coach'))}>
             {phase === 'done' ? 'Ver meu plano' : 'Abrir o Coach'}
           </button>
         )}
