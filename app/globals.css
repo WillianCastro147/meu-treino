@@ -2409,3 +2409,105 @@ textarea.input {
 .pick-row.on {
   color: var(--accent);
 }
+
+/* Tela "Instale o Moviq" (/instalar) e lembrete no Início */
+.install-box {
+  display: grid;
+  gap: 14px;
+}
+
+.install-icon {
+  border-radius: 18px;
+  box-shadow: 0 6px 24px rgba(59, 130, 246, 0.25);
+}
+
+.install-text {
+  color: var(--muted);
+  line-height: 1.45;
+  text-align: center;
+}
+
+.install-steps {
+  list-style: none;
+  display: grid;
+  gap: 12px;
+  padding: 0;
+  margin: 0;
+}
+
+.install-steps li {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  background: var(--card2);
+  border-radius: 14px;
+  padding: 12px 14px;
+  line-height: 1.4;
+}
+
+.install-num {
+  flex: 0 0 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 800;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.install-ok {
+  color: #22c55e;
+  font-weight: 700;
+  text-align: center;
+}
+
+.install-keep {
+  color: var(--muted);
+  font-size: 14px;
+  text-align: center;
+}
+
+.install-keep b {
+  color: var(--text);
+}
+
+.install-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--accent-soft);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  border-radius: 16px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+}
+
+.install-banner img {
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+
+.install-banner > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.install-banner b {
+  display: block;
+  font-size: 15px;
+}
+
+.install-banner small {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.install-banner .x {
+  background: none;
+  color: var(--muted);
+  font-size: 20px;
+  padding: 4px 6px;
+}

@@ -128,6 +128,21 @@ Para ver os avisos chegando: *Developers → Webhooks → (seu endpoint) → Eve
 - **Termos de uso e Política de privacidade:** preencha `TERMOS_URL` e `PRIVACIDADE_URL` no `config.js` do quiz.
 - **Ir para produção:** troque as chaves e os Price IDs pelos do modo *live* e crie o webhook também no modo *live*. Ele tem outro `whsec_...`.
 
+## E-mail de boas-vindas (Resend)
+
+Depois de cada compra, o webhook envia um e-mail com o botão "Acessar o Moviq" (cadastro com o e-mail da compra), o endereço www.moviqgym.app e o passo a passo para instalar o app na tela inicial ([lib/email.js](lib/email.js)). Um e-mail por compra (Idempotency-Key com o id da sessão). Sem `RESEND_API_KEY`, nada é enviado e o resto funciona normalmente.
+
+1. Crie a conta em https://resend.com e adicione o domínio `moviqgym.app` (*Domains → Add Domain*).
+2. Cadastre no DNS da Vercel (*Domains → moviqgym.app → DNS Records*) os registros que o Resend mostrar (MX/TXT de envio e o DKIM) e espere o domínio ficar "Verified".
+3. Crie uma API key com permissão *Sending access* e coloque na Vercel:
+
+| Variável | Valor |
+|----------|-------|
+| `RESEND_API_KEY` | `re_...` |
+| `EMAIL_FROM` | opcional, padrão `Moviq <ola@moviqgym.app>` |
+| `EMAIL_REPLY_TO` | opcional: e-mail que recebe as respostas dos clientes |
+
+Depois: *Redeploy*.
 ## Ajuda
 - https://support.stripe.com
 - https://docs.stripe.com/mcp
