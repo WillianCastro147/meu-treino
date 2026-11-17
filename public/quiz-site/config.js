@@ -10,7 +10,7 @@ window.MOVIQ_CONFIG = {
   SUPABASE_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im96anFma3VrenFvcHdxaHFqeXRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5MzI5NDQsImV4cCI6MjEwMDUwODk0NH0.4h__tLjeOFjOkHqNBidrUNFc38UGlnU4zkrPtvIIIic',
 
   // ------------------------------------------------------------------
-  // PAGAMENTO (Stripe Checkout): o botão "Continuar" envia o plano e o e-mail para o app,
+  // PAGAMENTO (Stripe Checkout): o botão "Garantir meu plano" envia o plano e o e-mail para o app,
   // que cria a página de pagamento da Stripe e leva a pessoa até ela.
   // O quiz roda no mesmo projeto do app (quiz.moviqgym.app), então o caminho é relativo.
   // ------------------------------------------------------------------
