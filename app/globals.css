@@ -31,6 +31,27 @@ body {
   font-size: 17px;
 }
 
+/* iPhone com o app na tela de início (status bar "black-translucent" + viewport-fit=cover):
+   no iOS 26 a área da página fica mais curta que a tela (perde a altura do relógio/ilha) quando o
+   conteúdo é curto, e a barra de baixo (fixed, bottom: 0) sobe e deixa um vão preto embaixo.
+   Somar o recuo do topo à altura mínima devolve a tela inteira. Fora do app instalado o recuo é 0. */
+html {
+  min-height: calc(100% + env(safe-area-inset-top));
+}
+
+/* Faixa opaca atrás do relógio/ilha: o conteúdo rolado não aparece por baixo das horas */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: env(safe-area-inset-top);
+  background: var(--bg);
+  z-index: 45;
+  pointer-events: none;
+}
+
 a {
   color: inherit;
   text-decoration: none;
@@ -52,6 +73,8 @@ textarea {
   max-width: 560px;
   margin: 0 auto;
   padding: 16px 16px 95px;
+  /* começa abaixo do relógio/ilha do iPhone */
+  padding-top: calc(16px + env(safe-area-inset-top));
 }
 
 .page-title {
@@ -270,6 +293,7 @@ textarea {
   width: 100%;
   max-width: 560px;
   height: 92vh;
+  max-height: calc(100% - env(safe-area-inset-top) - 8px);
   border-radius: 18px 18px 0 0;
   border: 1px solid var(--border);
   display: flex;
@@ -391,6 +415,7 @@ textarea {
   align-items: center;
   justify-content: center;
   padding: 20px;
+  padding-top: calc(20px + env(safe-area-inset-top));
 }
 
 .auth-box {
@@ -538,7 +563,7 @@ textarea {
 
 .session-head {
   position: sticky;
-  top: 0;
+  top: env(safe-area-inset-top);
   z-index: 40;
   background: var(--bg);
   display: flex;
@@ -1229,7 +1254,7 @@ textarea {
 /* Tela de treino: cabeçalho com X, título, tempo e ✓ */
 .workout-head {
   position: sticky;
-  top: 0;
+  top: env(safe-area-inset-top);
   z-index: 40;
   background: var(--bg);
   display: flex;
