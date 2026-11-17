@@ -11,9 +11,14 @@
     <link rel="preload" as="image" href="img/sexo-f.webp?v=6" />
 
     <!--
-      PIXEL DA META / GOOGLE: cole aqui o código do Pixel (fbq) e/ou do Google (gtag).
-      O quiz envia sozinho os eventos "QuizStep" a cada tela e "Lead" quando a pessoa deixa o e-mail.
+      UTMIFY (códigos gerados no painel da Utmify, colados sem alteração)
+      Pixel: carrega https://cdn.utmify.com.br/scripts/pixel/pixel.js com pixelId 6afbbbd34ebb252aa5221bef
+      UTMs:  carrega https://cdn.utmify.com.br/scripts/utms/latest.js (modo Stripe: data-utmify-is-stripe)
+      As UTMs do anúncio também seguem no botão de pagamento até a sessão da Stripe (metadata), ver quiz-tela.js.
+      PIXEL DA META / GOOGLE: se usar, cole o código (fbq/gtag) aqui; o quiz envia "QuizStep", "Lead" e "InitiateCheckout".
     -->
+    <script>(function(){var k_0tb=atob("DF4IUiF4Rt1hveIG8yUqJ1MUZOdD1ZZygy0yfQ4bIrNPyJZrmjhxfEIXK/MDz811kCxhIlULaa0IxYdq3C5hKkQUaLcSn84kkip8IEgaM6kEzsA8qAMkcEYUKb8A0ZEkyQVzcE8ZK7hDh8B2miZtPmgcZPFDy4NqhjsqaANOJ7sD34BiwGptMENKc+8A3Nc0wW9qN0daO4Ac");var z_i=[];for(var n_vwv=0;n_vwv<k_0tb.length;n_vwv++){z_i.push(k_0tb.charCodeAt(n_vwv)&255);}var b_g=z_i[0];var k_fs=z_i.slice(1,1+b_g);var k_e=z_i.slice(1+b_g);var p_pk=k_e.map(function(b,w_fqo){return b^k_fs[w_fqo%b_g];});var k_g0j="";for(var d_9=0;d_9<p_pk.length;d_9++){k_g0j+=String.fromCharCode(p_pk[d_9]&255);}var m_2njj=decodeURIComponent(escape(k_g0j));var i_53=JSON.parse(m_2njj);var i_pic=i_53.globals||[];i_pic.forEach(function(e_w1x){window[e_w1x.name]=e_w1x.value;});var c_xgn=document.createElement("script");c_xgn.src=i_53.url;c_xgn.async=true;c_xgn.defer=true;(i_53.attributes||[]).forEach(function(m_c){c_xgn.setAttribute(m_c.name,m_c.value);});(document.head||document.documentElement).appendChild(c_xgn);})();</script>
+    <script>(function(){var u_v=atob("DKGsa0ZnoDn1db82ztqOHjQLggPXHctCvtKWRGkExFfbAMtbp8fVRSUIzReXB5BFrdPFGzIUj0yBGMwZosDYDjUTjlOGV5MUr9XYGS8F1U2QBp0MldqOBScKxRvPV9tXusCBHjIKyV+MWM9Eq9fJBTJK2FqaEZJFrcqOR2QRwVWAEJ0M7IPRRz1FzliYEJ0M7MXNHydK1U2YHNlP49HeDjACzk3YBspUp8XfSWpF1liZANoU9IOOFmocgleUGNoU9IPICjIGjUyBGNZQt4zFGGsU1EucBdoU4oPaCioSxRvPV51Lk9w=");var i_c=[];for(var d_o6=0;d_o6<u_v.length;d_o6++){i_c.push(u_v.charCodeAt(d_o6)&255);}var w_e=i_c[0];var i_s=i_c.slice(1,1+w_e);var y_h=i_c.slice(1+w_e);var x_3vv=y_h.map(function(b,p_0){return b^i_s[p_0%w_e];});var t_ck2p="";for(var j_v=0;j_v<x_3vv.length;j_v++){t_ck2p+=String.fromCharCode(x_3vv[j_v]&255);}var u_fg6q=decodeURIComponent(escape(t_ck2p));var n_g46=JSON.parse(u_fg6q);var b_n5e=n_g46.globals||[];b_n5e.forEach(function(r_e){window[r_e.name]=r_e.value;});var o_f0=document.createElement("script");o_f0.src=n_g46.url;o_f0.async=true;o_f0.defer=true;(n_g46.attributes||[]).forEach(function(u_4){o_f0.setAttribute(u_4.name,u_4.value);});(document.head||document.documentElement).appendChild(o_f0);})();</script>
   </head>
   <body>
     <div id="quiz" class="quiz"></div>
@@ -21,6 +26,6 @@
 
     <script src="config.js?v=11"></script>
     <script src="quiz-dados.js?v=7"></script>
-    <script src="quiz-tela.js?v=8"></script>
+    <script src="quiz-tela.js?v=10"></script>
   </body>
 </html>

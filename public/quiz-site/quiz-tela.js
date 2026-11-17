@@ -47,6 +47,7 @@
     answers = Object.assign({}, answers, patch);
     save();
   };
+  save(); // grava as UTMs do anúncio já na chegada (seguem até a Stripe mesmo se a pessoa sair e voltar)
 
   // Pixel da Meta / Google, se estiverem instalados no index.html
   function track(event, data) {
@@ -452,11 +453,15 @@
         return;
       }
       track('InitiateCheckout', { value: p.total, currency: 'BRL', content_name: `moviq-${p.meses}m` });
+      // UTMs do anúncio (guardadas desde a chegada no quiz + as da URL atual): o app grava na sessão
+      // da Stripe (metadata), que é de onde a Utmify lê a origem da venda
+      const utms = Object.assign({}, tracking, Q.pickTracking(window.location.search));
       const form = h(
         'form',
         { method: 'POST', action: CFG.STRIPE_CHECKOUT_URL, style: 'display:none' },
         h('input', { type: 'hidden', name: 'plano', value: `${p.meses}m` }),
-        h('input', { type: 'hidden', name: 'email', value: String(answers.email || '').trim() })
+        h('input', { type: 'hidden', name: 'email', value: String(answers.email || '').trim() }),
+        Object.entries(utms).map(([k, v]) => h('input', { type: 'hidden', name: k, value: String(v) }))
       );
       document.body.append(form);
       form.submit();
