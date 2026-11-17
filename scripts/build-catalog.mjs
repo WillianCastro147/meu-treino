@@ -11,6 +11,7 @@
 //   public/media/still/<id>.webp        foto (miniatura)
 import fs from 'node:fs';
 import path from 'node:path';
+import { applyTranslations } from './details-i18n.mjs';
 
 const src = process.argv[2];
 if (!src || !fs.existsSync(path.join(src, 'exercises'))) {
@@ -93,5 +94,10 @@ for (const f of fs.readdirSync(path.join(src, 'exercises')).sort()) {
 
 fs.mkdirSync(out('catalog'), { recursive: true });
 fs.writeFileSync(out('catalog', 'exercises.json'), JSON.stringify(list));
+// Textos que o openGym deixou em inglês: usa as traduções já feitas (scripts/translate-details.mjs)
+for (const l of ['pt', 'es', 'fr']) {
+  const file = path.join(root, 'scripts', 'translations', `${l}.json`);
+  if (fs.existsSync(file)) details[l] = applyTranslations(details.en, details[l], JSON.parse(fs.readFileSync(file, 'utf8'))).details;
+}
 for (const [l, d] of Object.entries(details)) fs.writeFileSync(out('catalog', `details-${l}.json`), JSON.stringify(d));
 console.log(`${list.length} exercícios · ${copied} arquivos de mídia copiados`);
