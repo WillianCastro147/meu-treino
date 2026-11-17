@@ -20,7 +20,9 @@ import { RecoveryCard, ChallengesCard } from '@/components/HomeCards';
 import { todaysRoutine } from '@/lib/plan';
 import { startUrl, resultOfWorkout } from '@/lib/circuit';
 import { useCircuitText } from '@/lib/circuitText';
-import { loadActive, activeUrl } from '@/lib/activeWorkout';
+import { loadActive, activeUrl, clearActive } from '@/lib/activeWorkout';
+import { normalizeChallenge } from '@/lib/challenge';
+import ChallengeBoard from '@/components/ChallengeBoard';
 import { activityByDay, dayKey, fmtKg, weekStart, weekStreak, workoutSets, workoutVolume } from '@/lib/stats';
 import { setLabels } from '@/lib/sets';
 import { IconTimer, IconSets, IconVolume, IconDumbbell, IconTrash, IconGear, IconFlame, IconChevron } from '@/components/Icons';
@@ -37,6 +39,7 @@ function Accueil({ user }) {
   const router = useRouter();
   const [workouts, setWorkouts] = useState(null);
   const [expanded, setExpanded] = useState(null);
+  const [showRecent, setShowRecent] = useState(false); // quadro da sequência aberto: mostra os treinos recentes
   const [active, setActive] = useState(null);
   const [showStart, setShowStart] = useState(false);
   const [planInfo, setPlanInfo] = useState(null);
@@ -127,6 +130,19 @@ function Accueil({ user }) {
 
   const todayCount = todayRoutine?.exercises?.length || 0;
 
+  // Desafio 21 dias (lib/challenge.js): o mesmo quadro da aba Desafio
+  const homeChallenge = normalizeChallenge(plan?.challenge);
+  async function startChallengeDay(routineId) {
+    const routine = planInfo?.routines.find((r) => r.id === routineId);
+    if (!routine) return;
+    if (active && (active.routineId || null) !== routineId) {
+      const ok = await dialog.confirm(`${t('workoutInProgress')}: ${active.routineName}. ${t('confirmDiscard')}`, { danger: true, confirmLabel: t('discard') });
+      if (!ok) return;
+      clearActive();
+    }
+    router.push(startUrl(routine));
+  }
+
   return (
     <div className="page">
       <PageHeader
@@ -199,27 +215,103 @@ function Accueil({ user }) {
         )}
       </div>
 
+      {homeChallenge && planInfo && <ChallengeBoard challenge={homeChallenge} routines={planInfo.routines} onStart={startChallengeDay} />}
+
       <RecoveryCard note={recovery} onClose={() => hide('recovery')} />
       <ChallengesCard list={challenges} locale={locale} onClose={() => hide('challenges')} />
 
       <BodyWeightCard user={user} />
 
-      {/* Sequência de semanas: leva ao Progresso, onde estão medalhas e nível */}
+      {/* Sequência de semanas + treinos recentes: um quadro só; tocar abre a lista de treinos */}
       {workouts && workouts.length > 0 && (
-        <Link href="/estatisticas" className="card streak-link">
-          <span style={{ flex: 1 }}>
-            <span className="streak-title">
-              <IconFlame size={26} color="var(--accent)" /> {tf(streak === 1 ? 'streakOne' : 'streakMany', { n: streak })}
+        <div className="card recent-card">
+          <button className="recent-head" onClick={() => setShowRecent((v) => !v)} aria-expanded={showRecent}>
+            <span style={{ flex: 1, textAlign: 'left', minWidth: 0 }}>
+              <span className="streak-title">
+                <IconFlame size={26} color="var(--accent)" /> {tf(streak === 1 ? 'streakOne' : 'streakMany', { n: streak })}
+              </span>
+              <span className="muted" style={{ display: 'block', fontSize: 16, marginTop: 4 }}>
+                {tf('levelLine', { n: levelInfo(workouts).level })} · {tf('totalWorkouts', { n: workouts.length })}
+              </span>
+              <span className="recent-hint">{t('recentWorkouts')}</span>
             </span>
-            <span className="muted" style={{ display: 'block', fontSize: 16, marginTop: 4 }}>
-              {tf('levelLine', { n: levelInfo(workouts).level })} · {tf('totalWorkouts', { n: workouts.length })}
+            <span className={`recent-chevron ${showRecent ? 'open' : ''}`}>
+              <IconChevron size={20} color="var(--muted)" />
             </span>
-          </span>
-          <IconChevron size={20} color="var(--muted)" />
-        </Link>
-      )}
+          </button>
+          {showRecent && (
+            <div className="recent-list">
+              {workouts.slice(0, 20).map((w) => {
+                  const exs = w.exercises || [];
+                  const volume = workoutVolume(w);
+                  const totalSets = workoutSets(w);
+                  const isOpen = expanded === w.id;
 
-      {workouts && workouts.length > 0 && <p className="section-title" style={{ marginTop: 8 }}>{t('recentWorkouts')}</p>}
+                  return (
+                    <div key={w.id} className="recent-item">
+                      <div
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => setExpanded(isOpen ? null : w.id)}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <b style={{ fontSize: 18 }}>{w.name}</b>
+                          <span className="muted">{formatDate(w.started_at, locale)}</span>
+                        </div>
+
+                        <p className="muted stat-line">
+                          <IconTimer /> {w.duration_min} min
+                          <IconSets /> {totalSets} {t('sets')}
+                          <IconVolume /> {fmtKg(volume, locale)} kg
+                        </p>
+                        {resultOfWorkout(w) && <span className="circuit-badge">{ctext.result(resultOfWorkout(w))}</span>}
+
+                        {/* Miniatures des exercices de la routine */}
+                        <div className="thumb-strip">
+                          {exs.slice(0, 5).map(
+                            (ex, i) =>
+                              ex.gif && (
+                                <img key={i} src={ex.gif} alt={exName(ex)} className="strip-thumb" loading="lazy" />
+                              )
+                          )}
+                          {exs.length > 5 && <span className="strip-more">+{exs.length - 5}</span>}
+                        </div>
+                      </div>
+
+                      {isOpen && (
+                        <div style={{ marginTop: 10, borderTop: '1px solid var(--border)', paddingTop: 8 }}>
+                          {exs.map((ex, i) => (
+                            <div key={i} className="ex-row">
+                              {ex.gif && <img src={ex.gif} alt="" className="ex-thumb" loading="lazy" />}
+                              <div>
+                                <p className="ex-name">{exName(ex)}</p>
+                                <p className="muted">
+                                  {(() => {
+                                    const labels = setLabels(ex.sets);
+                                    // W / D / F na frente das séries especiais (aquecimento, drop, falha)
+                                    return ex.sets
+                                      .map((s, si) => (s.done ? `${/\d/.test(labels[si]) ? '' : labels[si] + ' '}${s.weight || 0}kg × ${s.reps || 0}` : null))
+                                      .filter(Boolean)
+                                      .join('  ·  ');
+                                  })() || t('noSetsDone')}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                          <button className="btn danger small" style={{ marginTop: 10 }} onClick={() => supprimer(w.id)}>
+                            <IconTrash /> {t('delete')}
+                          </button>
+                          <button className="btn secondary small" style={{ marginTop: 10, marginLeft: 8 }} onClick={() => router.push(`/treino/registro?id=${w.id}`)}>
+                            {t('edit')}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+            </div>
+          )}
+        </div>
+      )}
 
       {workouts === null && <p className="muted">{t('loading')}</p>}
 
@@ -234,75 +326,6 @@ function Accueil({ user }) {
           <p className="muted">{t('noWorkoutsHint')}</p>
         </div>
       )}
-
-      {workouts &&
-        workouts.slice(0, 20).map((w) => {
-          const exs = w.exercises || [];
-          const volume = workoutVolume(w);
-          const totalSets = workoutSets(w);
-          const isOpen = expanded === w.id;
-
-          return (
-            <div key={w.id} className="card">
-              <div
-                style={{ cursor: 'pointer' }}
-                onClick={() => setExpanded(isOpen ? null : w.id)}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <b style={{ fontSize: 18 }}>{w.name}</b>
-                  <span className="muted">{formatDate(w.started_at, locale)}</span>
-                </div>
-
-                <p className="muted stat-line">
-                  <IconTimer /> {w.duration_min} min
-                  <IconSets /> {totalSets} {t('sets')}
-                  <IconVolume /> {fmtKg(volume, locale)} kg
-                </p>
-                {resultOfWorkout(w) && <span className="circuit-badge">{ctext.result(resultOfWorkout(w))}</span>}
-
-                {/* Miniatures des exercices de la routine */}
-                <div className="thumb-strip">
-                  {exs.slice(0, 5).map(
-                    (ex, i) =>
-                      ex.gif && (
-                        <img key={i} src={ex.gif} alt={exName(ex)} className="strip-thumb" loading="lazy" />
-                      )
-                  )}
-                  {exs.length > 5 && <span className="strip-more">+{exs.length - 5}</span>}
-                </div>
-              </div>
-
-              {isOpen && (
-                <div style={{ marginTop: 10, borderTop: '1px solid var(--border)', paddingTop: 8 }}>
-                  {exs.map((ex, i) => (
-                    <div key={i} className="ex-row">
-                      {ex.gif && <img src={ex.gif} alt="" className="ex-thumb" loading="lazy" />}
-                      <div>
-                        <p className="ex-name">{exName(ex)}</p>
-                        <p className="muted">
-                          {(() => {
-                            const labels = setLabels(ex.sets);
-                            // W / D / F na frente das séries especiais (aquecimento, drop, falha)
-                            return ex.sets
-                              .map((s, si) => (s.done ? `${/\d/.test(labels[si]) ? '' : labels[si] + ' '}${s.weight || 0}kg × ${s.reps || 0}` : null))
-                              .filter(Boolean)
-                              .join('  ·  ');
-                          })() || t('noSetsDone')}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                  <button className="btn danger small" style={{ marginTop: 10 }} onClick={() => supprimer(w.id)}>
-                    <IconTrash /> {t('delete')}
-                  </button>
-                  <button className="btn secondary small" style={{ marginTop: 10, marginLeft: 8 }} onClick={() => router.push(`/treino/registro?id=${w.id}`)}>
-                    {t('edit')}
-                  </button>
-                </div>
-              )}
-            </div>
-          );
-        })}
 
       <BottomNav />
       {showStart && <StartSheet onClose={() => setShowStart(false)} />}
