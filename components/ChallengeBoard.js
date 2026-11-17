@@ -12,11 +12,14 @@ import { challengeProgress } from '@/lib/challenge';
 import { IconCheck, IconTrophy } from '@/components/Icons';
 
 // challenge: plan.challenge normalizado; routines: rotinas do usuário (com exercises);
-// onStart(routineId): começa o treino do dia; children: texto extra abaixo do título
-export default function ChallengeBoard({ challenge, routines, onStart, children }) {
+// onStart(routineId): começa o treino do dia; children: texto extra abaixo do título.
+// workouts (opcional): treinos já carregados pela tela (com routine_id), para não buscar de novo.
+// onNew (opcional): com o desafio terminado, mostra só um cartão menor de parabéns com este botão.
+export default function ChallengeBoard({ challenge, routines, onStart, onNew, workouts: given, children }) {
   const { t, tf, exName } = useI18n();
   const dialog = useDialog();
-  const [workouts, setWorkouts] = useState(null);
+  const [fetched, setFetched] = useState(null);
+  const workouts = given || fetched;
   const [open, setOpen] = useState(null); // índice do dia aberto
 
   const ids = challenge.days.map((d) => d.id);
@@ -24,14 +27,15 @@ export default function ChallengeBoard({ challenge, routines, onStart, children 
 
   // Treinos feitos das rotinas do desafio (para marcar os dias concluídos)
   useEffect(() => {
-    setWorkouts(null);
+    if (given) return;
+    setFetched(null);
     supabase
       .from('workouts')
       .select('routine_id, started_at')
       .in('routine_id', ids)
-      .then(({ data }) => setWorkouts(data || []));
+      .then(({ data }) => setFetched(data || []));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [idsKey]);
+  }, [idsKey, !!given]);
 
   const progress = challengeProgress(challenge, workouts || []);
   const routineOf = (i) => routines?.find((r) => r.id === challenge.days[i].id) || null;
@@ -39,6 +43,26 @@ export default function ChallengeBoard({ challenge, routines, onStart, children 
   function tocar(i) {
     if (progress.days[i] === 'locked') return dialog.alert(tf('chLocked', { n: progress.next + 1 }));
     setOpen(i);
+  }
+
+  // Terminado (só onde há onNew, no Início): cartão menor de parabéns, sem a grade
+  if (onNew && workouts !== null && progress?.finished) {
+    return (
+      <div className="card ch-done-card">
+        <span className="ch-done-icon">
+          <IconTrophy size={26} color="#fff" />
+        </span>
+        <span style={{ flex: 1, minWidth: 0 }}>
+          <b style={{ display: 'block', fontSize: 17 }}>{t('chFinished')}</b>
+          <span className="muted" style={{ display: 'block', fontSize: 14 }}>
+            {t('chTitle')} · {tf('chProgress', { n: 21 })}
+          </span>
+          <button className="link-btn" style={{ padding: '6px 0 0' }} onClick={onNew}>
+            {t('chRestart')}
+          </button>
+        </span>
+      </div>
+    );
   }
 
   const day = open !== null ? routineOf(open) : null;

@@ -21,11 +21,11 @@ import { todaysRoutine } from '@/lib/plan';
 import { startUrl, resultOfWorkout } from '@/lib/circuit';
 import { useCircuitText } from '@/lib/circuitText';
 import { loadActive, activeUrl, clearActive } from '@/lib/activeWorkout';
-import { normalizeChallenge } from '@/lib/challenge';
+import { normalizeChallenge, challengeToday } from '@/lib/challenge';
 import ChallengeBoard from '@/components/ChallengeBoard';
 import { activityByDay, dayKey, fmtKg, weekStart, weekStreak, workoutSets, workoutVolume } from '@/lib/stats';
 import { setLabels } from '@/lib/sets';
-import { IconTimer, IconSets, IconVolume, IconDumbbell, IconTrash, IconGear, IconFlame, IconChevron } from '@/components/Icons';
+import { IconTimer, IconSets, IconVolume, IconDumbbell, IconTrash, IconGear, IconFlame, IconChevron, IconTrophy } from '@/components/Icons';
 
 export default function InicioPage() {
   return (
@@ -128,10 +128,13 @@ function Accueil({ user }) {
       ? monthlyChallenges(workouts, weighins)
       : null;
 
-  const todayCount = todayRoutine?.exercises?.length || 0;
-
   // Desafio 21 dias (lib/challenge.js): o mesmo quadro da aba Desafio
   const homeChallenge = normalizeChallenge(plan?.challenge);
+  // Sem treino do plano hoje (descanso ou sem plano): o "Hoje" sugere o próximo dia do desafio
+  const chToday = homeChallenge && workouts && !todayRoutine ? challengeToday(homeChallenge, workouts) : null;
+  const chRoutine = chToday ? planInfo?.routines.find((r) => r.id === chToday.routineId) || null : null;
+  const suggested = todayRoutine || chRoutine;
+  const todayCount = suggested?.exercises?.length || 0;
   async function startChallengeDay(routineId) {
     const routine = planInfo?.routines.find((r) => r.id === routineId);
     if (!routine) return;
@@ -187,18 +190,20 @@ function Accueil({ user }) {
             <button
               className="today-row"
               onClick={() =>
-                active ? router.push(activeUrl(active)) : todayRoutine ? router.push(startUrl(todayRoutine)) : setShowStart(true)
+                active ? router.push(activeUrl(active)) : suggested ? router.push(startUrl(suggested)) : setShowStart(true)
               }
             >
               <span className="today-icon">
-                <IconDumbbell size={24} color="#fff" />
+                {!active && chRoutine && !todayRoutine ? <IconTrophy size={22} color="#fff" /> : <IconDumbbell size={24} color="#fff" />}
               </span>
               <span style={{ flex: 1, minWidth: 0 }}>
-                <span className="today-kicker">{active ? t('workoutInProgress') : t('today')}</span>
-                <span className="ellipsis" style={{ fontSize: 19, fontWeight: 600 }}>
-                  {active ? active.routineName : todayRoutine ? todayRoutine.name : isRestDay ? t('restDayToday') : t('noRoutineToday')}
+                <span className="today-kicker">
+                  {active ? t('workoutInProgress') : chRoutine && !todayRoutine ? `${t('today')} · ${t('ptab_challenge')}` : t('today')}
                 </span>
-                {!active && todayRoutine && todayCount > 0 && (
+                <span className="ellipsis" style={{ fontSize: 19, fontWeight: 600 }}>
+                  {active ? active.routineName : suggested ? suggested.name : isRestDay ? t('restDayToday') : t('noRoutineToday')}
+                </span>
+                {!active && suggested && todayCount > 0 && (
                   <span className="muted" style={{ display: 'block', fontSize: 15 }}>
                     {tf(todayCount === 1 ? 'nExercisesOne' : 'nExercisesMany', { n: todayCount })}
                   </span>
@@ -206,7 +211,7 @@ function Accueil({ user }) {
               </span>
               <span className="pill">{active ? t('continueWorkout') : t('startPill')}</span>
             </button>
-            {!active && (todayRoutine || isRestDay) && (
+            {!active && (suggested || isRestDay) && (
               <button className="link-btn" onClick={() => setShowStart(true)}>
                 {t('pickOtherWorkout')}
               </button>
@@ -215,7 +220,20 @@ function Accueil({ user }) {
         )}
       </div>
 
-      {homeChallenge && planInfo && <ChallengeBoard challenge={homeChallenge} routines={planInfo.routines} onStart={startChallengeDay} />}
+      {homeChallenge && planInfo && (
+        <ChallengeBoard
+          challenge={homeChallenge}
+          routines={planInfo.routines}
+          workouts={workouts}
+          onStart={startChallengeDay}
+          onNew={() => {
+            try {
+              localStorage.setItem('moviq.plan.tab', 'challenge');
+            } catch {}
+            router.push('/treino');
+          }}
+        />
+      )}
 
       <RecoveryCard note={recovery} onClose={() => hide('recovery')} />
       <ChallengesCard list={challenges} locale={locale} onClose={() => hide('challenges')} />
