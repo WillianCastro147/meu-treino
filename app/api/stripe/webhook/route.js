@@ -1,7 +1,7 @@
 // Avisos da Stripe: mantém a tabela assinaturas (migração 006) igual à assinatura na Stripe.
 // Eventos (cadastre na Stripe): checkout.session.completed, customer.subscription.created,
 // customer.subscription.updated, customer.subscription.deleted.
-import { stripe, supabaseAdmin, APP_URL } from '@/lib/stripe';
+import { stripe, supabaseAdmin, nomeDaCompra, APP_URL } from '@/lib/stripe';
 import { sendWelcomeEmail } from '@/lib/email';
 
 export const runtime = 'nodejs';
@@ -64,7 +64,8 @@ export async function POST(req) {
           const email = session.customer_details?.email || session.customer_email;
           await saveSubscription(db, sub, email);
           // E-mail de boas-vindas com o link do app (uma vez por compra; falha no e-mail não refaz o aviso)
-          await sendWelcomeEmail({ email, name: session.customer_details?.name, appUrl: APP_URL, idempotencyKey: `welcome-${session.id}` }).catch((e) =>
+          const name = await nomeDaCompra(session, db);
+          await sendWelcomeEmail({ email, name, appUrl: APP_URL, idempotencyKey: `welcome-${session.id}` }).catch((e) =>
             console.error('E-mail de boas-vindas:', e.message)
           );
         }

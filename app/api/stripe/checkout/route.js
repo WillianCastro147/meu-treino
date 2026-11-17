@@ -31,6 +31,8 @@ export async function POST(req) {
   if (!price) return new Response('Plano inválido ou sem preço configurado.', { status: 400 });
   const email = String(body.email || '').trim().toLowerCase();
   const metadata = { plano, origem: 'quiz', ...trackingFrom(body) };
+  // Nome do quiz: só na sessão (não na assinatura), para o link de acesso usar ele e não o nome do cartão
+  const nome = String(body.nome || '').trim().replace(/\s+/g, ' ').slice(0, 80);
 
   let session;
   try {
@@ -54,7 +56,7 @@ export async function POST(req) {
 
     // E-mail do quiz já preenchido: é por ele que o app libera o acesso e acha o plano do quiz
     ...(EMAIL_RE.test(email) && email.length <= 254 ? { customer_email: email } : {}),
-    metadata,
+    metadata: nome ? { ...metadata, nome } : metadata,
     subscription_data: { metadata }, // também na assinatura (renovações carregam a origem)
     });
   } catch (e) {
