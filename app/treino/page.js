@@ -16,9 +16,11 @@ import { normalizePlan, prunePlan, isoDay } from '@/lib/plan';
 import { circuitOfRoutine, startUrl } from '@/lib/circuit';
 import { useCircuitText } from '@/lib/circuitText';
 import { buildStarterPlan, STARTER_PLANS } from '@/lib/starter';
+import { challengeRoutineIds } from '@/lib/challenge';
+import ChallengeTab from '@/components/ChallengeTab';
 import { IconPlus, IconTrash, IconCalendar, IconChart, IconDumbbell, IconChevron, IconCheck } from '@/components/Icons';
 
-const PLAN_TABS = ['schedule', 'routines'];
+const PLAN_TABS = ['schedule', 'challenge', 'routines'];
 
 export default function TreinoPage() {
   return <AuthGuard>{(user) => <Plano user={user} />}</AuthGuard>;
@@ -53,20 +55,27 @@ function Plano({ user }) {
         return data || [];
       });
 
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem('moviq.plan.tab');
-      if (PLAN_TABS.includes(saved)) setTab(saved);
-    } catch {}
-    loadRoutines();
+  const loadPlan = () =>
     fetchPlan(user.id)
       .then((r) => {
         setPlan(normalizePlan(r.plan));
         setPlanMissing(r.missing);
       })
       .catch(() => {});
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('moviq.plan.tab');
+      if (PLAN_TABS.includes(saved)) setTab(saved);
+    } catch {}
+    loadRoutines();
+    loadPlan();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user.id]);
+
+  // Rotinas do Desafio 21 dias ficam só na aba Desafio
+  const challengeIds = challengeRoutineIds(plan);
+  const ownRoutines = routines ? routines.filter((r) => !challengeIds.has(r.id)) : null;
 
   async function updatePlan(next) {
     setPlan(next);
@@ -248,6 +257,17 @@ function Plano({ user }) {
         </>
       )}
 
+      {tab === 'challenge' && (
+        <ChallengeTab
+          user={user}
+          plan={plan}
+          planMissing={planMissing}
+          routines={routines}
+          onChanged={() => Promise.all([loadRoutines(), loadPlan()])}
+          onStart={demarrer}
+        />
+      )}
+
       {tab === 'routines' && (
         <>
           <div style={{ display: 'flex', gap: 10, marginBottom: 14 }}>
@@ -259,8 +279,8 @@ function Plano({ user }) {
             </button>
           </div>
 
-          {routines === null && <p className="muted">{t('loading')}</p>}
-          {routines && routines.length === 0 && (
+          {ownRoutines === null && <p className="muted">{t('loading')}</p>}
+          {ownRoutines && ownRoutines.length === 0 && (
             <div className="card" style={{ textAlign: 'center' }}>
               <p className="muted">{t('noRoutines')}</p>
               <button className="link-btn" style={{ marginTop: 8 }} onClick={() => pickTab('schedule')}>
@@ -269,8 +289,8 @@ function Plano({ user }) {
             </div>
           )}
 
-          {routines &&
-            routines.map((r) => {
+          {ownRoutines &&
+            ownRoutines.map((r) => {
               const onDays = Object.entries(plan.week || {})
                 .filter(([, id]) => id === r.id)
                 .sort((a, b) => a[0] - b[0])
@@ -327,7 +347,7 @@ function Plano({ user }) {
                   {!plan.week[picker.n] && <IconCheck size={18} color="var(--accent)" />}
                 </button>
               )}
-              {(routines || []).map((r) => {
+              {(ownRoutines || []).map((r) => {
                 const on = picker.kind === 'day' && plan.week[picker.n] === r.id;
                 return (
                   <button key={r.id} className={`pick-row ${on ? 'on' : ''}`} onClick={() => choose(r.id)}>
@@ -340,7 +360,7 @@ function Plano({ user }) {
                   </button>
                 );
               })}
-              {routines && routines.length === 0 && <p className="muted">{t('noRoutines')}</p>}
+              {ownRoutines && ownRoutines.length === 0 && <p className="muted">{t('noRoutines')}</p>}
               <button className="link-btn" style={{ padding: '12px 0' }} onClick={() => router.push('/treino/nova')}>
                 + {t('createRoutine')}
               </button>

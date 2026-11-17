@@ -2511,3 +2511,190 @@ textarea.input {
   font-size: 20px;
   padding: 4px 6px;
 }
+/* Desafio 21 dias (aba Desafio do Plano) */
+.ch-bar {
+  height: 8px;
+  border-radius: 99px;
+  background: var(--card2);
+  overflow: hidden;
+}
+
+.ch-bar span {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+  background: var(--accent);
+  transition: width 0.3s ease;
+}
+
+.ch-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.ch-cell {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: var(--card2);
+  color: var(--text);
+  font-size: 16px;
+  padding: 0;
+  min-width: 0;
+}
+
+/* Foto do exercício do dia: transparente, para o número aparecer por cima */
+.ch-cell-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* as fotos têm fundo branco: invertidas (com o matiz de volta) ficam com fundo escuro, como o app */
+  filter: invert(1) hue-rotate(180deg);
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.ch-cell-num {
+  position: relative;
+  font-weight: 800;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+}
+
+.ch-cell-check {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ch-cell.done {
+  box-shadow: inset 0 0 0 2.5px var(--accent);
+}
+
+.ch-cell.done .ch-cell-img {
+  opacity: 0.6;
+}
+
+.ch-cell.next {
+  box-shadow: inset 0 0 0 2.5px var(--accent), 0 0 0 2px var(--accent-soft);
+  background: var(--accent-soft);
+}
+
+.ch-cell.next .ch-cell-img {
+  opacity: 0.7;
+}
+
+.ch-cell.locked {
+  /* contorno azul mais suave nos dias que ainda vão abrir */
+  box-shadow: inset 0 0 0 1.5px rgba(59, 130, 246, 0.45);
+}
+
+.ch-cell.locked .ch-cell-img {
+  opacity: 0.32;
+}
+
+.ch-cell.locked .ch-cell-num {
+  color: var(--muted);
+}
+
+.ch-finished {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+/* Início: sequência de semanas + treinos recentes num quadro só (toque abre a lista) */
+.recent-head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: none;
+  color: inherit;
+  padding: 0;
+  font: inherit;
+  text-align: left;
+}
+
+.recent-hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.recent-chevron {
+  display: flex;
+  transition: transform 0.2s ease;
+}
+
+.recent-chevron.open {
+  transform: rotate(90deg);
+}
+
+.recent-list {
+  margin-top: 12px;
+}
+
+.recent-item {
+  border-top: 1px solid var(--border);
+  padding: 14px 0 6px;
+}
+
+/* Início: desafio concluído vira um cartão menor */
+.ch-done-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.ch-done-icon {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Iniciar: dias do Desafio 21 dias em sequência, separados das rotinas */
+.start-option.ch-locked {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.start-option.ch-next {
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.start-option-icon.ch-num {
+  background: var(--card3);
+  color: var(--text);
+  font-weight: 800;
+  font-size: 15px;
+}
+
+.start-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 18px 0 4px;
+}

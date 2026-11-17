@@ -9,10 +9,12 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AuthGuard from '@/components/AuthGuard';
 import { supabase } from '@/lib/supabase';
-import { logBodyWeight, saveRoutinesAsWeek } from '@/lib/data';
+import { fetchPlan, logBodyWeight, saveRoutinesAsWeek } from '@/lib/data';
 import { findExercise, loadCatalog } from '@/lib/catalog';
 import { buildStarterPlan, STARTER_PLANS } from '@/lib/starter';
-import { firstName, toCoachInput, starterFor } from '@/lib/quiz';
+import { normalizeChallenge } from '@/lib/challenge';
+import { createChallenge } from '@/lib/challengeCreate';
+import { firstName, toCoachInput, toChallengeInput, starterFor } from '@/lib/quiz';
 import { IconLogo } from '@/components/Icons';
 import { isStandalone } from '@/lib/install';
 
@@ -68,7 +70,15 @@ function Preparando({ user }) {
       }
     }
 
-    // 4) Marca o quiz como usado
+    // 4) Desafio 21 dias de calistenia, se a pessoa quis no quiz (e ainda não tem um)
+    const challengeInput = toChallengeInput(a);
+    if (challengeInput) {
+      setPhase('challenge');
+      const current = await fetchPlan(user.id).catch(() => ({ plan: null }));
+      if (!normalizeChallenge(current.plan?.challenge)) await createChallenge(user.id, challengeInput).catch(() => {});
+    }
+
+    // 5) Marca o quiz como usado
     await supabase.rpc('claim_quiz_lead', { p_id: found.id });
     setPhase('done');
   }
@@ -110,8 +120,9 @@ function Preparando({ user }) {
   const items = [
     ['profile', 'Salvando suas medidas'],
     ['plan', 'Montando seus treinos da semana'],
+    ...(toChallengeInput(lead?.answers) ? [['challenge', 'Montando seu Desafio 21 dias de calistenia']] : []),
   ];
-  const order = ['check', 'profile', 'plan', 'done'];
+  const order = ['check', 'profile', 'plan', 'challenge', 'done'];
   const at = order.indexOf(phase === 'error' ? 'done' : phase);
 
   if (!lead) {
