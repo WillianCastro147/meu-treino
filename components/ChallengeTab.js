@@ -139,9 +139,18 @@ export default function ChallengeTab({ user, plan, planMissing, routines, onChan
         <div className="ch-grid">
           {challenge.days.map((d, i) => {
             const s = progress?.days[i] || 'locked';
+            // Foto do primeiro exercício do dia no fundo, transparente, com o número por cima
+            const first = routineOf(i)?.exercises?.[0];
+            const img = first ? findExercise(first)?.gif || first.gif : null;
             return (
               <button key={d.id} className={`ch-cell ${s}`} onClick={() => tocar(i)} aria-label={`${tf('chDay', { n: i + 1 })} (${s})`}>
-                {s === 'done' ? <IconCheck size={18} /> : <b>{i + 1}</b>}
+                {img && <img src={img} alt="" className="ch-cell-img" loading="lazy" />}
+                <b className="ch-cell-num">{i + 1}</b>
+                {s === 'done' && (
+                  <span className="ch-cell-check">
+                    <IconCheck size={11} color="#fff" />
+                  </span>
+                )}
               </button>
             );
           })}
