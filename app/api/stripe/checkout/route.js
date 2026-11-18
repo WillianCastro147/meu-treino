@@ -1,6 +1,6 @@
 // Cria a Checkout Session da Stripe (página de pagamento hospedada pela Stripe) e redireciona para ela.
 // Chamado pela tela de planos do quiz (quiz.moviqgym.app) com um <form method="POST">: plano=12m|3m|1m|vitalicio, email e UTMs.
-import { stripe, PLAN_PRICES, APP_URL, QUIZ_URL, PLANO_VITALICIO, VITALICIO_PRICE, VITALICIO_CENTAVOS } from '@/lib/stripe';
+import { stripe, PLAN_PRICES, APP_URL, QUIZ_URL, PLANO_VITALICIO, VITALICIO_PRICE, VITALICIO_CENTAVOS, MARCA_POR_PLANO } from '@/lib/stripe';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -61,9 +61,7 @@ export async function POST(req) {
     payment_intent_data: { metadata }, // a origem também no pagamento (Utmify)
   };
 
-  let session;
-  try {
-    session = await stripe.checkout.sessions.create({
+  const params = {
     // Configurado no Checkout Studio
     ui_mode: 'hosted_page',
     billing_address_collection: 'auto',
@@ -81,7 +79,20 @@ export async function POST(req) {
     // E-mail do quiz já preenchido: é por ele que o app libera o acesso e acha o plano do quiz
     ...(EMAIL_RE.test(email) && email.length <= 254 ? { customer_email: email } : {}),
     metadata: nome ? { ...metadata, nome } : metadata,
-    });
+  };
+  // Nome e ícone desta oferta (lib/stripe.js); sem marca própria, vale a da conta Stripe
+  const marca = MARCA_POR_PLANO[plano];
+
+  let session;
+  try {
+    try {
+      session = await stripe.checkout.sessions.create(marca ? { ...params, branding_settings: marca } : params);
+    } catch (e) {
+      // Se a Stripe recusar a marca (ícone fora do ar, campo não aceito), o pagamento abre com a marca da conta
+      if (!marca || !/branding_settings/.test(`${e.param || ''} ${e.message || ''}`)) throw e;
+      console.error('Stripe checkout: marca recusada, seguindo sem ela:', e.message);
+      session = await stripe.checkout.sessions.create(params);
+    }
   } catch (e) {
     console.error('Stripe checkout:', e.type, e.code, e.message);
     return new Response('Não foi possível abrir o pagamento agora. Volte e tente de novo em instantes.', {
