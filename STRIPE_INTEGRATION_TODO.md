@@ -50,7 +50,7 @@ Além desses, a sessão leva `customer_email` (o e-mail digitado no quiz, para a
 2. **Chave da API:** em *Developers → API keys*, copie a **Secret key** (`sk_test_...`). Uma *restricted key* também serve, com escrita em *Checkout Sessions* e leitura em *Customers* e *Subscriptions*.
 3. **Webhook:** em *Developers → Webhooks → Add endpoint*:
    - URL: `https://moviqapp.vercel.app/api/stripe/webhook`
-   - Eventos: `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`
+   - Eventos: `checkout.session.completed`, `checkout.session.async_payment_succeeded` (Pix do acesso vitalício), `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`
    - Copie o **Signing secret** (`whsec_...`).
 4. **Portal do cliente** (para "Cancele quando quiser"): em *Settings → Billing → Customer portal*, ative o portal e copie o link de login. Ver "Próximos passos".
 

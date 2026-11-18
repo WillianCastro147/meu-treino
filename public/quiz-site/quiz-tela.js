@@ -412,11 +412,23 @@
     '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M12 3l7.5 3v5.5c0 4.6-3.2 8.2-7.5 9.5-4.3-1.3-7.5-4.9-7.5-9.5V6z"/><path d="M8.5 12.2l2.4 2.4 4.6-4.8"/></svg>';
 
   function paywall(step, body) {
-    const plans = (CFG.PLANOS || []).filter((p) => p && p.meses > 0 && p.total > 0);
+    const oferta = CFG.OFERTA_VITALICIA && CFG.OFERTA_VITALICIA.ativa && CFG.OFERTA_VITALICIA.total > 0 ? CFG.OFERTA_VITALICIA : null;
+    const plans = oferta ? [] : (CFG.PLANOS || []).filter((p) => p && p.meses > 0 && p.total > 0);
     const monthly = plans.find((p) => p.meses === 1);
-    if (answers.plano === undefined || !plans.some((p) => p.meses === answers.plano)) {
+    if (!oferta && (answers.plano === undefined || !plans.some((p) => p.meses === answers.plano))) {
       answers.plano = (plans.find((p) => p.destaque) || plans[0] || {}).meses;
     }
+
+    // Acesso vitalício: um card só, com o preço cheio e "pagamento único" (o mesmo valor aparece na Stripe)
+    const lifetimeCard = oferta
+      ? h(
+          'div',
+          { class: 'plan active featured' },
+          h('span', { class: 'plan-badge' }, 'PAGAMENTO ÚNICO'),
+          h('span', { class: 'plan-name' }, h('b', {}, 'Acesso vitalício'), h('small', {}, 'Pix ou cartão · sem mensalidade')),
+          h('span', { class: 'plan-price' }, h('b', {}, money(oferta.total)), h('small', {}, 'uma vez'))
+        )
+      : null;
 
     const cards = plans.map((p) => {
       const pm = perMonth(p);
@@ -448,19 +460,20 @@
     const errBox = h('div', {});
     // Envia plano + e-mail para o app (Vercel), que cria a Checkout Session da Stripe e redireciona para ela
     function go() {
-      const p = plans.find((x) => x.meses === answers.plano);
+      const sub = plans.find((x) => x.meses === answers.plano);
+      const p = oferta ? { plano: 'vitalicio', total: oferta.total } : sub ? { plano: `${sub.meses}m`, total: sub.total } : null;
       if (!p || !CFG.STRIPE_CHECKOUT_URL) {
         errBox.replaceChildren(h('p', { class: 'error-msg', style: 'text-align:center' }, 'Falta configurar o pagamento (STRIPE_CHECKOUT_URL em config.js).'));
         return;
       }
-      track('InitiateCheckout', { value: p.total, currency: 'BRL', content_name: `moviq-${p.meses}m` });
+      track('InitiateCheckout', { value: p.total, currency: 'BRL', content_name: `moviq-${p.plano}` });
       // UTMs do anúncio (guardadas desde a chegada no quiz + as da URL atual): o app grava na sessão
       // da Stripe (metadata), que é de onde a Utmify lê a origem da venda
       const utms = Object.assign({}, tracking, Q.pickTracking(window.location.search));
       const form = h(
         'form',
         { method: 'POST', action: CFG.STRIPE_CHECKOUT_URL, style: 'display:none' },
-        h('input', { type: 'hidden', name: 'plano', value: `${p.meses}m` }),
+        h('input', { type: 'hidden', name: 'plano', value: p.plano }),
         h('input', { type: 'hidden', name: 'email', value: String(answers.email || '').trim() }),
         // nome digitado no quiz: é ele que vai no link de acesso (não o nome do titular do cartão)
         h('input', { type: 'hidden', name: 'nome', value: String(answers.nome || '').trim() }),
@@ -488,10 +501,12 @@
               h('div', {}, h('b', {}, `Garantia de ${CFG.GARANTIA_DIAS} dias`), h('p', {}, 'Se não gostar, é só pedir: devolvemos 100% do seu dinheiro.'))
             )
           : null,
-        h('div', { class: 'pw-plans' }, cards),
-        h('button', { class: 'btn pw-cta', onclick: go }, 'Garantir meu plano'),
+        h('div', { class: 'pw-plans' }, oferta ? [lifetimeCard] : cards),
+        h('button', { class: 'btn pw-cta', onclick: go }, oferta ? 'Garantir meu acesso' : 'Garantir meu plano'),
         errBox,
-        CFG.AVISO_ASSINATURA ? h('p', { class: 'muted pw-legal' }, CFG.AVISO_ASSINATURA) : null,
+        oferta
+          ? CFG.AVISO_VITALICIO ? h('p', { class: 'muted pw-legal' }, CFG.AVISO_VITALICIO) : null
+          : CFG.AVISO_ASSINATURA ? h('p', { class: 'muted pw-legal' }, CFG.AVISO_ASSINATURA) : null,
         legal.length ? h('p', { class: 'muted pw-links' }, legal) : null,
       ].filter(Boolean)
     );
