@@ -1,6 +1,6 @@
 // Cria a Checkout Session da Stripe (página de pagamento hospedada pela Stripe) e redireciona para ela.
-// Chamado pela tela de planos do quiz (quiz.moviqgym.app) com um <form method="POST">: plano=12m|3m|1m, email e UTMs.
-import { stripe, PLAN_PRICES, APP_URL, QUIZ_URL } from '@/lib/stripe';
+// Chamado pela tela de planos do quiz (quiz.moviqgym.app) com um <form method="POST">: plano=12m|3m|1m|vitalicio, email e UTMs.
+import { stripe, PLAN_PRICES, APP_URL, QUIZ_URL, PLANO_VITALICIO, VITALICIO_CENTAVOS } from '@/lib/stripe';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -27,12 +27,37 @@ export async function POST(req) {
 
   const body = await readBody(req);
   const plano = String(body.plano || '');
-  const price = PLAN_PRICES[plano];
-  if (!price) return new Response('Plano inválido ou sem preço configurado.', { status: 400 });
+  const vitalicio = plano === PLANO_VITALICIO;
+  const price = vitalicio ? null : PLAN_PRICES[plano];
+  if (!vitalicio && !price) return new Response('Plano inválido ou sem preço configurado.', { status: 400 });
   const email = String(body.email || '').trim().toLowerCase();
   const metadata = { plano, origem: 'quiz', ...trackingFrom(body) };
   // Nome do quiz: só na sessão (não na assinatura), para o link de acesso usar ele e não o nome do cartão
   const nome = String(body.nome || '').trim().replace(/\s+/g, ' ').slice(0, 80);
+
+  // Assinatura recorrente (planos de 12, 3 e 1 mês): só cartão/carteiras
+  const assinatura = {
+    mode: 'subscription',
+    line_items: [{ price, quantity: 1 }],
+    payment_method_collection: 'always', // só vale em mode "subscription"
+    subscription_data: { metadata }, // também na assinatura (renovações carregam a origem)
+  };
+  // Acesso vitalício: pagamento único. Em mode "payment" a Stripe mostra o Pix (ativo no painel) além do cartão.
+  const pagamentoUnico = {
+    mode: 'payment',
+    line_items: [
+      {
+        quantity: 1,
+        price_data: {
+          currency: 'brl',
+          unit_amount: VITALICIO_CENTAVOS,
+          product_data: { name: 'Moviq · Acesso vitalício', description: 'Pagamento único. Sem mensalidade.' },
+        },
+      },
+    ],
+    customer_creation: 'always',
+    payment_intent_data: { metadata }, // a origem também no pagamento (Utmify)
+  };
 
   let session;
   try {
@@ -43,21 +68,17 @@ export async function POST(req) {
     phone_number_collection: { enabled: false },
     automatic_tax: { enabled: false },
     allow_promotion_codes: false,
-    payment_method_collection: 'always', // só vale em mode "subscription"
     submit_type: 'auto',
     integration_identifier: 'hosted_mobile_app_0001',
     origin_context: 'mobile_app',
 
-    // Assinatura recorrente (planos de 12, 3 e 1 mês)
-    mode: 'subscription',
-    line_items: [{ price, quantity: 1 }],
+    ...(vitalicio ? pagamentoUnico : assinatura),
     success_url: `${APP_URL}/bem-vindo?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: QUIZ_URL,
 
     // E-mail do quiz já preenchido: é por ele que o app libera o acesso e acha o plano do quiz
     ...(EMAIL_RE.test(email) && email.length <= 254 ? { customer_email: email } : {}),
     metadata: nome ? { ...metadata, nome } : metadata,
-    subscription_data: { metadata }, // também na assinatura (renovações carregam a origem)
     });
   } catch (e) {
     console.error('Stripe checkout:', e.type, e.code, e.message);

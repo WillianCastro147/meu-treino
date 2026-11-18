@@ -30,6 +30,12 @@ window.MOVIQ_CONFIG = {
     { meses: 1, total: 34.99 },
   ],
 
+  // OFERTA DE ACESSO VITALÍCIO (pagamento único, Pix ou cartão)
+  // ativa: true mostra SÓ esta oferta no lugar dos planos de assinatura acima; false volta para os planos.
+  // total: SÓ PARA MOSTRAR na tela. O valor cobrado vem do app (VITALICIO_CENTAVOS na Vercel, padrão 3700 = R$ 37,00).
+  OFERTA_VITALICIA: { ativa: true, total: 37 },
+  AVISO_VITALICIO: 'Pagamento único no Pix ou no cartão. Sem mensalidade e sem renovação automática.',
+
   // Garantia mostrada acima dos planos (0 = esconde)
   GARANTIA_DIAS: 7,
 

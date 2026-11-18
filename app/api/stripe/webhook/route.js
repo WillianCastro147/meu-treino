@@ -1,7 +1,7 @@
 // Avisos da Stripe: mantém a tabela assinaturas (migração 006) igual à assinatura na Stripe.
-// Eventos (cadastre na Stripe): checkout.session.completed, customer.subscription.created,
-// customer.subscription.updated, customer.subscription.deleted.
-import { stripe, supabaseAdmin, nomeDaCompra, APP_URL } from '@/lib/stripe';
+// Eventos (cadastre na Stripe): checkout.session.completed, checkout.session.async_payment_succeeded (Pix),
+// customer.subscription.created, customer.subscription.updated, customer.subscription.deleted.
+import { stripe, supabaseAdmin, nomeDaCompra, APP_URL, PLANO_VITALICIO } from '@/lib/stripe';
 import { sendWelcomeEmail } from '@/lib/email';
 
 export const runtime = 'nodejs';
@@ -41,6 +41,42 @@ async function saveSubscription(db, sub, email) {
   }
 }
 
+// Acesso vitalício (pagamento único): uma linha 'active' com plano 'vitalicio', sem assinatura.
+// Só grava com o pagamento confirmado: no cartão já no checkout.session.completed; no Pix, que é
+// assíncrono, no checkout.session.async_payment_succeeded. Avisos repetidos não duplicam a linha.
+async function saveVitalicio(db, session) {
+  const email = String(session.customer_details?.email || session.customer_email || '').trim().toLowerCase();
+  if (!email) throw new Error(`sessão ${session.id} sem e-mail`);
+  const row = {
+    status: 'active',
+    plano: PLANO_VITALICIO,
+    stripe_customer_id: typeof session.customer === 'string' ? session.customer : session.customer?.id || null,
+    current_period_end: null,
+    cancel_at_period_end: false,
+    updated_at: new Date().toISOString(),
+  };
+  const { data: existente, error: readError } = await db
+    .from('assinaturas')
+    .select('id')
+    .eq('email', email)
+    .eq('plano', PLANO_VITALICIO)
+    .maybeSingle();
+  if (readError) throw readError;
+  const { error } = existente
+    ? await db.from('assinaturas').update(row).eq('id', existente.id)
+    : await db.from('assinaturas').insert({ ...row, email });
+  if (error) throw error;
+  return email;
+}
+
+async function welcome(db, session, email) {
+  // E-mail de boas-vindas com o link do app (uma vez por compra; falha no e-mail não refaz o aviso)
+  const name = await nomeDaCompra(session, db);
+  await sendWelcomeEmail({ email, name, appUrl: APP_URL, idempotencyKey: `welcome-${session.id}` }).catch((e) =>
+    console.error('E-mail de boas-vindas:', e.message)
+  );
+}
+
 export async function POST(req) {
   const db = supabaseAdmin();
   if (!stripe || !db || !process.env.STRIPE_WEBHOOK_SECRET) return new Response('not_configured', { status: 503 });
@@ -63,12 +99,16 @@ export async function POST(req) {
           const sub = await stripe.subscriptions.retrieve(typeof session.subscription === 'string' ? session.subscription : session.subscription.id);
           const email = session.customer_details?.email || session.customer_email;
           await saveSubscription(db, sub, email);
-          // E-mail de boas-vindas com o link do app (uma vez por compra; falha no e-mail não refaz o aviso)
-          const name = await nomeDaCompra(session, db);
-          await sendWelcomeEmail({ email, name, appUrl: APP_URL, idempotencyKey: `welcome-${session.id}` }).catch((e) =>
-            console.error('E-mail de boas-vindas:', e.message)
-          );
+          await welcome(db, session, email);
+        } else if (session.mode === 'payment' && session.payment_status === 'paid') {
+          // cartão: pago na hora. Pix chega aqui como 'unpaid' e é liberado no aviso abaixo.
+          await welcome(db, session, await saveVitalicio(db, session));
         }
+        break;
+      }
+      case 'checkout.session.async_payment_succeeded': {
+        const session = event.data.object;
+        if (session.mode === 'payment') await welcome(db, session, await saveVitalicio(db, session));
         break;
       }
       case 'customer.subscription.created':
