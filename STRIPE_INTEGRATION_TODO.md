@@ -66,6 +66,7 @@ Além desses, a sessão leva `customer_email` (o e-mail digitado no quiz, para a
 | `STRIPE_SECRET_KEY` | `sk_test_...` (depois `sk_live_...`) |
 | `STRIPE_WEBHOOK_SECRET` | `whsec_...` |
 | `STRIPE_PRICE_12M` / `STRIPE_PRICE_3M` / `STRIPE_PRICE_1M` | os Price IDs |
+| `STRIPE_PRICE_VITALICIO` | Price ID **avulso** do acesso vitalício (produto "Moviq App", R$ 37,00) |
 | `SUPABASE_SERVICE_ROLE_KEY` | a chave service_role |
 | `QUIZ_URL` | opcional (padrão `https://quiz.moviqgym.app`) |
 | `NEXT_PUBLIC_PLANOS_URL` | o mesmo endereço do quiz (botão "Ver planos" de quem está sem assinatura) |
