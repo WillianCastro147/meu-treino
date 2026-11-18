@@ -1,6 +1,6 @@
 // Cria a Checkout Session da Stripe (página de pagamento hospedada pela Stripe) e redireciona para ela.
 // Chamado pela tela de planos do quiz (quiz.moviqgym.app) com um <form method="POST">: plano=12m|3m|1m|vitalicio, email e UTMs.
-import { stripe, PLAN_PRICES, APP_URL, QUIZ_URL, PLANO_VITALICIO, VITALICIO_CENTAVOS } from '@/lib/stripe';
+import { stripe, PLAN_PRICES, APP_URL, QUIZ_URL, PLANO_VITALICIO, VITALICIO_PRICE, VITALICIO_CENTAVOS } from '@/lib/stripe';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -46,14 +46,16 @@ export async function POST(req) {
   const pagamentoUnico = {
     mode: 'payment',
     line_items: [
-      {
-        quantity: 1,
-        price_data: {
-          currency: 'brl',
-          unit_amount: VITALICIO_CENTAVOS,
-          product_data: { name: 'Moviq · Acesso vitalício', description: 'Pagamento único. Sem mensalidade.' },
-        },
-      },
+      VITALICIO_PRICE
+        ? { price: VITALICIO_PRICE, quantity: 1 } // preço avulso cadastrado na Stripe
+        : {
+            quantity: 1,
+            price_data: {
+              currency: 'brl',
+              unit_amount: VITALICIO_CENTAVOS,
+              product_data: { name: 'Moviq · Acesso vitalício', description: 'Pagamento único. Sem mensalidade.' },
+            },
+          },
     ],
     customer_creation: 'always',
     payment_intent_data: { metadata }, // a origem também no pagamento (Utmify)

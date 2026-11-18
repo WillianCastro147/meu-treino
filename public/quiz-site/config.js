@@ -32,7 +32,8 @@ window.MOVIQ_CONFIG = {
 
   // OFERTA DE ACESSO VITALÍCIO (pagamento único, Pix ou cartão)
   // ativa: true mostra SÓ esta oferta no lugar dos planos de assinatura acima; false volta para os planos.
-  // total: SÓ PARA MOSTRAR na tela. O valor cobrado vem do app (VITALICIO_CENTAVOS na Vercel, padrão 3700 = R$ 37,00).
+  // total: SÓ PARA MOSTRAR na tela. O valor cobrado é o preço da Stripe em STRIPE_PRICE_VITALICIO na Vercel
+  //   (produto "Moviq App", price_1UcYaFQfnCdLHlDYcgtjhCiu, R$ 37,00 avulso em 16/11/2026): mantenha os dois iguais.
   OFERTA_VITALICIA: { ativa: true, total: 37 },
   AVISO_VITALICIO: 'Pagamento único no Pix ou no cartão. Sem mensalidade e sem renovação automática.',
 
