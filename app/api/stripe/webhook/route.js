@@ -1,8 +1,11 @@
 // Avisos da Stripe: mantém a tabela assinaturas (migração 006) igual à assinatura na Stripe.
 // Eventos (cadastre na Stripe): checkout.session.completed, checkout.session.async_payment_succeeded (Pix),
+// checkout.session.async_payment_failed (Pix expirou) e checkout.session.expired (pagamento abandonado):
+// estes dois mandam o e-mail de recuperação (lib/recuperacaoServer.js),
 // customer.subscription.created, customer.subscription.updated, customer.subscription.deleted.
 import { stripe, supabaseAdmin, nomeDaCompra, APP_URL, PLANO_VITALICIO } from '@/lib/stripe';
 import { sendWelcomeEmail } from '@/lib/email';
+import { enviarRecuperacao } from '@/lib/recuperacaoServer';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -109,6 +112,17 @@ export async function POST(req) {
       case 'checkout.session.async_payment_succeeded': {
         const session = event.data.object;
         if (session.mode === 'payment') await welcome(db, session, await saveVitalicio(db, session));
+        break;
+      }
+      // Recuperação: Pix venceu sem pagamento / pagamento aberto e abandonado (sessão expirou em 24 h).
+      // Falha no e-mail não refaz o aviso (só registra), para não reenviar em loop.
+      case 'checkout.session.async_payment_failed':
+      case 'checkout.session.expired': {
+        const session = event.data.object;
+        const sit = event.type === 'checkout.session.expired' ? 'abandonado' : 'pix_expirado';
+        await enviarRecuperacao(db, session, sit)
+          .then((r) => console.log('Recuperação', sit, session.id, JSON.stringify(r)))
+          .catch((e) => console.error('Recuperação:', sit, session.id, e.message));
         break;
       }
       case 'customer.subscription.created':

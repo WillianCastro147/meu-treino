@@ -50,7 +50,7 @@ Além desses, a sessão leva `customer_email` (o e-mail digitado no quiz, para a
 2. **Chave da API:** em *Developers → API keys*, copie a **Secret key** (`sk_test_...`). Uma *restricted key* também serve, com escrita em *Checkout Sessions* e leitura em *Customers* e *Subscriptions*.
 3. **Webhook:** em *Developers → Webhooks → Add endpoint*:
    - URL: `https://moviqapp.vercel.app/api/stripe/webhook`
-   - Eventos: `checkout.session.completed`, `checkout.session.async_payment_succeeded` (Pix do acesso vitalício), `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`
+   - Eventos: `checkout.session.completed`, `checkout.session.async_payment_succeeded` (Pix do acesso vitalício), `checkout.session.async_payment_failed` (Pix expirou → e-mail de recuperação), `checkout.session.expired` (pagamento abandonado → e-mail de recuperação), `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`
    - Copie o **Signing secret** (`whsec_...`).
 4. **Portal do cliente** (para "Cancele quando quiser"): em *Settings → Billing → Customer portal*, ative o portal e copie o link de login. Ver "Próximos passos".
 
@@ -67,6 +67,13 @@ Além desses, a sessão leva `customer_email` (o e-mail digitado no quiz, para a
 | `STRIPE_WEBHOOK_SECRET` | `whsec_...` |
 | `STRIPE_PRICE_12M` / `STRIPE_PRICE_3M` / `STRIPE_PRICE_1M` | os Price IDs |
 | `STRIPE_PRICE_VITALICIO` | Price ID **avulso** do acesso vitalício (produto "Moviq App", R$ 37,00) |
+| `ADMIN_EMAILS` | e-mails (separados por vírgula) das contas do app que abrem `/admin/recuperacao` |
+
+## Recuperação de Pix expirado e pagamento abandonado
+
+- **E-mail automático:** quando o Pix vence sem pagamento (`checkout.session.async_payment_failed`) ou o pagamento fica aberto até expirar (`checkout.session.expired`, 24 h), o webhook manda um e-mail com o botão "Gerar novo Pix". Só para a tentativa mais recente da pessoa e nunca para quem já tem acesso ([lib/recuperacaoServer.js](lib/recuperacaoServer.js)).
+- **Link de recuperação:** `/api/stripe/recuperar?s=<sessão>&c=email|whatsapp` cria um checkout novo com o mesmo plano, e-mail, nome e UTMs (a Utmify atribui a venda ao anúncio de origem). Metadados `recuperacao` e `recuperado_de` marcam a venda recuperada.
+- **WhatsApp manual:** `www.moviqgym.app/admin/recuperacao` lista quem não pagou, com telefone (pedido no checkout) e o botão "Chamar no WhatsApp", que abre o seu WhatsApp com a mensagem pronta.
 | `SUPABASE_SERVICE_ROLE_KEY` | a chave service_role |
 | `QUIZ_URL` | opcional (padrão `https://quiz.moviqgym.app`) |
 | `NEXT_PUBLIC_PLANOS_URL` | o mesmo endereço do quiz (botão "Ver planos" de quem está sem assinatura) |
