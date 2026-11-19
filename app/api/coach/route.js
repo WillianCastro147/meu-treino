@@ -7,6 +7,7 @@ import catalogRaw from '@/public/catalog/exercises.json';
 import { buildCandidates, buildMessages, DAILY_LIMIT, EQUIPMENT_PRESETS, GOALS, LEVELS, MINUTES, outputText, PLAN_SCHEMA, validatePlan } from '@/lib/coach';
 import { buildChallengeCandidates, buildChallengeMessages, CHALLENGE_MINUTES, CHALLENGE_SCHEMA, validateChallenge } from '@/lib/challenge';
 import { isMissingTable } from '@/lib/data';
+import { acessoCoach } from '@/lib/coachAcesso';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -47,6 +48,15 @@ export async function POST(req) {
   if (process.env.NEXT_PUBLIC_EXIGIR_ASSINATURA === '1') {
     const { data: ok, error: accessError } = await supabase.rpc('tem_acesso');
     if (!accessError && ok !== true) return json({ error: 'no_subscription' }, 402);
+  }
+
+  // Gerador de treino com IA (extra pago): fora o primeiro plano do quiz, a IA é só para quem comprou
+  try {
+    const acesso = await acessoCoach(user.email);
+    if (!acesso.liberado) return json({ error: 'gerador_required' }, 403);
+  } catch (e) {
+    console.error('Coach: falha ao conferir o gerador', e.message);
+    return json({ error: 'upstream' }, 502);
   }
 
   // Pedido do usuário, sempre conferido no servidor

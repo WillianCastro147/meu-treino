@@ -3,8 +3,8 @@
 // checkout.session.async_payment_failed (Pix expirou) e checkout.session.expired (pagamento abandonado):
 // estes dois mandam o e-mail de recuperação (lib/recuperacaoServer.js),
 // customer.subscription.created, customer.subscription.updated, customer.subscription.deleted.
-import { stripe, supabaseAdmin, nomeDaCompra, APP_URL, PLANO_VITALICIO, PLANO_ALIMENTAR, PLANO_ALIMENTAR_PRICE } from '@/lib/stripe';
-import { sendWelcomeEmail, sendPlanoAlimentarEmail } from '@/lib/email';
+import { stripe, supabaseAdmin, nomeDaCompra, APP_URL, PLANO_VITALICIO, extrasAtivos, extraDoPlano } from '@/lib/stripe';
+import { sendWelcomeEmail, sendExtraEmail } from '@/lib/email';
 import { enviarRecuperacao } from '@/lib/recuperacaoServer';
 
 export const runtime = 'nodejs';
@@ -44,7 +44,7 @@ async function saveSubscription(db, sub, email) {
   }
 }
 
-// Compra avulsa (pagamento único): uma linha 'active' com o plano ('vitalicio' ou 'plano_alimentar'),
+// Compra avulsa (pagamento único): uma linha 'active' com o plano ('vitalicio', 'plano_alimentar', 'gerador_ia'),
 // sem assinatura. Só grava com o pagamento confirmado: no cartão já no checkout.session.completed; no Pix,
 // que é assíncrono, no checkout.session.async_payment_succeeded. Avisos repetidos não duplicam a linha.
 async function saveCompraAvulsa(db, session, plano) {
@@ -72,22 +72,23 @@ async function saveCompraAvulsa(db, session, plano) {
   return email;
 }
 
-// Pagamento único confirmado. Sessão de plano_alimentar sozinho (oferta depois da compra ou dentro do app)
-// libera só o plano alimentar. Sessão do vitalício libera o app e, se a pessoa marcou o order bump,
-// também o plano alimentar.
+// Pagamento único confirmado. Sessão de um extra sozinho (oferta depois da compra ou dentro do app)
+// libera só aquele extra. Sessão do vitalício libera o app e os extras marcados como order bump.
 async function liberarPagamentoUnico(db, session) {
-  if (session.metadata?.plano === PLANO_ALIMENTAR) {
-    const email = await saveCompraAvulsa(db, session, PLANO_ALIMENTAR);
+  const avulso = extraDoPlano(session.metadata?.plano);
+  if (avulso) {
+    const email = await saveCompraAvulsa(db, session, avulso.plano);
     const name = await nomeDaCompra(session, db);
-    await sendPlanoAlimentarEmail({ email, name, appUrl: APP_URL, idempotencyKey: `alimentar-${session.id}` }).catch((e) =>
-      console.error('E-mail do plano alimentar:', e.message)
+    await sendExtraEmail({ email, name, extra: avulso, appUrl: APP_URL, idempotencyKey: `${avulso.plano}-${session.id}` }).catch((e) =>
+      console.error('E-mail do extra:', avulso.plano, e.message)
     );
     return;
   }
   const email = await saveCompraAvulsa(db, session, PLANO_VITALICIO);
-  if (PLANO_ALIMENTAR_PRICE) {
+  if (extrasAtivos().length) {
     const itens = await stripe.checkout.sessions.listLineItems(session.id, { limit: 10 });
-    if (itens.data.some((i) => i.price?.id === PLANO_ALIMENTAR_PRICE)) await saveCompraAvulsa(db, session, PLANO_ALIMENTAR);
+    const precos = new Set(itens.data.map((i) => i.price?.id));
+    for (const e of extrasAtivos()) if (precos.has(e.price)) await saveCompraAvulsa(db, session, e.plano);
   }
   await welcome(db, session, email);
 }
