@@ -68,6 +68,7 @@ Além desses, a sessão leva `customer_email` (o e-mail digitado no quiz, para a
 | `STRIPE_PRICE_12M` / `STRIPE_PRICE_3M` / `STRIPE_PRICE_1M` | os Price IDs |
 | `STRIPE_PRICE_VITALICIO` | Price ID **avulso** do acesso vitalício (produto "Moviq App", R$ 37,00) |
 | `STRIPE_PRICE_PLANO_ALIMENTAR` | Price ID **avulso** do plano alimentar (liga o order bump, a oferta depois da compra e a venda dentro do app) |
+| `STRIPE_PRICE_GERADOR_IA` | Price ID **avulso** do gerador de treino com IA (liga o 2º order bump e **bloqueia o Coach** para quem não comprou, fora o primeiro plano do quiz) |
 | `ADMIN_EMAILS` | e-mails (separados por vírgula) das contas do app que abrem `/admin/recuperacao` |
 
 ## Plano alimentar (produto extra)
@@ -77,6 +78,13 @@ Além desses, a sessão leva `customer_email` (o e-mail digitado no quiz, para a
 - **Dentro do app:** cartão "Plano alimentar" no Início abre `/alimentacao` (o plano, ou a oferta para quem não comprou).
 - **Liberação:** o webhook grava a linha `plano_alimentar` (status `active`) na tabela `assinaturas`, pela compra junto (item da sessão do vitalício) ou sozinha (`metadata.plano = plano_alimentar`), e manda o e-mail "Seu plano alimentar está liberado".
 - **Cálculo:** [lib/nutricao.js](lib/nutricao.js) (metas pelo quiz e pelo peso do perfil, cardápio com opções). Estimativa geral, com aviso de que não substitui nutricionista.
+
+## Gerador de treino com IA (produto extra)
+
+- Segundo order bump no checkout do vitalício; oferta depois da compra para quem não levou; e a página `/coach` vira a oferta para quem não tem.
+- **Bloqueio no servidor** ([lib/coachAcesso.js](lib/coachAcesso.js)): com `STRIPE_PRICE_GERADOR_IA` configurado, `/api/coach` só gera para quem tem a linha `gerador_ia` ativa ou ainda está montando o primeiro plano do quiz (quiz do e-mail não usado). Quem não tem e cria um Desafio no app recebe o desafio pronto (sem IA).
+- Limite de 5 gerações a cada 24 h (lib/coach.js `DAILY_LIMIT`).
+- Imagens dos order bumps (sem texto): `public/produtos/plano-alimentar.png` e `public/produtos/gerador-ia.png`.
 
 ## Recuperação de Pix expirado e pagamento abandonado
 

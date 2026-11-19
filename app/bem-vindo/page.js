@@ -2,24 +2,44 @@
 
 // Volta da Stripe depois do pagamento (success_url): confirma a sessão e abre o cadastro
 // com o e-mail da compra. Quem já está logado segue para /preparando.
-// Se a compra foi o acesso vitalício sem o plano alimentar, mostra antes a oferta do plano alimentar
-// (upsell, um pagamento à parte). "Não, obrigado" segue para o cadastro.
+// Se a compra foi o acesso vitalício e ficou de fora algum extra (plano alimentar, gerador de treino com IA),
+// mostra antes a oferta do primeiro que faltou (upsell, um pagamento à parte). "Não, obrigado" segue para o cadastro.
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { IconLogo } from '@/components/Icons';
 
-const BENEFICIOS = [
-  'Calorias, proteínas, carboidratos e gorduras do seu dia, calculados pelo seu objetivo, peso e treinos',
-  '5 refeições com opções de comida do dia a dia: arroz, feijão, frango, ovos, tapioca, frutas',
-  'Quantidades em gramas ajustadas para você, para trocar à vontade',
-  'Fica no app junto com o seu treino',
-];
+const OFERTAS = {
+  plano_alimentar: {
+    titulo: 'Quer acelerar o resultado com um plano alimentar?',
+    sub: 'O treino faz a parte dele. A alimentação certa faz o resultado aparecer mais rápido.',
+    beneficios: [
+      'Calorias, proteínas, carboidratos e gorduras do seu dia, calculados pelo seu objetivo, peso e treinos',
+      '5 refeições com opções de comida do dia a dia: arroz, feijão, frango, ovos, tapioca, frutas',
+      'Quantidades em gramas ajustadas para você, para trocar à vontade',
+      'Fica no app junto com o seu treino',
+    ],
+    botao: 'Quero o plano alimentar',
+    aviso: 'Estimativa geral a partir das suas respostas do quiz. Não substitui a orientação de um nutricionista.',
+  },
+  gerador_ia: {
+    titulo: 'Quer criar treinos novos com IA sempre que quiser?',
+    sub: 'Seu primeiro plano já vem pronto. Com o gerador, você monta um treino novo quando enjoar, mudar de objetivo ou de academia.',
+    beneficios: [
+      'Treinos novos montados pela IA em segundos, com o seu objetivo, nível, dias e tempo',
+      'Escolha o equipamento: academia completa, em casa ou só o peso do corpo',
+      'Novos Desafios 21 dias de calistenia gerados para o seu nível',
+      'Até 5 treinos novos por dia',
+    ],
+    botao: 'Quero o gerador de treino com IA',
+    aviso: '',
+  },
+};
 
 export default function BemVindoPage() {
   const router = useRouter();
   const [msg, setMsg] = useState('Confirmando seu pagamento…');
-  const [oferta, setOferta] = useState(null); // { preco, url }
+  const [oferta, setOferta] = useState(null); // { plano, nome, preco, url }
   const [cadastro, setCadastro] = useState('');
 
   useEffect(() => {
@@ -45,8 +65,8 @@ export default function BemVindoPage() {
         return;
       }
       setMsg(
-        info.plano === 'plano_alimentar'
-          ? 'Plano alimentar confirmado! Agora crie sua conta com o mesmo e-mail.'
+        info.plano === 'plano_alimentar' || info.plano === 'gerador_ia'
+          ? 'Compra confirmada! Agora crie sua conta com o mesmo e-mail.'
           : 'Pagamento confirmado! Agora crie sua conta com o mesmo e-mail.'
       );
       setTimeout(() => router.replace(destino), 1200);
@@ -54,6 +74,7 @@ export default function BemVindoPage() {
   }, [router]);
 
   if (oferta) {
+    const o = OFERTAS[oferta.plano] || OFERTAS.plano_alimentar;
     return (
       <div className="auth-wrap">
         <div className="auth-box">
@@ -63,12 +84,12 @@ export default function BemVindoPage() {
               ✓ Pagamento confirmado. Seu acesso ao Moviq está liberado.
             </p>
             <h1 className="quiz-title" style={{ marginTop: 14 }}>
-              Quer acelerar o resultado com um plano alimentar?
+              {o.titulo}
             </h1>
-            <p className="quiz-sub">O treino faz a parte dele. A alimentação certa faz o resultado aparecer mais rápido.</p>
+            <p className="quiz-sub">{o.sub}</p>
           </div>
           <ul className="card" style={{ listStyle: 'none', display: 'grid', gap: 12, margin: '18px 0', padding: 18 }}>
-            {BENEFICIOS.map((b) => (
+            {o.beneficios.map((b) => (
               <li key={b} style={{ display: 'flex', gap: 10, fontSize: 15, lineHeight: 1.4 }}>
                 <span style={{ color: 'var(--accent)', fontWeight: 800 }}>✓</span>
                 <span>{b}</span>
@@ -82,14 +103,16 @@ export default function BemVindoPage() {
             </span>
           </p>
           <a className="btn" href={oferta.url} style={{ display: 'block', textAlign: 'center' }}>
-            Quero o plano alimentar
+            {o.botao}
           </a>
           <button className="btn secondary" style={{ marginTop: 10, width: '100%' }} onClick={() => router.replace(cadastro)}>
             Não, obrigado. Continuar para o app
           </button>
-          <p className="muted" style={{ fontSize: 12.5, textAlign: 'center', marginTop: 14, lineHeight: 1.5 }}>
-            Estimativa geral a partir das suas respostas do quiz. Não substitui a orientação de um nutricionista.
-          </p>
+          {o.aviso ? (
+            <p className="muted" style={{ fontSize: 12.5, textAlign: 'center', marginTop: 14, lineHeight: 1.5 }}>
+              {o.aviso}
+            </p>
+          ) : null}
         </div>
       </div>
     );

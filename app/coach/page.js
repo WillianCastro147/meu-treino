@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AuthGuard from '@/components/AuthGuard';
 import BottomNav from '@/components/BottomNav';
@@ -35,6 +35,35 @@ function Coach({ user }) {
   const [saving, setSaving] = useState(false);
   const [result, setResult] = useState(null); // { plan, remaining }
   const [error, setError] = useState('');
+  // Gerador de treino com IA (extra pago): sem ele, a página mostra a oferta no lugar do formulário
+  const [acesso, setAcesso] = useState(null); // { liberado, preco }
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        const res = await fetch('/api/coach/acesso', { headers: { Authorization: `Bearer ${data.session?.access_token || ''}` } });
+        setAcesso(res.ok ? await res.json() : { liberado: true });
+      } catch (e) {
+        setAcesso({ liberado: true });
+      }
+    })();
+  }, []);
+
+  const comprarGerador = () => {
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '/api/stripe/checkout';
+    for (const [k, v] of Object.entries({ plano: 'gerador_ia', email: user.email || '' })) {
+      const i = document.createElement('input');
+      i.type = 'hidden';
+      i.name = k;
+      i.value = v;
+      form.append(i);
+    }
+    document.body.append(form);
+    form.submit();
+  };
 
   const dayName = (n) => new Date(2026, 9, 11 + n).toLocaleDateString(locale, { weekday: 'long' }); // 12/10/2026 = segunda
 
@@ -50,7 +79,9 @@ function Coach({ user }) {
         body: JSON.stringify({ goal, level, days, minutes, equipment: EQUIPMENT_PRESETS[preset], notes, lang }),
       });
       const body = await res.json().catch(() => ({}));
-      if (!res.ok) {
+      if (!res.ok && body.error === 'gerador_required') {
+        setAcesso({ liberado: false, preco: acesso?.preco || null });
+      } else if (!res.ok) {
         const key = { not_configured: 'coachNotConfigured', limit: 'coachLimit', unauthorized: 'coachLogin' }[body.error] || 'coachError';
         setError(tf(key, { n: body.limit || '' }));
       } else setResult(body);
@@ -97,7 +128,42 @@ function Coach({ user }) {
       </div>
       <PageHeader title={t('coachTitle')} sub={t('coachSub')} />
 
-      {!result && (
+      {acesso && !acesso.liberado && (
+        <div className="card">
+          <p style={{ fontWeight: 800, fontSize: 18, marginBottom: 8 }}>Gerador de treino com IA</p>
+          <p className="muted" style={{ fontSize: 15, lineHeight: 1.45 }}>
+            Seu primeiro plano já foi montado pela IA a partir do quiz. Para criar treinos novos com IA sempre que quiser, libere o gerador.
+          </p>
+          <ul style={{ listStyle: 'none', display: 'grid', gap: 10, margin: '14px 0 16px', padding: 0 }}>
+            {[
+              'Treinos novos em segundos, com seu objetivo, nível, dias e tempo',
+              'Academia completa, em casa ou só com o peso do corpo',
+              'Novos Desafios 21 dias gerados para o seu nível',
+              'Até 5 treinos novos por dia',
+            ].map((b) => (
+              <li key={b} style={{ display: 'flex', gap: 10, fontSize: 15 }}>
+                <span style={{ color: 'var(--accent)', fontWeight: 800 }}>✓</span>
+                <span>{b}</span>
+              </li>
+            ))}
+          </ul>
+          {acesso.preco ? (
+            <>
+              <p style={{ marginBottom: 12 }}>
+                <b style={{ fontSize: 24 }}>{acesso.preco}</b> <span className="muted">pagamento único, Pix ou cartão</span>
+              </p>
+              <button className="btn" style={{ width: '100%' }} onClick={comprarGerador}>
+                Quero o gerador de treino com IA
+              </button>
+            </>
+          ) : null}
+          <button className="btn secondary" style={{ width: '100%', marginTop: 10 }} onClick={() => router.push('/treino')}>
+            Voltar para o meu plano
+          </button>
+        </div>
+      )}
+
+      {acesso?.liberado && !result && (
         <div className="card">
           <label className="label" style={{ marginTop: 0 }}>{t('coachGoal')}</label>
           <div className="plate-chips">{GOALS.map((g) => chip(goal === g, () => setGoal(g), t('goal_' + g)))}</div>

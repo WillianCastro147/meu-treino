@@ -1,8 +1,8 @@
 // Depois do pagamento: devolve o e-mail e o nome da Checkout Session para a página /bem-vindo
 // abrir o cadastro já preenchido. Só responde para sessões concluídas.
-// Se foi a compra do acesso vitalício sem o plano alimentar, devolve também a oferta do plano
-// alimentar (upsell) com o valor, para a /bem-vindo mostrar antes do cadastro.
-import { stripe, nomeDaCompra, PLANO_VITALICIO, PLANO_ALIMENTAR_PRICE, precoPlanoAlimentar } from '@/lib/stripe';
+// Se foi a compra do acesso vitalício e a pessoa não levou algum extra (plano alimentar, gerador de treino
+// com IA), devolve a oferta do primeiro que ficou de fora (upsell), para a /bem-vindo mostrar antes do cadastro.
+import { stripe, nomeDaCompra, PLANO_VITALICIO, extrasAtivos, precoExtra } from '@/lib/stripe';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -20,10 +20,13 @@ export async function GET(req) {
   if (s.status !== 'complete') return Response.json({ error: 'not_complete' }, { status: 409 });
 
   let upsell = null;
-  const levouPlano = (s.line_items?.data || []).some((i) => i.price?.id === PLANO_ALIMENTAR_PRICE);
-  if (PLANO_ALIMENTAR_PRICE && s.metadata?.plano === PLANO_VITALICIO && !levouPlano) {
-    const preco = await precoPlanoAlimentar();
-    if (preco) upsell = { preco, url: `/api/stripe/upsell?s=${encodeURIComponent(s.id)}` };
+  if (s.metadata?.plano === PLANO_VITALICIO) {
+    const levou = new Set((s.line_items?.data || []).map((i) => i.price?.id));
+    const faltou = extrasAtivos().find((e) => !levou.has(e.price));
+    const preco = faltou ? await precoExtra(faltou.plano) : null;
+    if (faltou && preco) {
+      upsell = { plano: faltou.plano, nome: faltou.nome, preco, url: `/api/stripe/upsell?${new URLSearchParams({ s: s.id, p: faltou.plano })}` };
+    }
   }
 
   return Response.json({
