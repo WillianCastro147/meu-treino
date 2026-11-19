@@ -371,6 +371,7 @@ textarea {
 
 .plan-price b {
   display: block;
+  white-space: nowrap;
   font-size: 22px;
   font-weight: 800;
   color: #60a5fa;
@@ -433,6 +434,32 @@ textarea {
 
 .quiz-body.paywall {
   padding-bottom: 20px;
+}
+
+/* Resumo do plano do quiz no topo da tela de planos */
+.pw-plan {
+  border: 1px solid var(--card2);
+  margin-bottom: 16px;
+  font-size: 15px;
+}
+
+.pw-plan-title {
+  font-weight: 800;
+  font-size: 16px;
+  margin-bottom: 12px;
+}
+
+.pw-section {
+  font-weight: 800;
+  font-size: 17px;
+  margin: 28px 0 12px;
+}
+
+.pw-app {
+  display: block;
+  width: 180px;
+  height: auto;
+  margin: 4px auto 18px;
 }
 
 /* Gráfico de nível (tela info-nivel) */

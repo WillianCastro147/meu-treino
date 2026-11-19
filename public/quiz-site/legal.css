@@ -1,0 +1,55 @@
+/* Páginas de Termos de uso e Política de privacidade */
+:root {
+  --bg: #000000;
+  --text: #ffffff;
+  --muted: #8e8e93;
+  --accent: #60a5fa;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.6;
+}
+
+.legal {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 24px 16px 64px;
+}
+
+.legal h1 {
+  font-size: 28px;
+  line-height: 1.2;
+  margin: 12px 0 4px;
+}
+
+.legal h2 {
+  font-size: 18px;
+  margin: 28px 0 8px;
+}
+
+.legal p,
+.legal li {
+  font-size: 15.5px;
+  color: #e5e5ea;
+}
+
+.legal ul {
+  padding-left: 20px;
+}
+
+.legal .muted {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.legal a {
+  color: var(--accent);
+}

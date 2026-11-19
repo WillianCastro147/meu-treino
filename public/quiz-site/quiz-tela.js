@@ -488,11 +488,42 @@
       CFG.PRIVACIDADE_URL ? h('a', { href: CFG.PRIVACIDADE_URL, target: '_blank', rel: 'noopener' }, 'Política de privacidade') : null,
     ].filter(Boolean);
 
+    // O plano montado no quiz, logo abaixo do título: a pessoa vê o que está comprando antes do preço
+    const s = Q.planSummary(answers);
+    const cap = (v) => (v ? v.charAt(0).toUpperCase() + v.slice(1) : v);
+    const planRows = [
+      ['Objetivo', s.objetivo],
+      ['Rotina', s.rotina],
+      ['Prioridade', s.foco],
+      s.cuidados ? ['Cuidado com', s.cuidados] : null,
+      answers.desafio === 'sim' || Number(answers.dias) === 7 ? ['Bônus', 'Desafio 21 dias'] : null,
+    ].filter((r) => r && r[1]);
+    const nome = String(answers.nome || '').trim().split(/\s+/)[0];
+    const planBox = planRows.length
+      ? h(
+          'div',
+          { class: 'card pw-plan' },
+          h('p', { class: 'pw-plan-title' }, nome ? `Seu plano, ${nome}` : 'Seu plano'),
+          h('div', { class: 'quiz-summary' }, planRows.map(([k, v]) => h('div', {}, h('span', { class: 'muted' }, k), h('b', {}, cap(v)))))
+        )
+      : null;
+
+    const aviso = oferta ? CFG.AVISO_VITALICIO : CFG.AVISO_ASSINATURA;
+    const ctaTxt = oferta ? 'Garantir meu acesso' : 'Garantir meu plano';
+
     body.classList.add('paywall');
     body.append(
       ...[
         h('h1', { class: 'quiz-title pw-title' }, Q.resolve(step.title, answers)),
+        planBox,
+        // Preço e botão sobem: aparecem sem rolar a tela no celular
+        h('div', { class: 'pw-plans' }, oferta ? [lifetimeCard] : cards),
+        h('button', { class: 'btn pw-cta', onclick: go }, ctaTxt),
+        errBox,
+        aviso ? h('p', { class: 'muted pw-legal' }, aviso) : null,
+        h('p', { class: 'pw-section' }, 'O que você recebe'),
         h('ul', { class: 'card pw-benefits' }, BENEFITS.map((b) => h('li', {}, h('span', { html: ICON_CHECK }), h('span', {}, b)))),
+        h('img', { class: 'pw-app', src: 'img/info-app.svg', alt: 'Treino do dia no app Moviq', loading: 'lazy', width: 180, height: 320 }),
         CFG.GARANTIA_DIAS > 0
           ? h(
               'div',
@@ -501,12 +532,8 @@
               h('div', {}, h('b', {}, `Garantia de ${CFG.GARANTIA_DIAS} dias`), h('p', {}, 'Se não gostar, é só pedir: devolvemos 100% do seu dinheiro.'))
             )
           : null,
-        h('div', { class: 'pw-plans' }, oferta ? [lifetimeCard] : cards),
-        h('button', { class: 'btn pw-cta', onclick: go }, oferta ? 'Garantir meu acesso' : 'Garantir meu plano'),
-        errBox,
-        oferta
-          ? CFG.AVISO_VITALICIO ? h('p', { class: 'muted pw-legal' }, CFG.AVISO_VITALICIO) : null
-          : CFG.AVISO_ASSINATURA ? h('p', { class: 'muted pw-legal' }, CFG.AVISO_ASSINATURA) : null,
+        // Segundo botão para quem leu até o fim
+        h('button', { class: 'btn pw-cta', onclick: go }, ctaTxt),
         legal.length ? h('p', { class: 'muted pw-links' }, legal) : null,
       ].filter(Boolean)
     );
