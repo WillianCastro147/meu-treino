@@ -9,7 +9,7 @@
   const IMG_V = 6;
   const imgSrc = (slot) => (slot === 'info-app' ? `img/info-app.svg?v=${IMG_V}` : `img/${slot}.webp?v=${IMG_V}`);
 
-  const SECTIONS = ['Objetivo', 'Seu treino', 'Rotina', 'Medidas', 'Seu plano'];
+  const SECTIONS = ['Objetivo', 'Seu treino', 'Medidas', 'Seu plano'];
 
   const GOAL_LABEL = {
     massa: 'ganhar massa muscular',
@@ -209,19 +209,6 @@
       ],
     },
     {
-      id: 'divisao',
-      section: 1,
-      type: 'single',
-      title: 'Como você prefere dividir os treinos?',
-      options: [
-        { value: 'auto', label: 'Não sei, escolha por mim' },
-        { value: 'fullbody', label: 'Corpo inteiro em todo treino' },
-        { value: 'upper-lower', label: 'Superior / Inferior' },
-        { value: 'abc', label: 'ABC (ex.: peito, costas, pernas)' },
-        { value: 'ppl', label: 'Empurrar / Puxar / Pernas' },
-      ],
-    },
-    {
       id: 'limites',
       section: 1,
       type: 'multi',
@@ -269,36 +256,11 @@
       text: 'O Moviq mostra o exercício do dia com vídeo, as séries, a carga sugerida e o descanso. Quando você bate as repetições, ele sobe a carga sozinho.',
     },
 
-    // ---------- Rotina ----------
-    {
-      id: 'horario',
-      section: 2,
-      type: 'single',
-      title: 'Em que horário você costuma treinar?',
-      options: [
-        { value: 'manha', label: 'De manhã' },
-        { value: 'almoco', label: 'No almoço' },
-        { value: 'tarde', label: 'À tarde' },
-        { value: 'noite', label: 'À noite' },
-        { value: 'varia', label: 'Varia' },
-      ],
-    },
-    {
-      id: 'sono',
-      section: 2,
-      type: 'single',
-      title: 'Quantas horas você dorme por noite?',
-      options: [
-        { value: '<5', label: 'Menos de 5 h' },
-        { value: '5-6', label: '5 a 6 h' },
-        { value: '7-8', label: '7 a 8 h' },
-        { value: '8+', label: 'Mais de 8 h' },
-      ],
-    },
+    // ---------- Desafio (ainda em "Seu treino") ----------
     {
       // Desafio 21 dias de calistenia: quem disser sim recebe o desafio além do plano semanal (app: lib/challenge.js)
       id: 'desafio',
-      section: 2,
+      section: 1,
       type: 'single',
       when: (a) => Number(a.dias) !== 7, // "todos os dias" já inclui o desafio
       title: 'Quer entrar no Desafio 21 dias de calistenia?',
@@ -310,11 +272,11 @@
     },
 
     // ---------- Medidas ----------
-    { id: 'altura', section: 3, type: 'number', title: 'Qual é a sua altura?', unit: 'cm', min: 120, max: 230, placeholder: '175' },
-    { id: 'peso', section: 3, type: 'number', title: 'E o seu peso atual?', unit: 'kg', min: 35, max: 300, placeholder: '80', decimal: true },
+    { id: 'altura', section: 2, type: 'number', title: 'Qual é a sua altura?', unit: 'cm', min: 120, max: 230, placeholder: '175' },
+    { id: 'peso', section: 2, type: 'number', title: 'E o seu peso atual?', unit: 'kg', min: 35, max: 300, placeholder: '80', decimal: true },
     {
       id: 'pesoMeta',
-      section: 3,
+      section: 2,
       type: 'number',
       title: 'Tem um peso que você quer alcançar?',
       sub: 'Opcional. Vamos acompanhar isso no app.',
@@ -327,12 +289,12 @@
     },
 
     // ---------- Seu plano ----------
-    { id: 'montando', section: 4, type: 'loader', title: 'Montando seu plano…' },
-    { id: 'resumo', section: 4, type: 'summary', title: 'Seu plano Moviq' },
-    { id: 'nome', section: 4, type: 'name', title: 'Como você quer ser chamado(a)?' },
-    { id: 'email', section: 4, type: 'email', title: (a) => `${firstName(a.nome) ? firstName(a.nome) + ', p' : 'P'}ara onde enviamos seu plano?` },
+    { id: 'montando', section: 3, type: 'loader', title: 'Montando seu plano…' },
+    { id: 'resumo', section: 3, type: 'summary', title: 'Seu plano Moviq' },
+    { id: 'nome', section: 3, type: 'name', title: 'Como você quer ser chamado(a)?' },
+    { id: 'email', section: 3, type: 'email', title: (a) => `${firstName(a.nome) ? firstName(a.nome) + ', p' : 'P'}ara onde enviamos seu plano?` },
     // Tela de planos (só na versão Hostinger): planos e preços em config.js
-    { id: 'planos', section: 4, type: 'paywall', title: (a) => `Comece hoje a ${GOAL_LABEL[a.objetivo] || 'treinar do jeito certo'}` },
+    { id: 'planos', section: 3, type: 'paywall', title: (a) => `Comece hoje a ${GOAL_LABEL[a.objetivo] || 'treinar do jeito certo'}` },
   ];
 
   // ---------- Navegação ----------
