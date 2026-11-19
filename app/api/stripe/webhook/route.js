@@ -3,8 +3,8 @@
 // checkout.session.async_payment_failed (Pix expirou) e checkout.session.expired (pagamento abandonado):
 // estes dois mandam o e-mail de recuperação (lib/recuperacaoServer.js),
 // customer.subscription.created, customer.subscription.updated, customer.subscription.deleted.
-import { stripe, supabaseAdmin, nomeDaCompra, APP_URL, PLANO_VITALICIO } from '@/lib/stripe';
-import { sendWelcomeEmail } from '@/lib/email';
+import { stripe, supabaseAdmin, nomeDaCompra, APP_URL, PLANO_VITALICIO, PLANO_ALIMENTAR, PLANO_ALIMENTAR_PRICE } from '@/lib/stripe';
+import { sendWelcomeEmail, sendPlanoAlimentarEmail } from '@/lib/email';
 import { enviarRecuperacao } from '@/lib/recuperacaoServer';
 
 export const runtime = 'nodejs';
@@ -44,15 +44,15 @@ async function saveSubscription(db, sub, email) {
   }
 }
 
-// Acesso vitalício (pagamento único): uma linha 'active' com plano 'vitalicio', sem assinatura.
-// Só grava com o pagamento confirmado: no cartão já no checkout.session.completed; no Pix, que é
-// assíncrono, no checkout.session.async_payment_succeeded. Avisos repetidos não duplicam a linha.
-async function saveVitalicio(db, session) {
+// Compra avulsa (pagamento único): uma linha 'active' com o plano ('vitalicio' ou 'plano_alimentar'),
+// sem assinatura. Só grava com o pagamento confirmado: no cartão já no checkout.session.completed; no Pix,
+// que é assíncrono, no checkout.session.async_payment_succeeded. Avisos repetidos não duplicam a linha.
+async function saveCompraAvulsa(db, session, plano) {
   const email = String(session.customer_details?.email || session.customer_email || '').trim().toLowerCase();
   if (!email) throw new Error(`sessão ${session.id} sem e-mail`);
   const row = {
     status: 'active',
-    plano: PLANO_VITALICIO,
+    plano,
     stripe_customer_id: typeof session.customer === 'string' ? session.customer : session.customer?.id || null,
     current_period_end: null,
     cancel_at_period_end: false,
@@ -62,7 +62,7 @@ async function saveVitalicio(db, session) {
     .from('assinaturas')
     .select('id')
     .eq('email', email)
-    .eq('plano', PLANO_VITALICIO)
+    .eq('plano', plano)
     .maybeSingle();
   if (readError) throw readError;
   const { error } = existente
@@ -70,6 +70,26 @@ async function saveVitalicio(db, session) {
     : await db.from('assinaturas').insert({ ...row, email });
   if (error) throw error;
   return email;
+}
+
+// Pagamento único confirmado. Sessão de plano_alimentar sozinho (oferta depois da compra ou dentro do app)
+// libera só o plano alimentar. Sessão do vitalício libera o app e, se a pessoa marcou o order bump,
+// também o plano alimentar.
+async function liberarPagamentoUnico(db, session) {
+  if (session.metadata?.plano === PLANO_ALIMENTAR) {
+    const email = await saveCompraAvulsa(db, session, PLANO_ALIMENTAR);
+    const name = await nomeDaCompra(session, db);
+    await sendPlanoAlimentarEmail({ email, name, appUrl: APP_URL, idempotencyKey: `alimentar-${session.id}` }).catch((e) =>
+      console.error('E-mail do plano alimentar:', e.message)
+    );
+    return;
+  }
+  const email = await saveCompraAvulsa(db, session, PLANO_VITALICIO);
+  if (PLANO_ALIMENTAR_PRICE) {
+    const itens = await stripe.checkout.sessions.listLineItems(session.id, { limit: 10 });
+    if (itens.data.some((i) => i.price?.id === PLANO_ALIMENTAR_PRICE)) await saveCompraAvulsa(db, session, PLANO_ALIMENTAR);
+  }
+  await welcome(db, session, email);
 }
 
 async function welcome(db, session, email) {
@@ -105,13 +125,13 @@ export async function POST(req) {
           await welcome(db, session, email);
         } else if (session.mode === 'payment' && session.payment_status === 'paid') {
           // cartão: pago na hora. Pix chega aqui como 'unpaid' e é liberado no aviso abaixo.
-          await welcome(db, session, await saveVitalicio(db, session));
+          await liberarPagamentoUnico(db, session);
         }
         break;
       }
       case 'checkout.session.async_payment_succeeded': {
         const session = event.data.object;
-        if (session.mode === 'payment') await welcome(db, session, await saveVitalicio(db, session));
+        if (session.mode === 'payment') await liberarPagamentoUnico(db, session);
         break;
       }
       // Recuperação: Pix venceu sem pagamento / pagamento aberto e abandonado (sessão expirou em 24 h).

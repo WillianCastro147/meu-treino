@@ -67,7 +67,16 @@ Além desses, a sessão leva `customer_email` (o e-mail digitado no quiz, para a
 | `STRIPE_WEBHOOK_SECRET` | `whsec_...` |
 | `STRIPE_PRICE_12M` / `STRIPE_PRICE_3M` / `STRIPE_PRICE_1M` | os Price IDs |
 | `STRIPE_PRICE_VITALICIO` | Price ID **avulso** do acesso vitalício (produto "Moviq App", R$ 37,00) |
+| `STRIPE_PRICE_PLANO_ALIMENTAR` | Price ID **avulso** do plano alimentar (liga o order bump, a oferta depois da compra e a venda dentro do app) |
 | `ADMIN_EMAILS` | e-mails (separados por vírgula) das contas do app que abrem `/admin/recuperacao` |
+
+## Plano alimentar (produto extra)
+
+- **Order bump:** no pagamento do acesso vitalício, o plano alimentar aparece como item opcional (`optional_items`) para a pessoa marcar.
+- **Oferta depois da compra:** a `/bem-vindo` mostra o plano alimentar antes do cadastro para quem não marcou o bump; o botão abre `/api/stripe/upsell?s=<sessão>`, um pagamento à parte (Pix ou cartão) com as mesmas UTMs.
+- **Dentro do app:** cartão "Plano alimentar" no Início abre `/alimentacao` (o plano, ou a oferta para quem não comprou).
+- **Liberação:** o webhook grava a linha `plano_alimentar` (status `active`) na tabela `assinaturas`, pela compra junto (item da sessão do vitalício) ou sozinha (`metadata.plano = plano_alimentar`), e manda o e-mail "Seu plano alimentar está liberado".
+- **Cálculo:** [lib/nutricao.js](lib/nutricao.js) (metas pelo quiz e pelo peso do perfil, cardápio com opções). Estimativa geral, com aviso de que não substitui nutricionista.
 
 ## Recuperação de Pix expirado e pagamento abandonado
 
