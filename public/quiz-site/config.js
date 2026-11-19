@@ -23,7 +23,7 @@ window.MOVIQ_CONFIG = {
   //               com e-mail, nome e UTMs do anúncio no link. O acesso é liberado por /api/hotmart/webhook.
   // Para voltar para a Stripe, é só trocar para 'stripe' (as duas continuam funcionando no app).
   // ------------------------------------------------------------------
-  GATEWAY: 'stripe',
+  GATEWAY: 'hotmart',
   // Links de pagamento da Hotmart (Produtos > seu produto > Links > "Link do checkout"), um por plano.
   // vitalicio: oferta de acesso vitalício · 12m / 3m / 1m: planos de assinatura (se usar)
   // vitalicio: produto "Moviq: App de Treino Personalizado" (ID 9022148), preço base R$ 37,00 (oferta f2515lu4)
