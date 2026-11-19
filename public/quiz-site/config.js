@@ -42,6 +42,6 @@ window.MOVIQ_CONFIG = {
 
   // Textos legais abaixo do botão (deixe '' para esconder o link)
   AVISO_ASSINATURA: 'Assinatura recorrente, renovada automaticamente. Cancele quando quiser.',
-  TERMOS_URL: 'termos.html',
-  PRIVACIDADE_URL: 'privacidade.html',
+  TERMOS_URL: '', // rascunho em docs/legal/termos.html: publicar quando o e-mail de contato receber mensagens
+  PRIVACIDADE_URL: '', // rascunho em docs/legal/privacidade.html
 };
