@@ -458,18 +458,44 @@
     });
 
     const errBox = h('div', {});
-    // Envia plano + e-mail para o app (Vercel), que cria a Checkout Session da Stripe e redireciona para ela
+    const hotmart = CFG.GATEWAY === 'hotmart';
+    let saindo = false;
+    // Stripe: envia plano + e-mail para o app (Vercel), que cria a Checkout Session e redireciona para ela.
+    // Hotmart: vai direto para o link de pagamento do plano (sem passar pelo app).
     function go() {
+      if (saindo) return; // toque repetido enquanto a página de pagamento abre
       const sub = plans.find((x) => x.meses === answers.plano);
       const p = oferta ? { plano: 'vitalicio', total: oferta.total } : sub ? { plano: `${sub.meses}m`, total: sub.total } : null;
-      if (!p || !CFG.STRIPE_CHECKOUT_URL) {
-        errBox.replaceChildren(h('p', { class: 'error-msg', style: 'text-align:center' }, 'Falta configurar o pagamento (STRIPE_CHECKOUT_URL em config.js).'));
+      // UTMs do anúncio (guardadas desde a chegada no quiz + as da URL atual). Stripe: o app grava na sessão
+      // (metadata). Hotmart: vão no link (src/sck chegam na compra), e é de lá que a Utmify lê a origem da venda
+      const utms = Object.assign({}, tracking, Q.pickTracking(window.location.search));
+      const destinoHotmart = hotmart && p
+        ? Q.checkoutUrl((CFG.HOTMART_LINKS || {})[p.plano], { email: answers.email, name: answers.nome, tracking: utms })
+        : null;
+      if (!p || (hotmart ? !destinoHotmart : !CFG.STRIPE_CHECKOUT_URL)) {
+        const falta = hotmart ? `o link da Hotmart do plano "${p ? p.plano : '?'}" (HOTMART_LINKS em config.js)` : 'STRIPE_CHECKOUT_URL em config.js';
+        errBox.replaceChildren(h('p', { class: 'error-msg', style: 'text-align:center' }, `Falta configurar o pagamento: ${falta}.`));
         return;
       }
+      saindo = true;
+      // Resposta na hora: a página de pagamento leva alguns segundos para abrir no celular
+      body.querySelectorAll('.pw-cta').forEach((b) => {
+        b.disabled = true;
+        b.textContent = 'Abrindo pagamento seguro…';
+      });
+      // Se a pessoa voltar do pagamento (botão voltar), o botão funciona de novo
+      window.addEventListener('pageshow', () => {
+        saindo = false;
+        body.querySelectorAll('.pw-cta').forEach((b) => {
+          b.disabled = false;
+          b.textContent = ctaTxt;
+        });
+      }, { once: true });
       track('InitiateCheckout', { value: p.total, currency: 'BRL', content_name: `moviq-${p.plano}` });
-      // UTMs do anúncio (guardadas desde a chegada no quiz + as da URL atual): o app grava na sessão
-      // da Stripe (metadata), que é de onde a Utmify lê a origem da venda
-      const utms = Object.assign({}, tracking, Q.pickTracking(window.location.search));
+      if (destinoHotmart) {
+        window.location.href = destinoHotmart;
+        return;
+      }
       const form = h(
         'form',
         { method: 'POST', action: CFG.STRIPE_CHECKOUT_URL, style: 'display:none' },

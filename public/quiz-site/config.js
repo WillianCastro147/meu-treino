@@ -16,6 +16,24 @@ window.MOVIQ_CONFIG = {
   // ------------------------------------------------------------------
   STRIPE_CHECKOUT_URL: '/api/stripe/checkout',
 
+  // ------------------------------------------------------------------
+  // GATEWAY: onde a pessoa paga.
+  //   'stripe'  = como sempre (STRIPE_CHECKOUT_URL acima)
+  //   'hotmart' = o botão leva direto ao link de pagamento da Hotmart do plano (HOTMART_LINKS abaixo),
+  //               com e-mail, nome e UTMs do anúncio no link. O acesso é liberado por /api/hotmart/webhook.
+  // Para voltar para a Stripe, é só trocar para 'stripe' (as duas continuam funcionando no app).
+  // ------------------------------------------------------------------
+  GATEWAY: 'stripe',
+  // Links de pagamento da Hotmart (Produtos > seu produto > Links > "Link do checkout"), um por plano.
+  // vitalicio: oferta de acesso vitalício · 12m / 3m / 1m: planos de assinatura (se usar)
+  // vitalicio: produto "Moviq: App de Treino Personalizado" (ID 9022148), preço base R$ 37,00 (oferta f2515lu4)
+  HOTMART_LINKS: {
+    vitalicio: 'https://pay.hotmart.com/B108579304F?off=f2515lu4',
+    '12m': '',
+    '3m': '',
+    '1m': '',
+  },
+
   // PLANOS (tela final, depois do e-mail)
   // meses: 12, 3 ou 1 (cada um ligado a um preço na Stripe: STRIPE_PRICE_12M, STRIPE_PRICE_3M, STRIPE_PRICE_1M na Vercel)
   // total: preço cobrado no período (R$), SÓ PARA MOSTRAR na tela: precisa ser igual ao preço cadastrado na Stripe

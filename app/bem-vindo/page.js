@@ -2,6 +2,7 @@
 
 // Volta da Stripe depois do pagamento (success_url): confirma a sessão e abre o cadastro
 // com o e-mail da compra. Quem já está logado segue para /preparando.
+// Volta da Hotmart (página de obrigado, sem session_id): abre o cadastro direto.
 // Se a compra foi o acesso vitalício e ficou de fora algum extra (plano alimentar, gerador de treino com IA),
 // mostra antes a oferta do primeiro que faltou (upsell, um pagamento à parte). "Não, obrigado" segue para o cadastro.
 import { useEffect, useState } from 'react';
@@ -50,10 +51,23 @@ export default function BemVindoPage() {
       const params = new URLSearchParams(window.location.search);
       const id = params.get('session_id') || '';
       let info = {};
-      try {
-        const res = await fetch(`/api/stripe/sessao?session_id=${encodeURIComponent(id)}`);
-        if (res.ok) info = await res.json();
-      } catch (e) {}
+      if (id) {
+        try {
+          const res = await fetch(`/api/stripe/sessao?session_id=${encodeURIComponent(id)}`);
+          if (res.ok) info = await res.json();
+        } catch (e) {}
+      } else {
+        // Volta da Hotmart (página de obrigado): não há sessão para confirmar. O acesso é liberado pelo
+        // aviso da Hotmart (/api/hotmart/webhook) quando o pagamento cai; aqui só abre o cadastro,
+        // com o e-mail e o nome se a Hotmart mandar na URL.
+        info = { email: params.get('email') || '', name: params.get('name') || params.get('nome') || '' };
+        setMsg('Compra recebida! Agora crie sua conta com o mesmo e-mail da compra. O acesso é liberado assim que o pagamento for confirmado.');
+        const q = new URLSearchParams({ modo: 'cadastro' });
+        if (info.email) q.set('email', info.email);
+        if (info.name) q.set('name', String(info.name).trim().split(/\s+/)[0]);
+        setTimeout(() => router.replace(`/login?${q}`), 3500);
+        return;
+      }
       const q = new URLSearchParams({ modo: 'cadastro' });
       if (info.email) q.set('email', info.email);
       if (info.name) q.set('name', String(info.name).trim().split(/\s+/)[0]);
