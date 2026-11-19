@@ -40,6 +40,24 @@ const IconTarget = () => (
   </svg>
 );
 
+const IconFood = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10" />
+    <path d="M17 21V3c-2 1.5-3 4-3 7v3h3" />
+  </svg>
+);
+
+/** Plano alimentar (só em português): abre /alimentacao, que mostra o plano ou a oferta */
+export function NutritionCard() {
+  const { lang } = useI18n();
+  if (lang !== 'pt') return null;
+  return (
+    <a className="card" href="/alimentacao" style={{ display: 'block', color: 'inherit', textDecoration: 'none' }}>
+      <CardHead icon={<IconFood />} kicker="Alimentação" title="Plano alimentar" sub="Calorias e refeições para o seu objetivo" />
+    </a>
+  );
+}
+
 /** Aviso de recuperação: { group, days, covered } de lib/engage.js recoveryNote */
 export function RecoveryCard({ note, onClose }) {
   const { t, tf } = useI18n();
