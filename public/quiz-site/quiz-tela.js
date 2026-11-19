@@ -523,7 +523,7 @@
         aviso ? h('p', { class: 'muted pw-legal' }, aviso) : null,
         h('p', { class: 'pw-section' }, 'O que você recebe'),
         h('ul', { class: 'card pw-benefits' }, BENEFITS.map((b) => h('li', {}, h('span', { html: ICON_CHECK }), h('span', {}, b)))),
-        h('img', { class: 'pw-app', src: 'img/info-app.svg', alt: 'Treino do dia no app Moviq', loading: 'lazy', width: 180, height: 320 }),
+        h('img', { class: 'pw-app', src: 'img/info-app.webp?v=7', alt: 'Treino do dia no app Moviq', loading: 'lazy', width: 240, height: 320 }),
         CFG.GARANTIA_DIAS > 0
           ? h(
               'div',

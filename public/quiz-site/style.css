@@ -457,7 +457,7 @@ textarea {
 
 .pw-app {
   display: block;
-  width: 180px;
+  width: 240px;
   height: auto;
   margin: 4px auto 18px;
 }
@@ -701,11 +701,14 @@ textarea {
 }
 
 .quiz-hero.quiz-img--info-app {
-  width: min(100%, 240px);
-  aspect-ratio: 750 / 1334;
+  width: min(100%, 300px);
+  aspect-ratio: 3 / 4;
   height: auto;
   display: block;
   margin: 0 auto 14px;
+  /* o mockup já tem fundo transparente e some no preto: sem a caixa cinza das outras imagens */
+  background: none;
+  border-radius: 0;
 }
 
 .quiz-icon,

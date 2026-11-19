@@ -6,8 +6,8 @@
 
   // Imagem de cada vaga (pasta img/, em WebP para carregar rápido no celular)
   // IMG_V: troque o número quando substituir imagens, para os navegadores não mostrarem a versão antiga guardada
-  const IMG_V = 6;
-  const imgSrc = (slot) => (slot === 'info-app' ? `img/info-app.svg?v=${IMG_V}` : `img/${slot}.webp?v=${IMG_V}`);
+  const IMG_V = 7;
+  const imgSrc = (slot) => `img/${slot}.webp?v=${IMG_V}`; // info-app.webp: mockup do app em 3x (fundo transparente)
 
   const SECTIONS = ['Objetivo', 'Seu treino', 'Medidas', 'Seu plano'];
 
