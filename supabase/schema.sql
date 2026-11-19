@@ -243,6 +243,12 @@ create table if not exists public.assinaturas (
 
 create index if not exists assinaturas_email_idx on public.assinaturas (email);
 
+-- Vendas pela Hotmart (igual a migrations/007_hotmart.sql)
+alter table public.assinaturas add column if not exists gateway text not null default 'stripe';
+alter table public.assinaturas add column if not exists hotmart_transacao text;
+alter table public.assinaturas add column if not exists hotmart_assinante text;
+create unique index if not exists assinaturas_hotmart_transacao_key on public.assinaturas (hotmart_transacao);
+
 -- Sem políticas: ninguém lê nem grava direto pelo app. O app só usa tem_acesso().
 alter table public.assinaturas enable row level security;
 
@@ -251,6 +257,7 @@ alter table public.assinaturas enable row level security;
 --   past_due: sim (a Stripe ainda está tentando cobrar)
 --   cortesia: sim (liberado à mão: você, testes, contas antigas)
 --   canceled / unpaid / incomplete...: não
+--   (exceto assinatura da Hotmart cancelada: vale até o fim do período pago)
 create or replace function public.tem_acesso()
 returns boolean
 language sql
@@ -261,7 +268,10 @@ as $$
     select 1
     from public.assinaturas a
     where a.email = lower(auth.jwt() ->> 'email')
-      and a.status in ('active', 'trialing', 'past_due', 'cortesia')
+      and (
+        a.status in ('active', 'trialing', 'past_due', 'cortesia')
+        or (a.gateway = 'hotmart' and a.status = 'canceled' and a.current_period_end > now())
+      )
   );
 $$;
 
