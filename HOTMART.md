@@ -40,7 +40,17 @@ Ferramentas → Webhook (API e notificações) → nova configuração:
 | `HOTMART_PRODUTO_GERADOR_IA` | ID do order bump (opcional) |
 | `HOTMART_PRODUTO_ASSINATURA` | ID do produto de assinatura (só se vender os planos 12m/3m/1m na Hotmart) |
 
-Cada variável aceita vários IDs separados por vírgula.
+Cada variável aceita vários IDs separados por vírgula. Sem a variável, valem os IDs já cadastrados
+(em `lib/hotmart.js`, `PRODUTOS_PADRAO`):
+
+| Produto na Hotmart | ID | Preço | Entrega (PDF) |
+|---|---|---|---|
+| Moviq: App de Treino Personalizado | 9022148 | R$ 37,00 | `docs/hotmart/acesso-moviq.pdf` |
+| Moviq: Plano Alimentar (order bump) | 9022748 | R$ 19,90 | `docs/hotmart/plano-alimentar.pdf` |
+| Moviq: Gerador de Treino com IA (order bump) | 9022760 | R$ 27,90 | `docs/hotmart/gerador-ia.pdf` |
+
+Os order bumps precisam estar também na configuração do webhook "MOVIQ APP - libera acesso" na Hotmart
+(senão o app não recebe o aviso da compra deles).
 
 ### 5. Quiz
 Em `public/quiz-site/config.js`:
