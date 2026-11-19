@@ -26,9 +26,11 @@ window.MOVIQ_CONFIG = {
   GATEWAY: 'hotmart',
   // Links de pagamento da Hotmart (Produtos > seu produto > Links > "Link do checkout"), um por plano.
   // vitalicio: oferta de acesso vitalício · 12m / 3m / 1m: planos de assinatura (se usar)
-  // vitalicio: produto "Moviq: App de Treino Personalizado" (ID 9022148), preço base R$ 37,00 (oferta f2515lu4)
+  // vitalicio: produto "Moviq: App de Treino Personalizado" (ID 9022148), preço base R$ 37,00 (oferta f2515lu4).
+  //   checkoutMode=10 abre a página do Checkout Builder com os order bumps (plano alimentar e gerador de IA).
+  //   Não use "off=f2515lu4" junto: com ele a Hotmart abre a página padrão, sem os bumps.
   HOTMART_LINKS: {
-    vitalicio: 'https://pay.hotmart.com/B108579304F?off=f2515lu4',
+    vitalicio: 'https://pay.hotmart.com/B108579304F?checkoutMode=10',
     '12m': '',
     '3m': '',
     '1m': '',

@@ -49,6 +49,10 @@ Cada variável aceita vários IDs separados por vírgula. Sem a variável, valem
 | Moviq: Plano Alimentar (order bump) | 9022748 | R$ 19,90 | `docs/hotmart/plano-alimentar.pdf` |
 | Moviq: Gerador de Treino com IA (order bump) | 9022760 | R$ 27,90 | `docs/hotmart/gerador-ia.pdf` |
 
+Os order bumps ficam na página "Em Branco" do Checkout Builder do produto 9022148 (Ferramentas > Order Bump),
+publicada como padrão. Essa página só abre com `?checkoutMode=10` no link e **sem** `off=`: por isso o link do
+vitalício em `HOTMART_LINKS` é `https://pay.hotmart.com/B108579304F?checkoutMode=10`.
+
 Os order bumps precisam estar também na configuração do webhook "MOVIQ APP - libera acesso" na Hotmart
 (senão o app não recebe o aviso da compra deles).
 
