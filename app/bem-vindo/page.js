@@ -10,6 +10,14 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { IconLogo } from '@/components/Icons';
+import { useI18n } from '@/lib/i18n';
+
+// Quiz em espanhol (quiz.moviqgym.app/es): a Stripe volta com ?lang=es, que também deixa o app em espanhol.
+// As ofertas de extra abaixo são só do quiz em português (vitalício em reais), então aqui só os avisos.
+const AVISOS = {
+  pt: { confirmando: 'Confirmando seu pagamento…', confirmado: 'Pagamento confirmado! Agora crie sua conta com o mesmo e-mail.', titulo: 'Bem-vindo ao Moviq!' },
+  es: { confirmando: 'Confirmando tu pago…', confirmado: '¡Pago confirmado! Ahora crea tu cuenta con el mismo correo.', titulo: '¡Bienvenido a Moviq!' },
+};
 
 const OFERTAS = {
   plano_alimentar: {
@@ -40,7 +48,9 @@ const OFERTAS = {
 
 export default function BemVindoPage() {
   const router = useRouter();
-  const [msg, setMsg] = useState('Confirmando seu pagamento…');
+  const { lang } = useI18n();
+  const av = AVISOS[lang === 'es' ? 'es' : 'pt'];
+  const [msg, setMsg] = useState(''); // vazio = "confirmando" no idioma da tela
   const [ofertas, setOfertas] = useState([]); // [{ plano, nome, preco, url }], uma de cada vez
   const [cadastro, setCadastro] = useState('');
   const oferta = ofertas[0] || null;
@@ -93,9 +103,11 @@ export default function BemVindoPage() {
         return;
       }
       setMsg(
-        info.plano === 'plano_alimentar' || info.plano === 'gerador_ia'
-          ? 'Compra confirmada! Agora crie sua conta com o mesmo e-mail.'
-          : 'Pagamento confirmado! Agora crie sua conta com o mesmo e-mail.'
+        params.get('lang') === 'es'
+          ? AVISOS.es.confirmado
+          : info.plano === 'plano_alimentar' || info.plano === 'gerador_ia'
+            ? 'Compra confirmada! Agora crie sua conta com o mesmo e-mail.'
+            : AVISOS.pt.confirmado
       );
       setTimeout(() => router.replace(destino), 1200);
     })();
@@ -151,9 +163,9 @@ export default function BemVindoPage() {
       <div className="auth-box" style={{ textAlign: 'center' }}>
         <IconLogo size={44} />
         <h1 className="quiz-title" style={{ marginTop: 14 }}>
-          Bem-vindo ao Moviq!
+          {av.titulo}
         </h1>
-        <p className="quiz-sub">{msg}</p>
+        <p className="quiz-sub">{msg || av.confirmando}</p>
       </div>
     </div>
   );

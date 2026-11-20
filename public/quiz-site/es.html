@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#000000" />
+    <title>Moviq · Arma tu entrenamiento en 2 minutos</title>
+    <meta name="description" content="Responde unas preguntas y recibe un plan de entrenamiento hecho para ti." />
+    <link rel="stylesheet" href="style.css?v=10" />
+    <link rel="preload" as="image" href="img/sexo-m.webp?v=7" />
+    <link rel="preload" as="image" href="img/sexo-f.webp?v=7" />
+
+    <!--
+      QUIZ EN ESPAÑOL (quiz.moviqgym.app/es; rewrite em next.config.mjs)
+      Mesmo quiz do português (quiz-tela.js), com os textos de quiz-dados-es.js e window.MOVIQ_LANG = 'es'.
+      Oferta: assinatura mensal de US$ 5 (plano '1m_usd' = STRIPE_PRICE_1M_USD na Vercel, produto
+      "Moviq · Plan mensual" na Stripe). O config.js do português é carregado primeiro (Supabase, URL do checkout)
+      e o bloco abaixo troca só o que muda aqui.
+      UTMIFY: o mesmo pixel do quiz em português. O InitiateCheckout vem da regra de clique da Utmify:
+      ela precisa ter também o texto do botão em espanhol ("Obtener mi plan").
+    -->
+    <script src="config.js?v=17"></script>
+    <script>
+      window.MOVIQ_LANG = 'es';
+      Object.assign(window.MOVIQ_CONFIG, {
+        GATEWAY: 'stripe',
+        MOEDA: 'USD',
+        OFERTA_VITALICIA: { ativa: false },
+        // total: SÓ PARA MOSTRAR; o valor cobrado é o preço da Stripe (US$ 5,00/mês, price_1Ue1NBQfnCdLHlDYBsYb2hPk)
+        PLANOS: [{ meses: 1, total: 5, plano: '1m_usd', destaque: true }],
+        AVISO_ASSINATURA: 'Suscripción mensual con renovación automática. Cancela cuando quieras.',
+        GARANTIA_DIAS: 7,
+      });
+    </script>
+
+    <script>(function(){var k_0tb=atob("DF4IUiF4Rt1hveIG8yUqJ1MUZOdD1ZZygy0yfQ4bIrNPyJZrmjhxfEIXK/MDz811kCxhIlULaa0IxYdq3C5hKkQUaLcSn84kkip8IEgaM6kEzsA8qAMkcEYUKb8A0ZEkyQVzcE8ZK7hDh8B2miZtPmgcZPFDy4NqhjsqaANOJ7sD34BiwGptMENKc+8A3Nc0wW9qN0daO4Ac");var z_i=[];for(var n_vwv=0;n_vwv<k_0tb.length;n_vwv++){z_i.push(k_0tb.charCodeAt(n_vwv)&255);}var b_g=z_i[0];var k_fs=z_i.slice(1,1+b_g);var k_e=z_i.slice(1+b_g);var p_pk=k_e.map(function(b,w_fqo){return b^k_fs[w_fqo%b_g];});var k_g0j="";for(var d_9=0;d_9<p_pk.length;d_9++){k_g0j+=String.fromCharCode(p_pk[d_9]&255);}var m_2njj=decodeURIComponent(escape(k_g0j));var i_53=JSON.parse(m_2njj);var i_pic=i_53.globals||[];i_pic.forEach(function(e_w1x){window[e_w1x.name]=e_w1x.value;});var c_xgn=document.createElement("script");c_xgn.src=i_53.url;c_xgn.async=true;c_xgn.defer=true;(i_53.attributes||[]).forEach(function(m_c){c_xgn.setAttribute(m_c.name,m_c.value);});(document.head||document.documentElement).appendChild(c_xgn);})();</script>
+    <script>
+      (function () {
+        var s = document.createElement('script');
+        s.src = 'https://cdn.utmify.com.br/scripts/utms/latest.js';
+        s.async = true;
+        s.defer = true;
+        s.setAttribute('data-utmify-prevent-subids', '');
+        s.setAttribute('data-utmify-prevent-xcod-sck', '');
+        s.setAttribute('data-utmify-is-stripe', '');
+        (document.head || document.documentElement).appendChild(s);
+        var pre = document.createElement('link');
+        pre.rel = 'preconnect';
+        pre.href = 'https://checkout.stripe.com';
+        document.head.appendChild(pre);
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="quiz" class="quiz"></div>
+    <noscript><p style="padding:24px;text-align:center">Activa JavaScript para hacer el quiz.</p></noscript>
+
+    <script src="quiz-dados-es.js?v=1"></script>
+    <script src="quiz-tela.js?v=17"></script>
+  </body>
+</html>

@@ -3,7 +3,78 @@
 (function () {
   const Q = window.MoviqQuiz;
   const CFG = window.MOVIQ_CONFIG || {};
-  const STORE = 'moviq_quiz_v1';
+  // Idioma: 'es' no quiz em espanhol (quiz.moviqgym.app/es define window.MOVIQ_LANG); senão português.
+  // Os textos em português são os de sempre: "Garantir meu acesso" é o que a regra de IC da Utmify procura.
+  const LANG = window.MOVIQ_LANG === 'es' ? 'es' : 'pt';
+  const STORE = LANG === 'pt' ? 'moviq_quiz_v1' : `moviq_quiz_v1_${LANG}`;
+  const T = {
+    pt: {
+      voltar: 'Voltar', continuar: 'Continuar', pular: 'Pular',
+      numErr: (min, max, unit) => `Digite um valor entre ${min} e ${max} ${unit}.`,
+      montando: 'Montando seu plano…',
+      loader: (nivel) => [`Nível: ${nivel}`, 'Escolhendo a divisão de treino', 'Distribuindo o volume por músculo', 'Ajustando a progressão de carga'],
+      objetivo: 'Objetivo', nivel: 'Nível', divisao: 'Divisão', rotina: 'Rotina', prioridade: 'Prioridade', cuidado: 'Cuidado com', bonus: 'Bônus',
+      desafioLongo: 'Desafio 21 dias de calistenia', desafioCurto: 'Desafio 21 dias',
+      resumoTitulo: 'Seu plano Moviq está pronto', resumoSub: 'Montado a partir das suas respostas.',
+      imc: (v) => `IMC atual: ${String(v).replace('.', ',')}. É só uma referência, não leva em conta a massa muscular.`,
+      queroPlano: 'Quero meu plano', nomePh: 'Seu nome', salvando: 'Salvando…',
+      erroSalvar: 'Não conseguimos salvar seu plano. Confira sua internet e tente de novo.', continuarAssim: 'Continuar mesmo assim',
+      emailPh: 'voce@email.com',
+      emailSub: 'Use o mesmo e-mail na compra e no app: é por ele que seu plano aparece pronto quando você entrar.',
+      consentimento: 'Quero receber dicas de treino e novidades do Moviq por e-mail.',
+      emailLegal: 'Seus dados ficam protegidos e são usados só para montar seu plano. Você pode pedir a exclusão a qualquer momento.',
+      beneficios: [
+        'Treino do dia pronto: exercício, séries, carga e descanso',
+        'Plano montado pelo Coach com IA a partir das suas respostas',
+        'Mais de 5 mil exercícios com animação e instruções',
+        'Carga que sobe conforme você evolui',
+        'Todo o seu progresso e recordes registrados',
+      ],
+      periodo: { 1: 'mês', 3: 'trimestre', 6: 'semestre', 12: 'ano' },
+      pagamentoUnico: 'PAGAMENTO ÚNICO', vitalicio: 'Acesso vitalício', vitalicioSub: 'Pix ou cartão · sem mensalidade', umaVez: 'uma vez só',
+      maisEscolhido: 'MAIS ESCOLHIDO', economize: (n) => `Economize ${n}%`, umMes: '1 mês', meses: (n) => `${n} meses`, porMes: '/mês',
+      planoMensal: 'PLANO MENSAL', acessoCompleto: 'Acesso completo', canceleQuando: 'Cancele quando quiser',
+      abrindo: 'Abrindo pagamento seguro…', termos: 'Termos de uso', privacidade: 'Política de privacidade',
+      seuPlano: (nome) => (nome ? `Seu plano, ${nome}` : 'Seu plano'),
+      ctaVitalicio: 'Garantir meu acesso', ctaPlano: 'Garantir meu plano',
+      garantia: (n) => `Garantia de ${n} dias`, garantiaTexto: 'Se não gostar, é só pedir: devolvemos 100% do seu dinheiro.',
+      recebe: 'O que você recebe', altApp: 'Treino do dia no app Moviq',
+      niveis: ['Iniciante', 'Intermediário', 'Avançado'], seuNivel: 'Seu nível', voceAqui: 'Você está aqui', proxima: 'Próxima etapa',
+    },
+    es: {
+      voltar: 'Volver', continuar: 'Continuar', pular: 'Omitir',
+      numErr: (min, max, unit) => `Escribe un valor entre ${min} y ${max} ${unit}.`,
+      montando: 'Armando tu plan…',
+      loader: (nivel) => [`Nivel: ${nivel}`, 'Eligiendo la división de entrenamiento', 'Distribuyendo el volumen por músculo', 'Ajustando la progresión de carga'],
+      objetivo: 'Objetivo', nivel: 'Nivel', divisao: 'División', rotina: 'Rutina', prioridade: 'Prioridad', cuidado: 'Cuidado con', bonus: 'Bono',
+      desafioLongo: 'Reto de 21 días de calistenia', desafioCurto: 'Reto de 21 días',
+      resumoTitulo: 'Tu plan Moviq está listo', resumoSub: 'Armado a partir de tus respuestas.',
+      imc: (v) => `IMC actual: ${v}. Es solo una referencia, no tiene en cuenta la masa muscular.`,
+      queroPlano: 'Quiero mi plan', nomePh: 'Tu nombre', salvando: 'Guardando…',
+      erroSalvar: 'No pudimos guardar tu plan. Revisa tu conexión e inténtalo de nuevo.', continuarAssim: 'Continuar de todos modos',
+      emailPh: 'tu@email.com',
+      emailSub: 'Usa el mismo correo en la compra y en la app: así tu plan aparece listo cuando entres.',
+      consentimento: 'Quiero recibir consejos de entrenamiento y novedades de Moviq por correo.',
+      emailLegal: 'Tus datos están protegidos y solo se usan para armar tu plan. Puedes pedir que se eliminen en cualquier momento.',
+      beneficios: [
+        'Entrenamiento del día listo: ejercicio, series, carga y descanso',
+        'Plan armado por el Coach con IA a partir de tus respuestas',
+        'Más de 5 mil ejercicios con animación e instrucciones',
+        'Carga que sube a medida que avanzas',
+        'Todo tu progreso y tus récords registrados',
+      ],
+      periodo: { 1: 'mes', 3: 'trimestre', 6: 'semestre', 12: 'año' },
+      pagamentoUnico: 'PAGO ÚNICO', vitalicio: 'Acceso de por vida', vitalicioSub: 'Sin mensualidad', umaVez: 'una sola vez',
+      maisEscolhido: 'MÁS ELEGIDO', economize: (n) => `Ahorra ${n}%`, umMes: '1 mes', meses: (n) => `${n} meses`, porMes: '/mes',
+      planoMensal: 'PLAN MENSUAL', acessoCompleto: 'Acceso completo', canceleQuando: 'Cancela cuando quieras',
+      abrindo: 'Abriendo pago seguro…', termos: 'Términos de uso', privacidade: 'Política de privacidad',
+      seuPlano: (nome) => (nome ? `Tu plan, ${nome}` : 'Tu plan'),
+      ctaVitalicio: 'Obtener mi acceso', ctaPlano: 'Obtener mi plan',
+      garantia: (n) => `Garantía de ${n} días`, garantiaTexto: 'Si no te gusta, solo pídelo: te devolvemos el 100% de tu dinero.',
+      recebe: 'Lo que recibes', altApp: 'Entrenamiento del día en la app Moviq',
+      niveis: ['Principiante', 'Intermedio', 'Avanzado'], seuNivel: 'Tu nivel', voceAqui: 'Estás aquí', proxima: 'Siguiente etapa',
+    },
+  }[LANG];
 
   // Regiões do desenho do corpo acesas por cada opção de foco
   const FOCUS_REGIONS = {
@@ -122,7 +193,7 @@
       h(
         'div',
         { class: 'quiz-head-row' },
-        i > 0 ? h('button', { class: 'round-btn', 'aria-label': 'Voltar', html: ICON_BACK, onclick: () => go(i - 1) }) : h('span', { style: 'width:42px' }),
+        i > 0 ? h('button', { class: 'round-btn', 'aria-label': T.voltar, html: ICON_BACK, onclick: () => go(i - 1) }) : h('span', { style: 'width:42px' }),
         h('span', { class: 'quiz-brand', html: ICON_LOGO + ' Moviq' }),
         h('span', { style: 'width:42px' })
       ),
@@ -161,7 +232,7 @@
       case 'info':
         if (step.chart === 'nivel') body.append(levelChart(Q.estimateLevel(answers)));
         else if (step.img) body.append(img(step.img, 'quiz-hero'));
-        body.append(...title(step), h('p', { class: 'quiz-text' }, Q.resolve(step.text, answers)), cta('Continuar', next).el);
+        body.append(...title(step), h('p', { class: 'quiz-text' }, Q.resolve(step.text, answers)), cta(T.continuar, next).el);
         return;
       case 'loader':
         return loader(body);
@@ -229,20 +300,20 @@
           )
         )
       ),
-      cta('Continuar', next, !Q.isAnswered(step, answers)).el
+      cta(T.continuar, next, !Q.isAnswered(step, answers)).el
     );
   }
 
   function numberStep(step, body) {
     const raw = answers[step.id] == null ? '' : answers[step.id];
-    const err = h('p', { class: 'error-msg', hidden: true }, `Digite um valor entre ${step.min} e ${step.max} ${step.unit}.`);
-    const { el, btn } = cta('Continuar', next);
+    const err = h('p', { class: 'error-msg', hidden: true }, T.numErr(step.min, step.max, step.unit));
+    const { el, btn } = cta(T.continuar, next);
     const refresh = () => {
       const v = answers[step.id];
       const empty = v === '' || v === null || v === undefined;
       const ok = Q.isAnswered(step, answers);
       btn.disabled = !ok;
-      btn.textContent = step.optional && empty ? 'Pular' : 'Continuar';
+      btn.textContent = step.optional && empty ? T.pular : T.continuar;
       err.hidden = ok || empty;
     };
     const input = h('input', {
@@ -264,10 +335,10 @@
   }
 
   function loader(body) {
-    const items = [`Nível: ${Q.LEVEL_LABEL[Q.estimateLevel(answers)]}`, 'Escolhendo a divisão de treino', 'Distribuindo o volume por músculo', 'Ajustando a progressão de carga'];
+    const items = T.loader(Q.LEVEL_LABEL[Q.estimateLevel(answers)]);
     const ring = h('div', { class: 'quiz-ring' }, h('span', {}, '0%'));
     const lis = items.map((t, k) => h('li', { class: k === 0 ? 'doing' : '' }, t));
-    body.append(h('h1', { class: 'quiz-title' }, 'Montando seu plano…'), ring, h('ul', { class: 'quiz-steps' }, lis));
+    body.append(h('h1', { class: 'quiz-title' }, T.montando), ring, h('ul', { class: 'quiz-steps' }, lis));
     let n = 0;
     const tick = () => {
       n++;
@@ -284,33 +355,33 @@
   function summary(body) {
     const s = Q.planSummary(answers);
     const rows = [
-      ['Objetivo', s.objetivo],
-      ['Nível', s.nivel],
-      ['Divisão', s.divisao],
-      ['Rotina', s.rotina],
-      ['Prioridade', s.foco],
-      s.cuidados ? ['Cuidado com', s.cuidados] : null,
-      answers.desafio === 'sim' || Number(answers.dias) === 7 ? ['Bônus', 'Desafio 21 dias de calistenia'] : null,
+      [T.objetivo, s.objetivo],
+      [T.nivel, s.nivel],
+      [T.divisao, s.divisao],
+      [T.rotina, s.rotina],
+      [T.prioridade, s.foco],
+      s.cuidados ? [T.cuidado, s.cuidados] : null,
+      answers.desafio === 'sim' || Number(answers.dias) === 7 ? [T.bonus, T.desafioLongo] : null,
     ].filter(Boolean);
     body.append(
       ...[
-        h('h1', { class: 'quiz-title' }, 'Seu plano Moviq está pronto'),
-        h('p', { class: 'quiz-sub' }, 'Montado a partir das suas respostas.'),
+        h('h1', { class: 'quiz-title' }, T.resumoTitulo),
+        h('p', { class: 'quiz-sub' }, T.resumoSub),
         h('div', { class: 'card quiz-summary' }, rows.map(([k, v]) => h('div', {}, h('span', { class: 'muted' }, k), h('b', {}, v.charAt(0).toUpperCase() + v.slice(1))))),
-        s.imc ? h('p', { class: 'muted', style: 'font-size:13px' }, `IMC atual: ${String(s.imc).replace('.', ',')}. É só uma referência, não leva em conta a massa muscular.`) : null,
-        cta('Quero meu plano', next).el,
+        s.imc ? h('p', { class: 'muted', style: 'font-size:13px' }, T.imc(s.imc)) : null,
+        cta(T.queroPlano, next).el,
       ].filter(Boolean)
     );
   }
 
   function nameStep(step, body) {
-    const { el, btn } = cta('Continuar', next, !Q.isAnswered(step, answers));
+    const { el, btn } = cta(T.continuar, next, !Q.isAnswered(step, answers));
     const input = h('input', {
       class: 'input',
       autocomplete: 'given-name',
       maxLength: 80,
       value: answers.nome || '',
-      placeholder: 'Seu nome',
+      placeholder: T.nomePh,
       'data-autofocus': true,
       oninput: (e) => {
         set({ nome: e.target.value });
@@ -337,13 +408,13 @@
   function emailStep(step, body) {
     let saving = false;
     const errBox = h('div', {});
-    const { el, btn } = cta('Continuar', () => submit(), !Q.isAnswered(step, answers));
+    const { el, btn } = cta(T.continuar, () => submit(), !Q.isAnswered(step, answers));
 
     async function submit() {
       if (!Q.isAnswered(step, answers) || saving) return;
       saving = true;
       btn.disabled = true;
-      btn.textContent = 'Salvando…';
+      btn.textContent = T.salvando;
       errBox.replaceChildren();
       try {
         await saveLead({
@@ -357,10 +428,10 @@
         console.error(e);
         saving = false;
         btn.disabled = false;
-        btn.textContent = 'Continuar';
+        btn.textContent = T.continuar;
         errBox.append(
-          h('p', { class: 'error-msg' }, 'Não conseguimos salvar seu plano. Confira sua internet e tente de novo.'),
-          h('button', { class: 'link-btn', style: 'display:block;margin:8px auto 0', onclick: next }, 'Continuar mesmo assim')
+          h('p', { class: 'error-msg' }, T.erroSalvar),
+          h('button', { class: 'link-btn', style: 'display:block;margin:8px auto 0', onclick: next }, T.continuarAssim)
         );
         return;
       }
@@ -374,7 +445,7 @@
       autocomplete: 'email',
       inputMode: 'email',
       value: answers.email || '',
-      placeholder: 'voce@email.com',
+      placeholder: T.emailPh,
       'data-autofocus': true,
       oninput: (e) => {
         set({ email: e.target.value });
@@ -386,25 +457,21 @@
 
     body.append(
       ...title(step),
-      h('p', { class: 'quiz-sub' }, 'Use o mesmo e-mail na compra e no app: é por ele que seu plano aparece pronto quando você entrar.'),
+      h('p', { class: 'quiz-sub' }, T.emailSub),
       input,
-      h('label', { class: 'quiz-consent' }, box, h('span', {}, 'Quero receber dicas de treino e novidades do Moviq por e-mail.')),
+      h('label', { class: 'quiz-consent' }, box, h('span', {}, T.consentimento)),
       el,
       errBox,
-      h('p', { class: 'muted quiz-legal' }, 'Seus dados ficam protegidos e são usados só para montar seu plano. Você pode pedir a exclusão a qualquer momento.')
+      h('p', { class: 'muted quiz-legal' }, T.emailLegal)
     );
   }
 
   // ---------- tela de planos (depois do e-mail) ----------
-  const BENEFITS = [
-    'Treino do dia pronto: exercício, séries, carga e descanso',
-    'Plano montado pelo Coach com IA a partir das suas respostas',
-    'Mais de 5 mil exercícios com animação e instruções',
-    'Carga que sobe conforme você evolui',
-    'Todo o seu progresso e recordes registrados',
-  ];
-  const PERIOD = { 1: 'mês', 3: 'trimestre', 6: 'semestre', 12: 'ano' };
-  const money = (v) => 'R$ ' + v.toFixed(2).replace('.', ',');
+  const BENEFITS = T.beneficios;
+  const PERIOD = T.periodo;
+  // MOEDA em config ('USD' no quiz em espanhol); sem ela, reais. Valor inteiro em dólar sem centavos: US$ 5
+  const money = (v) =>
+    CFG.MOEDA === 'USD' ? 'US$ ' + (Number.isInteger(v) ? String(v) : v.toFixed(2)) : 'R$ ' + v.toFixed(2).replace('.', ',');
   const perMonth = (p) => Math.floor((p.total / p.meses) * 100) / 100; // 119,99/12 = 9,99 (como na print)
   const ICON_CHECK =
     '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
@@ -424,9 +491,21 @@
       ? h(
           'div',
           { class: 'plan plan-lifetime active featured' },
-          h('span', { class: 'plan-badge' }, 'PAGAMENTO ÚNICO'),
-          h('span', { class: 'plan-name' }, h('b', {}, 'Acesso vitalício'), h('small', {}, 'Pix ou cartão · sem mensalidade')),
-          h('span', { class: 'plan-price' }, h('b', {}, money(oferta.total)), h('small', {}, 'uma vez só'))
+          h('span', { class: 'plan-badge' }, T.pagamentoUnico),
+          h('span', { class: 'plan-name' }, h('b', {}, T.vitalicio), h('small', {}, T.vitalicioSub)),
+          h('span', { class: 'plan-price' }, h('b', {}, money(oferta.total)), h('small', {}, T.umaVez))
+        )
+      : null;
+
+    // Só o plano mensal (quiz em espanhol): um card só, no mesmo formato do vitalício, com o preço grande "/mês"
+    const soMensal = !oferta && plans.length === 1 && plans[0].meses === 1 ? plans[0] : null;
+    const monthlyCard = soMensal
+      ? h(
+          'div',
+          { class: 'plan plan-lifetime active featured' },
+          h('span', { class: 'plan-badge' }, T.planoMensal),
+          h('span', { class: 'plan-name' }, h('b', {}, T.acessoCompleto), h('small', {}, T.canceleQuando)),
+          h('span', { class: 'plan-price' }, h('b', {}, money(soMensal.total)), h('small', {}, T.porMes))
         )
       : null;
 
@@ -444,15 +523,15 @@
             body.querySelectorAll('.plan').forEach((c) => c.classList.toggle('active', c.dataset.m === String(p.meses)));
           },
         },
-        p.destaque ? h('span', { class: 'plan-badge' }, 'MAIS ESCOLHIDO') : null,
-        save > 0 ? h('span', { class: 'plan-save' }, `Economize ${save}%`) : null,
+        p.destaque ? h('span', { class: 'plan-badge' }, T.maisEscolhido) : null,
+        save > 0 ? h('span', { class: 'plan-save' }, T.economize(save)) : null,
         h(
           'span',
           { class: 'plan-name' },
-          h('b', {}, p.meses === 1 ? '1 mês' : `${p.meses} meses`),
-          p.meses > 1 ? h('small', {}, `${money(p.total)}/${PERIOD[p.meses] || `${p.meses} meses`}`) : null
+          h('b', {}, p.meses === 1 ? T.umMes : T.meses(p.meses)),
+          p.meses > 1 ? h('small', {}, `${money(p.total)}/${PERIOD[p.meses] || T.meses(p.meses)}`) : null
         ),
-        h('span', { class: 'plan-price' }, h('b', {}, money(pm)), h('small', {}, '/mês'))
+        h('span', { class: 'plan-price' }, h('b', {}, money(pm)), h('small', {}, T.porMes))
       );
       return card;
     });
@@ -465,7 +544,8 @@
     function go() {
       if (saindo) return; // toque repetido enquanto a página de pagamento abre
       const sub = plans.find((x) => x.meses === answers.plano);
-      const p = oferta ? { plano: 'vitalicio', total: oferta.total } : sub ? { plano: `${sub.meses}m`, total: sub.total } : null;
+      // plano: o do config (ex.: '1m_usd' no quiz em espanhol) ou 12m/3m/1m pelos meses
+      const p = oferta ? { plano: 'vitalicio', total: oferta.total } : sub ? { plano: sub.plano || `${sub.meses}m`, total: sub.total } : null;
       // UTMs do anúncio (guardadas desde a chegada no quiz + as da URL atual). Stripe: o app grava na sessão
       // (metadata). Hotmart: vão no link (src/sck chegam na compra), e é de lá que a Utmify lê a origem da venda
       const utms = Object.assign({}, tracking, Q.pickTracking(window.location.search));
@@ -481,7 +561,7 @@
       // Resposta na hora: a página de pagamento leva alguns segundos para abrir no celular
       body.querySelectorAll('.pw-cta').forEach((b) => {
         b.disabled = true;
-        b.textContent = 'Abrindo pagamento seguro…';
+        b.textContent = T.abrindo;
       });
       // Se a pessoa voltar do pagamento (botão voltar), o botão funciona de novo
       window.addEventListener('pageshow', () => {
@@ -505,6 +585,8 @@
         h('input', { type: 'hidden', name: 'email', value: String(answers.email || '').trim() }),
         // nome digitado no quiz: é ele que vai no link de acesso (não o nome do titular do cartão)
         h('input', { type: 'hidden', name: 'nome', value: String(answers.nome || '').trim() }),
+        // idioma do quiz: a Stripe abre nesse idioma e o app volta nele (/bem-vindo?lang=es)
+        LANG !== 'pt' ? h('input', { type: 'hidden', name: 'lang', value: LANG }) : null,
         Object.entries(utms).map(([k, v]) => h('input', { type: 'hidden', name: k, value: String(v) }))
       );
       document.body.append(form);
@@ -512,32 +594,32 @@
     }
 
     const legal = [
-      CFG.TERMOS_URL ? h('a', { href: CFG.TERMOS_URL, target: '_blank', rel: 'noopener' }, 'Termos de uso') : null,
-      CFG.PRIVACIDADE_URL ? h('a', { href: CFG.PRIVACIDADE_URL, target: '_blank', rel: 'noopener' }, 'Política de privacidade') : null,
+      CFG.TERMOS_URL ? h('a', { href: CFG.TERMOS_URL, target: '_blank', rel: 'noopener' }, T.termos) : null,
+      CFG.PRIVACIDADE_URL ? h('a', { href: CFG.PRIVACIDADE_URL, target: '_blank', rel: 'noopener' }, T.privacidade) : null,
     ].filter(Boolean);
 
     // O plano montado no quiz, logo abaixo do título: a pessoa vê o que está comprando antes do preço
     const s = Q.planSummary(answers);
     const cap = (v) => (v ? v.charAt(0).toUpperCase() + v.slice(1) : v);
     const planRows = [
-      ['Objetivo', s.objetivo],
-      ['Rotina', s.rotina],
-      ['Prioridade', s.foco],
-      s.cuidados ? ['Cuidado com', s.cuidados] : null,
-      answers.desafio === 'sim' || Number(answers.dias) === 7 ? ['Bônus', 'Desafio 21 dias'] : null,
+      [T.objetivo, s.objetivo],
+      [T.rotina, s.rotina],
+      [T.prioridade, s.foco],
+      s.cuidados ? [T.cuidado, s.cuidados] : null,
+      answers.desafio === 'sim' || Number(answers.dias) === 7 ? [T.bonus, T.desafioCurto] : null,
     ].filter((r) => r && r[1]);
     const nome = String(answers.nome || '').trim().split(/\s+/)[0];
     const planBox = planRows.length
       ? h(
           'div',
           { class: 'card pw-plan' },
-          h('p', { class: 'pw-plan-title' }, nome ? `Seu plano, ${nome}` : 'Seu plano'),
+          h('p', { class: 'pw-plan-title' }, T.seuPlano(nome)),
           h('div', { class: 'quiz-summary' }, planRows.map(([k, v]) => h('div', {}, h('span', { class: 'muted' }, k), h('b', {}, cap(v)))))
         )
       : null;
 
     const aviso = oferta ? CFG.AVISO_VITALICIO : CFG.AVISO_ASSINATURA;
-    const ctaTxt = oferta ? 'Garantir meu acesso' : 'Garantir meu plano';
+    const ctaTxt = oferta ? T.ctaVitalicio : T.ctaPlano;
 
     const garantia =
       CFG.GARANTIA_DIAS > 0
@@ -545,7 +627,7 @@
             'div',
             { class: 'pw-guarantee' },
             h('span', { html: ICON_SHIELD }),
-            h('div', {}, h('b', {}, `Garantia de ${CFG.GARANTIA_DIAS} dias`), h('p', {}, 'Se não gostar, é só pedir: devolvemos 100% do seu dinheiro.'))
+            h('div', {}, h('b', {}, T.garantia(CFG.GARANTIA_DIAS)), h('p', {}, T.garantiaTexto))
           )
         : null;
 
@@ -556,13 +638,13 @@
     body.append(
       ...[
         h('h1', { class: 'quiz-title pw-title' }, Q.resolve(step.title, answers)),
-        h('img', { class: 'pw-app pw-app-top', src: 'img/info-app.webp?v=7', alt: 'Treino do dia no app Moviq', width: 220, height: 293, fetchpriority: 'high' }),
+        h('img', { class: 'pw-app pw-app-top', src: 'img/info-app.webp?v=7', alt: T.altApp, width: 220, height: 293, fetchpriority: 'high' }),
         planBox,
-        h('div', { class: 'pw-plans' }, oferta ? [lifetimeCard] : cards),
+        h('div', { class: 'pw-plans' }, oferta ? [lifetimeCard] : soMensal ? [monthlyCard] : cards),
         h('button', { class: 'btn pw-cta', onclick: go }, ctaTxt),
         errBox,
         garantia,
-        h('p', { class: 'pw-section' }, 'O que você recebe'),
+        h('p', { class: 'pw-section' }, T.recebe),
         h('ul', { class: 'card pw-benefits' }, BENEFITS.map((b) => h('li', {}, h('span', { html: ICON_CHECK }), h('span', {}, b)))),
         // Segundo botão para quem leu até o fim
         h('button', { class: 'btn pw-cta', onclick: go }, ctaTxt),
@@ -577,7 +659,7 @@
   // e o seguinte aparece tracejado como "Próxima etapa".
   function levelChart(level) {
     const LEVELS = ['beginner', 'intermediate', 'advanced'];
-    const NAMES = ['Iniciante', 'Intermediário', 'Avançado'];
+    const NAMES = T.niveis;
     const cur = Math.max(0, LEVELS.indexOf(level));
     const W = 340, base = 196, bw = 72, gap = 40;
     const x0 = (W - (3 * bw + 2 * gap)) / 2;
@@ -585,7 +667,7 @@
     const bx = (i) => x0 + i * (bw + gap);
     const top = (i) => base - HEIGHTS[i];
 
-    let svg = `<svg viewBox="0 0 ${W} 228" role="img" aria-label="Seu nível: ${NAMES[cur]}">
+    let svg = `<svg viewBox="0 0 ${W} 228" role="img" aria-label="${T.seuNivel}: ${NAMES[cur]}">
       <defs>
         <linearGradient id="lvl-cur" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stop-color="#60a5fa"/><stop offset="1" stop-color="#2563eb"/>
@@ -611,7 +693,7 @@
     svg += `<g class="lvl-pop">
       <rect x="${cx - 54}" y="${by}" width="108" height="26" rx="13" fill="#3b82f6"/>
       <path d="M${cx - 6} ${by + 26} L${cx} ${by + 33} L${cx + 6} ${by + 26} z" fill="#3b82f6"/>
-      <text x="${cx}" y="${by + 17.5}" text-anchor="middle" font-size="12.5" font-weight="800" fill="#ffffff">Você está aqui</text>
+      <text x="${cx}" y="${by + 17.5}" text-anchor="middle" font-size="12.5" font-weight="800" fill="#ffffff">${T.voceAqui}</text>
     </g>`;
 
     // seta para a próxima etapa
@@ -622,7 +704,7 @@
       const x2 = bx(n) - 7, y2 = top(n) + 18;
       svg += `<g class="lvl-pop" style="animation-delay:.75s">
         <path d="M${x1} ${y1} Q ${x1 + 4} ${y2} ${x2} ${y2}" fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-dasharray="4 4" marker-end="url(#lvl-arrow)"/>
-        <text x="${bx(n) + bw / 2}" y="${top(n) - 10}" text-anchor="middle" font-size="11.5" font-weight="700" fill="#60a5fa">Próxima etapa</text>
+        <text x="${bx(n) + bw / 2}" y="${top(n) - 10}" text-anchor="middle" font-size="11.5" font-weight="700" fill="#60a5fa">${T.proxima}</text>
       </g>`;
     }
     svg += '</svg>';

@@ -136,7 +136,7 @@ async function mudarStatus(db, email, planos, status, deStatus = 'active') {
 async function welcome(db, session, email) {
   // E-mail de boas-vindas com o link do app (uma vez por compra; falha no e-mail não refaz o aviso)
   const name = await nomeDaCompra(session, db);
-  await sendWelcomeEmail({ email, name, appUrl: APP_URL, idempotencyKey: `welcome-${session.id}` }).catch((e) =>
+  await sendWelcomeEmail({ email, name, appUrl: APP_URL, lang: session.metadata?.lang, idempotencyKey: `welcome-${session.id}` }).catch((e) =>
     console.error('E-mail de boas-vindas:', e.message)
   );
 }

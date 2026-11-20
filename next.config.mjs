@@ -12,6 +12,9 @@ const nextConfig = {
     return {
       beforeFiles: [
         { source: '/', has: QUIZ_HOST, destination: '/quiz-site/index.html' },
+        // Quiz em espanhol: quiz.moviqgym.app/es (sem barra no fim: os arquivos relativos, como style.css e img/,
+        // continuam saindo da raiz do quiz; "/es/" vira "/es" sozinho)
+        { source: '/es', has: QUIZ_HOST, destination: '/quiz-site/es.html' },
         { source: '/:path((?!api/|_next/|quiz-site/).+)', has: QUIZ_HOST, destination: '/quiz-site/:path' },
       ],
     };
