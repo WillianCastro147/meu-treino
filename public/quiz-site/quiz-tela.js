@@ -491,7 +491,9 @@
           b.textContent = ctaTxt;
         });
       }, { once: true });
-      track('InitiateCheckout', { value: p.total, currency: 'BRL', content_name: `moviq-${p.plano}` });
+      // InitiateCheckout NÃO sai daqui: quem marca é a regra de clique da Utmify (botão "Garantir meu acesso"),
+      // que manda pelo servidor e conta 1 por pessoa. Mandar também por aqui duplicava o IC na Meta
+      // (IDs de evento diferentes, a Meta contava os dois).
       if (destinoHotmart) {
         window.location.href = destinoHotmart;
         return;

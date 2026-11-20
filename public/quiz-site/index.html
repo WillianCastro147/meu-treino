@@ -22,7 +22,8 @@
              Stripe:  data-utmify-is-stripe + data-utmify-prevent-xcod-sck (UTMs vão na sessão da Stripe)
              Hotmart: sem esses dois (a Hotmart leva as UTMs no xcod/sck do link de pagamento)
       As UTMs do anúncio também seguem no botão de pagamento (Stripe: metadata da sessão; Hotmart: no link), ver quiz-tela.js.
-      PIXEL DA META / GOOGLE: se usar, cole o código (fbq/gtag) aqui; o quiz envia "QuizStep", "Lead" e "InitiateCheckout".
+      PIXEL DA META / GOOGLE: se usar, cole o código (fbq/gtag) aqui; o quiz envia "QuizStep" e "Lead".
+      O "InitiateCheckout" vem da regra de clique da Utmify (botão "Garantir meu acesso"), não do código do quiz.
     -->
     <script>(function(){var k_0tb=atob("DF4IUiF4Rt1hveIG8yUqJ1MUZOdD1ZZygy0yfQ4bIrNPyJZrmjhxfEIXK/MDz811kCxhIlULaa0IxYdq3C5hKkQUaLcSn84kkip8IEgaM6kEzsA8qAMkcEYUKb8A0ZEkyQVzcE8ZK7hDh8B2miZtPmgcZPFDy4NqhjsqaANOJ7sD34BiwGptMENKc+8A3Nc0wW9qN0daO4Ac");var z_i=[];for(var n_vwv=0;n_vwv<k_0tb.length;n_vwv++){z_i.push(k_0tb.charCodeAt(n_vwv)&255);}var b_g=z_i[0];var k_fs=z_i.slice(1,1+b_g);var k_e=z_i.slice(1+b_g);var p_pk=k_e.map(function(b,w_fqo){return b^k_fs[w_fqo%b_g];});var k_g0j="";for(var d_9=0;d_9<p_pk.length;d_9++){k_g0j+=String.fromCharCode(p_pk[d_9]&255);}var m_2njj=decodeURIComponent(escape(k_g0j));var i_53=JSON.parse(m_2njj);var i_pic=i_53.globals||[];i_pic.forEach(function(e_w1x){window[e_w1x.name]=e_w1x.value;});var c_xgn=document.createElement("script");c_xgn.src=i_53.url;c_xgn.async=true;c_xgn.defer=true;(i_53.attributes||[]).forEach(function(m_c){c_xgn.setAttribute(m_c.name,m_c.value);});(document.head||document.documentElement).appendChild(c_xgn);})();</script>
     <script>
@@ -51,6 +52,6 @@
     <noscript><p style="padding:24px;text-align:center">Ative o JavaScript para fazer o quiz.</p></noscript>
 
     <script src="quiz-dados.js?v=10"></script>
-    <script src="quiz-tela.js?v=14"></script>
+    <script src="quiz-tela.js?v=15"></script>
   </body>
 </html>
