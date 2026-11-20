@@ -74,7 +74,7 @@ Além desses, a sessão leva `customer_email` (o e-mail digitado no quiz, para a
 
 ## Plano alimentar (produto extra)
 
-- **Order bump:** no pagamento do acesso vitalício, o plano alimentar aparece como item opcional (`optional_items`) para a pessoa marcar.
+- **Order bump:** desligado desde 20/11/2026 (`BUMPS_NO_CHECKOUT` em [lib/checkout.js](lib/checkout.js)); quando ligado, os extras aparecem como itens opcionais (`optional_items`) no pagamento do vitalício. Hoje os extras são vendidos só depois da compra e dentro do app.
 - **Oferta depois da compra:** a `/bem-vindo` mostra o plano alimentar antes do cadastro para quem não marcou o bump; o botão abre `/api/stripe/upsell?s=<sessão>`, um pagamento à parte (Pix ou cartão) com as mesmas UTMs.
 - **Dentro do app:** cartão "Plano alimentar" no Início abre `/alimentacao` (o plano, ou a oferta para quem não comprou).
 - **Liberação:** o webhook grava a linha `plano_alimentar` (status `active`) na tabela `assinaturas`, pela compra junto (item da sessão do vitalício) ou sozinha (`metadata.plano = plano_alimentar`), e manda o e-mail "Seu plano alimentar está liberado".
