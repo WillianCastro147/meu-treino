@@ -125,7 +125,7 @@ export default function BemVindoPage() {
             ))}
           </ul>
           <p style={{ textAlign: 'center', margin: '0 0 14px' }}>
-            <b style={{ fontSize: 26 }}>{oferta.preco}</b>
+            <b style={{ fontSize: 42, lineHeight: 1.1, letterSpacing: -0.5, display: 'block' }}>{oferta.preco}</b>
             <span className="muted" style={{ display: 'block', fontSize: 14 }}>
               pagamento único, no Pix ou no cartão
             </span>
