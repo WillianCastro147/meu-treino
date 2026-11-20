@@ -5,6 +5,7 @@
 import { stripe, APP_URL, extraDoPlano } from '@/lib/stripe';
 import { criarSessaoCheckout } from '@/lib/checkout';
 import { emailDaSessao } from '@/lib/recuperacao';
+import { dadosDoNavegador, dadosDoClique } from '@/lib/metaCapi';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -25,7 +26,7 @@ export async function GET(req) {
       email: emailDaSessao(compra),
       nome: compra.metadata?.nome || '',
       tracking: compra.metadata || {},
-      extra: { upsell_de: compra.id },
+      extra: { upsell_de: compra.id, ...dadosDoClique(compra.metadata, dadosDoNavegador({ headers: req.headers })) },
       cancelUrl: voltar, // desistiu da oferta: volta para terminar o cadastro
     });
     return Response.redirect(nova.url, 303);

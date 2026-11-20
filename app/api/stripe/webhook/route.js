@@ -6,9 +6,21 @@
 import { stripe, supabaseAdmin, nomeDaCompra, APP_URL, PLANO_VITALICIO, extrasAtivos, extraDoPlano } from '@/lib/stripe';
 import { sendWelcomeEmail, sendExtraEmail } from '@/lib/email';
 import { enviarRecuperacao } from '@/lib/recuperacaoServer';
+import { enviarCompraMeta } from '@/lib/metaCapi';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+// Compra na Meta (API de Conversões) com os dados do clique no anúncio. Só envia com META_CAPI_TOKEN na Vercel.
+// Falha aqui só é registrada: nunca impede liberar o acesso nem faz a Stripe repetir o aviso.
+async function compraNaMeta(session) {
+  try {
+    const r = await enviarCompraMeta(session);
+    if (!r?.skipped) console.log('Meta Purchase', session.id, JSON.stringify(r));
+  } catch (e) {
+    console.error('Meta Purchase:', session.id, e.message);
+  }
+}
 
 const iso = (s) => (s ? new Date(s * 1000).toISOString() : null);
 
@@ -124,15 +136,20 @@ export async function POST(req) {
           const email = session.customer_details?.email || session.customer_email;
           await saveSubscription(db, sub, email);
           await welcome(db, session, email);
+          await compraNaMeta(session);
         } else if (session.mode === 'payment' && session.payment_status === 'paid') {
           // cartão: pago na hora. Pix chega aqui como 'unpaid' e é liberado no aviso abaixo.
           await liberarPagamentoUnico(db, session);
+          await compraNaMeta(session);
         }
         break;
       }
       case 'checkout.session.async_payment_succeeded': {
         const session = event.data.object;
-        if (session.mode === 'payment') await liberarPagamentoUnico(db, session);
+        if (session.mode === 'payment') {
+          await liberarPagamentoUnico(db, session);
+          await compraNaMeta(session);
+        }
         break;
       }
       // Recuperação: Pix venceu sem pagamento / pagamento aberto e abandonado (sessão expirou em 24 h).

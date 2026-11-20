@@ -5,6 +5,7 @@
 import { stripe, supabaseAdmin, APP_URL, QUIZ_URL } from '@/lib/stripe';
 import { criarSessaoCheckout, planoValido } from '@/lib/checkout';
 import { emailDaSessao, situacao } from '@/lib/recuperacao';
+import { dadosDoNavegador, dadosDoClique } from '@/lib/metaCapi';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -43,7 +44,11 @@ export async function GET(req) {
       email,
       nome: antiga.metadata?.nome || '',
       tracking: antiga.metadata || {},
-      extra: { recuperacao: canal, recuperado_de: antiga.id },
+      extra: {
+        recuperacao: canal,
+        recuperado_de: antiga.id,
+        ...dadosDoClique(antiga.metadata, dadosDoNavegador({ headers: req.headers })),
+      },
     });
     return Response.redirect(nova.url, 303);
   } catch (e) {

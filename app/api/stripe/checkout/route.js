@@ -3,6 +3,7 @@
 // A sessão em si é montada em lib/checkout.js (a mesma usada pelo link de recuperação).
 import { stripe } from '@/lib/stripe';
 import { criarSessaoCheckout, planoValido } from '@/lib/checkout';
+import { dadosDoNavegador } from '@/lib/metaCapi';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -23,7 +24,15 @@ export async function POST(req) {
 
   let session;
   try {
-    session = await criarSessaoCheckout({ plano, email: body.email, nome: body.nome, tracking: body });
+    session = await criarSessaoCheckout({
+      plano,
+      email: body.email,
+      nome: body.nome,
+      tracking: body,
+      // fbp/fbc (cookies do pixel, mesmo domínio), IP e navegador de quem clicou: vão na Compra para a Meta
+      // (lib/metaCapi.js), que assim liga a venda ao clique no anúncio
+      extra: dadosDoNavegador({ headers: req.headers, body }),
+    });
   } catch (e) {
     console.error('Stripe checkout:', e.type, e.code, e.message);
     return new Response('Não foi possível abrir o pagamento agora. Volte e tente de novo em instantes.', {
