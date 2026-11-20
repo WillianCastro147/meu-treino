@@ -25,7 +25,11 @@ e segura a entrega.
 ## Conferir antes de contar como venda (opcional)
 Gerenciador de Eventos → **Eventos de teste** → copie o código (ex.: `TEST12345`) → Vercel:
 `META_TEST_EVENT_CODE` = o código e novo deploy. A próxima compra aparece só em "Eventos de teste", com a
-lista de parâmetros. Depois **apague** `META_TEST_EVENT_CODE` (com ela, as compras não contam na campanha).
+lista de parâmetros. Depois **apague** `META_TEST_EVENT_CODE` **e faça novo deploy** (variável só vale a partir
+do deploy seguinte; enquanto ela estiver no deploy em produção, nenhuma compra conta na campanha).
+
+Para conferir em produção sem o modo de teste: log da Vercel `Meta Purchase cs_live_… {"ok":true,"recebidos":1}`
+e, no Gerenciador de Eventos, Compra → "Recebido pela última vez" acompanhando as vendas da Stripe.
 
 ## Variáveis
 | Variável | Para quê |
