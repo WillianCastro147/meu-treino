@@ -277,8 +277,8 @@ textarea {
 /* Tela de planos (depois do e-mail) */
 .paywall .pw-title {
   text-align: left;
-  font-size: 28px;
-  margin: 4px 0 16px;
+  font-size: 26px;
+  margin: 4px 0 12px;
 }
 
 .pw-benefits {
@@ -449,6 +449,20 @@ textarea {
   margin-bottom: 12px;
 }
 
+/* Na tela de planos o resumo fica mais compacto (o app aparece acima) */
+.paywall .pw-plan {
+  padding: 14px 16px;
+  margin-bottom: 14px;
+}
+
+.paywall .pw-plan-title {
+  margin-bottom: 8px;
+}
+
+.paywall .pw-plan .quiz-summary {
+  gap: 7px;
+}
+
 .pw-section {
   font-weight: 800;
   font-size: 17px;
@@ -460,6 +474,37 @@ textarea {
   width: 240px;
   height: auto;
   margin: 4px auto 18px;
+}
+
+/* App logo abaixo do título: só o topo da tela (até o exercício), sumindo no fundo,
+   para preço e botão continuarem visíveis sem rolar no celular */
+.pw-app-top {
+  width: 180px;
+  height: 158px;
+  object-fit: cover;
+  object-position: top;
+  margin: 0 auto 14px;
+  -webkit-mask-image: linear-gradient(to bottom, #000 72%, transparent);
+  mask-image: linear-gradient(to bottom, #000 72%, transparent);
+}
+
+/* Preço do acesso vitalício em destaque */
+.plan-lifetime .plan-price b {
+  font-size: 34px;
+  line-height: 1.05;
+  letter-spacing: -0.5px;
+}
+
+.plan-lifetime .plan-price small {
+  font-size: 13px;
+}
+
+/* Garantia logo abaixo do primeiro botão */
+.paywall .pw-cta + div + .pw-guarantee,
+.paywall .pw-cta + .pw-guarantee {
+  justify-content: center;
+  text-align: left;
+  padding: 14px 4px 0;
 }
 
 /* Gráfico de nível (tela info-nivel) */

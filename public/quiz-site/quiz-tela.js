@@ -419,14 +419,14 @@
       answers.plano = (plans.find((p) => p.destaque) || plans[0] || {}).meses;
     }
 
-    // Acesso vitalício: um card só, com o preço cheio e "pagamento único" (o mesmo valor aparece na Stripe)
+    // Acesso vitalício: um card só, com o preço grande e "pagamento único" (o mesmo valor aparece na Stripe)
     const lifetimeCard = oferta
       ? h(
           'div',
-          { class: 'plan active featured' },
+          { class: 'plan plan-lifetime active featured' },
           h('span', { class: 'plan-badge' }, 'PAGAMENTO ÚNICO'),
           h('span', { class: 'plan-name' }, h('b', {}, 'Acesso vitalício'), h('small', {}, 'Pix ou cartão · sem mensalidade')),
-          h('span', { class: 'plan-price' }, h('b', {}, money(oferta.total)), h('small', {}, 'uma vez'))
+          h('span', { class: 'plan-price' }, h('b', {}, money(oferta.total)), h('small', {}, 'uma vez só'))
         )
       : null;
 
@@ -539,29 +539,34 @@
     const aviso = oferta ? CFG.AVISO_VITALICIO : CFG.AVISO_ASSINATURA;
     const ctaTxt = oferta ? 'Garantir meu acesso' : 'Garantir meu plano';
 
+    const garantia =
+      CFG.GARANTIA_DIAS > 0
+        ? h(
+            'div',
+            { class: 'pw-guarantee' },
+            h('span', { html: ICON_SHIELD }),
+            h('div', {}, h('b', {}, `Garantia de ${CFG.GARANTIA_DIAS} dias`), h('p', {}, 'Se não gostar, é só pedir: devolvemos 100% do seu dinheiro.'))
+          )
+        : null;
+
+    // Ordem da tela: título > app (a pessoa vê que está comprando um app) > plano do quiz > preço grande >
+    // botão > garantia. Tudo isso cabe sem rolar no celular; benefícios e o segundo botão ficam abaixo.
+    // O texto do botão (ctaTxt) não pode mudar: a regra de InitiateCheckout da Utmify procura por ele.
     body.classList.add('paywall');
     body.append(
       ...[
         h('h1', { class: 'quiz-title pw-title' }, Q.resolve(step.title, answers)),
+        h('img', { class: 'pw-app pw-app-top', src: 'img/info-app.webp?v=7', alt: 'Treino do dia no app Moviq', width: 220, height: 293, fetchpriority: 'high' }),
         planBox,
-        // Preço e botão sobem: aparecem sem rolar a tela no celular
         h('div', { class: 'pw-plans' }, oferta ? [lifetimeCard] : cards),
         h('button', { class: 'btn pw-cta', onclick: go }, ctaTxt),
         errBox,
-        aviso ? h('p', { class: 'muted pw-legal' }, aviso) : null,
+        garantia,
         h('p', { class: 'pw-section' }, 'O que você recebe'),
         h('ul', { class: 'card pw-benefits' }, BENEFITS.map((b) => h('li', {}, h('span', { html: ICON_CHECK }), h('span', {}, b)))),
-        h('img', { class: 'pw-app', src: 'img/info-app.webp?v=7', alt: 'Treino do dia no app Moviq', loading: 'lazy', width: 240, height: 320 }),
-        CFG.GARANTIA_DIAS > 0
-          ? h(
-              'div',
-              { class: 'pw-guarantee' },
-              h('span', { html: ICON_SHIELD }),
-              h('div', {}, h('b', {}, `Garantia de ${CFG.GARANTIA_DIAS} dias`), h('p', {}, 'Se não gostar, é só pedir: devolvemos 100% do seu dinheiro.'))
-            )
-          : null,
         // Segundo botão para quem leu até o fim
         h('button', { class: 'btn pw-cta', onclick: go }, ctaTxt),
+        aviso ? h('p', { class: 'muted pw-legal' }, aviso) : null,
         legal.length ? h('p', { class: 'muted pw-links' }, legal) : null,
       ].filter(Boolean)
     );
