@@ -14,7 +14,8 @@ export async function GET(req) {
   const url = new URL(req.url);
   const id = url.searchParams.get('s') || '';
   const extra = extraDoPlano(url.searchParams.get('p') || 'plano_alimentar');
-  const voltar = `${APP_URL}/bem-vindo?session_id=${encodeURIComponent(id)}&sem_oferta=1`;
+  // Desistiu no pagamento da oferta: volta para a /bem-vindo, que segue para a oferta seguinte (ou o cadastro)
+  const voltar = `${APP_URL}/bem-vindo?session_id=${encodeURIComponent(id)}&depois=${encodeURIComponent(extra?.plano || '')}`;
   if (!stripe || !extra || !/^cs_(test|live)_[A-Za-z0-9]+$/.test(id)) return Response.redirect(voltar, 303);
 
   try {

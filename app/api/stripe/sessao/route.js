@@ -1,7 +1,7 @@
 // Depois do pagamento: devolve o e-mail e o nome da Checkout Session para a página /bem-vindo
 // abrir o cadastro já preenchido. Só responde para sessões concluídas.
-// Se foi a compra do acesso vitalício e a pessoa não levou algum extra (plano alimentar, gerador de treino
-// com IA), devolve a oferta do primeiro que ficou de fora (upsell), para a /bem-vindo mostrar antes do cadastro.
+// Se foi a compra do acesso vitalício, devolve as ofertas dos extras que a pessoa não levou (plano alimentar,
+// gerador de treino com IA), na ordem, para a /bem-vindo mostrar uma de cada vez antes do cadastro.
 import { stripe, nomeDaCompra, PLANO_VITALICIO, extrasAtivos, precoExtra, precoDoItem } from '@/lib/stripe';
 
 export const runtime = 'nodejs';
@@ -19,13 +19,13 @@ export async function GET(req) {
   }
   if (s.status !== 'complete') return Response.json({ error: 'not_complete' }, { status: 409 });
 
-  let upsell = null;
+  // Ofertas em sequência (plano alimentar, depois gerador com IA): "Não, obrigado" passa para a próxima
+  const upsells = [];
   if (s.metadata?.plano === PLANO_VITALICIO) {
     const levou = new Set(await Promise.all((s.line_items?.data || []).map(precoDoItem)));
-    const faltou = extrasAtivos().find((e) => !levou.has(e.price));
-    const preco = faltou ? await precoExtra(faltou.plano) : null;
-    if (faltou && preco) {
-      upsell = { plano: faltou.plano, nome: faltou.nome, preco, url: `/api/stripe/upsell?${new URLSearchParams({ s: s.id, p: faltou.plano })}` };
+    for (const e of extrasAtivos().filter((x) => !levou.has(x.price))) {
+      const preco = await precoExtra(e.plano);
+      if (preco) upsells.push({ plano: e.plano, nome: e.nome, preco, url: `/api/stripe/upsell?${new URLSearchParams({ s: s.id, p: e.plano })}` });
     }
   }
 
@@ -33,6 +33,7 @@ export async function GET(req) {
     email: s.customer_details?.email || s.customer_email || null,
     name: await nomeDaCompra(s),
     plano: s.metadata?.plano || null,
-    upsell,
+    upsell: upsells[0] || null,
+    upsells,
   });
 }

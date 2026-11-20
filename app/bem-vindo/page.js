@@ -4,7 +4,8 @@
 // com o e-mail da compra. Quem já está logado segue para /preparando.
 // Volta da Hotmart (página de obrigado, sem session_id): abre o cadastro direto.
 // Se a compra foi o acesso vitalício e ficou de fora algum extra (plano alimentar, gerador de treino com IA),
-// mostra antes a oferta do primeiro que faltou (upsell, um pagamento à parte). "Não, obrigado" segue para o cadastro.
+// mostra antes as ofertas dos que faltaram, uma de cada vez (upsell, um pagamento à parte): plano alimentar e,
+// para quem recusar, o gerador de treino com IA. "Não, obrigado" na última segue para o cadastro.
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
@@ -40,8 +41,17 @@ const OFERTAS = {
 export default function BemVindoPage() {
   const router = useRouter();
   const [msg, setMsg] = useState('Confirmando seu pagamento…');
-  const [oferta, setOferta] = useState(null); // { plano, nome, preco, url }
+  const [ofertas, setOfertas] = useState([]); // [{ plano, nome, preco, url }], uma de cada vez
   const [cadastro, setCadastro] = useState('');
+  const oferta = ofertas[0] || null;
+
+  // "Não, obrigado": próxima oferta (plano alimentar → gerador com IA) ou, se acabou, o cadastro
+  const recusar = () => {
+    if (ofertas.length > 1) {
+      setOfertas(ofertas.slice(1));
+      window.scrollTo(0, 0);
+    } else router.replace(cadastro);
+  };
 
   useEffect(() => {
     (async () => {
@@ -73,9 +83,13 @@ export default function BemVindoPage() {
       if (info.name) q.set('name', String(info.name).trim().split(/\s+/)[0]);
       const destino = `/login?${q}`;
 
-      if (info.upsell && !params.get('sem_oferta')) {
+      // Volta de um checkout de oferta sem pagar (depois=<plano>): segue para as ofertas seguintes
+      let lista = params.get('sem_oferta') ? [] : info.upsells || (info.upsell ? [info.upsell] : []);
+      const depois = params.get('depois');
+      if (depois) lista = lista.slice(lista.findIndex((o) => o.plano === depois) + 1);
+      if (lista.length) {
         setCadastro(destino);
-        setOferta(info.upsell);
+        setOfertas(lista);
         return;
       }
       setMsg(
@@ -119,8 +133,8 @@ export default function BemVindoPage() {
           <a className="btn" href={oferta.url} style={{ display: 'block', textAlign: 'center' }}>
             {o.botao}
           </a>
-          <button className="btn secondary" style={{ marginTop: 10, width: '100%' }} onClick={() => router.replace(cadastro)}>
-            Não, obrigado. Continuar para o app
+          <button className="btn secondary" style={{ marginTop: 10, width: '100%' }} onClick={recusar}>
+            {ofertas.length > 1 ? 'Não, obrigado' : 'Não, obrigado. Continuar para o app'}
           </button>
           {o.aviso ? (
             <p className="muted" style={{ fontSize: 12.5, textAlign: 'center', marginTop: 14, lineHeight: 1.5 }}>
