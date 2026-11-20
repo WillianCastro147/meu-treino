@@ -2,8 +2,10 @@
 // Eventos (cadastre na Stripe): checkout.session.completed, checkout.session.async_payment_succeeded (Pix),
 // checkout.session.async_payment_failed (Pix expirou) e checkout.session.expired (pagamento abandonado):
 // estes dois mandam o e-mail de recuperação (lib/recuperacaoServer.js),
-// customer.subscription.created, customer.subscription.updated, customer.subscription.deleted.
+// customer.subscription.created, customer.subscription.updated, customer.subscription.deleted,
+// charge.refunded (reembolso tira o acesso), charge.dispute.created e charge.dispute.closed (contestação).
 import { stripe, supabaseAdmin, nomeDaCompra, APP_URL, PLANO_VITALICIO, extrasAtivos, extraDoPlano } from '@/lib/stripe';
+import { planosDaCompra, planosDoReembolso } from '@/lib/reembolso';
 import { sendWelcomeEmail, sendExtraEmail } from '@/lib/email';
 import { enviarRecuperacao } from '@/lib/recuperacaoServer';
 import { enviarCompraMeta } from '@/lib/metaCapi';
@@ -105,6 +107,32 @@ async function liberarPagamentoUnico(db, session) {
   await welcome(db, session, email);
 }
 
+// Reembolso e contestação: acha a compra (Checkout Session) pelo pagamento e muda o status das linhas que ela
+// liberou. 'reembolsado' e 'contestado' não dão acesso (tem_acesso e temExtra só aceitam linhas ativas).
+async function compraDoPagamento(paymentIntent) {
+  const pi = typeof paymentIntent === 'string' ? paymentIntent : paymentIntent?.id;
+  if (!pi) return null;
+  const { data } = await stripe.checkout.sessions.list({ payment_intent: pi, limit: 1 });
+  const session = data[0];
+  if (!session || session.mode !== 'payment') return null; // assinatura: os avisos customer.subscription.* cuidam
+  const email = String(session.customer_details?.email || session.customer_email || '').trim().toLowerCase();
+  if (!email) return null;
+  const itens = await stripe.checkout.sessions.listLineItems(session.id, { limit: 10 });
+  return {
+    session,
+    email,
+    plano: session.metadata?.plano,
+    itens: itens.data.map((i) => ({ price: i.price?.id, amount_total: i.amount_total })),
+    extras: extrasAtivos().map((e) => ({ plano: e.plano, price: e.price })),
+  };
+}
+
+async function mudarStatus(db, email, planos, status, deStatus = 'active') {
+  if (!planos.length) return;
+  const { error } = await db.from('assinaturas').update({ status, updated_at: new Date().toISOString() }).eq('email', email).in('plano', planos).eq('status', deStatus);
+  if (error) throw error;
+}
+
 async function welcome(db, session, email) {
   // E-mail de boas-vindas com o link do app (uma vez por compra; falha no e-mail não refaz o aviso)
   const name = await nomeDaCompra(session, db);
@@ -161,6 +189,28 @@ export async function POST(req) {
         await enviarRecuperacao(db, session, sit)
           .then((r) => console.log('Recuperação', sit, session.id, JSON.stringify(r)))
           .catch((e) => console.error('Recuperação:', sit, session.id, e.message));
+        break;
+      }
+      // Reembolso (garantia de 7 dias): total tira tudo o que a compra liberou; parcial, só o bump do mesmo valor
+      case 'charge.refunded': {
+        const charge = event.data.object;
+        const compra = await compraDoPagamento(charge.payment_intent);
+        if (!compra) break;
+        const planos = planosDoReembolso({ ...compra, total: charge.amount, reembolsado: charge.amount_refunded });
+        await mudarStatus(db, compra.email, planos, 'reembolsado');
+        console.log('Reembolso', compra.session.id, charge.amount_refunded, '/', charge.amount, planos.length ? `tirou ${planos.join(', ')}` : 'parcial: conferir à mão');
+        break;
+      }
+      // Contestação (chargeback): tira o acesso na abertura; se a disputa for ganha, devolve
+      case 'charge.dispute.created':
+      case 'charge.dispute.closed': {
+        const disputa = event.data.object;
+        const compra = await compraDoPagamento(disputa.payment_intent);
+        if (!compra) break;
+        const planos = planosDaCompra(compra);
+        if (event.type === 'charge.dispute.created') await mudarStatus(db, compra.email, planos, 'contestado');
+        else if (disputa.status === 'won') await mudarStatus(db, compra.email, planos, 'active', 'contestado');
+        console.log('Contestação', compra.session.id, event.type === 'charge.dispute.created' ? 'aberta' : disputa.status, planos.join(', '));
         break;
       }
       case 'customer.subscription.created':

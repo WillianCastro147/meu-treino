@@ -50,7 +50,8 @@ Além desses, a sessão leva `customer_email` (o e-mail digitado no quiz, para a
 2. **Chave da API:** em *Developers → API keys*, copie a **Secret key** (`sk_test_...`). Uma *restricted key* também serve, com escrita em *Checkout Sessions* e leitura em *Customers* e *Subscriptions*.
 3. **Webhook:** em *Developers → Webhooks → Add endpoint*:
    - URL: `https://moviqapp.vercel.app/api/stripe/webhook`
-   - Eventos: `checkout.session.completed`, `checkout.session.async_payment_succeeded` (Pix do acesso vitalício), `checkout.session.async_payment_failed` (Pix expirou → e-mail de recuperação), `checkout.session.expired` (pagamento abandonado → e-mail de recuperação), `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`
+   - Eventos: `checkout.session.completed`, `checkout.session.async_payment_succeeded` (Pix do acesso vitalício), `checkout.session.async_payment_failed` (Pix expirou → e-mail de recuperação), `checkout.session.expired` (pagamento abandonado → e-mail de recuperação), `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `charge.refunded` (reembolso tira o acesso), `charge.dispute.created` e `charge.dispute.closed` (contestação tira o acesso; disputa ganha devolve)
+   - Reembolso total tira o app e os extras daquela compra. Parcial só tira o order bump com o mesmo valor devolvido; outro valor fica para conferir à mão (o log da Vercel mostra `Reembolso … parcial: conferir à mão`). Regras em [lib/reembolso.js](lib/reembolso.js).
    - Copie o **Signing secret** (`whsec_...`).
 4. **Portal do cliente** (para "Cancele quando quiser"): em *Settings → Billing → Customer portal*, ative o portal e copie o link de login. Ver "Próximos passos".
 
