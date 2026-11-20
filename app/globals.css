@@ -2025,6 +2025,23 @@ textarea.input {
   background: var(--accent-soft);
   color: var(--accent);
 }
+/* Cartões dos extras no Início (Coach IA, plano alimentar): o cartão inteiro é o link */
+.extra-card {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+.extra-card .hcard-head {
+  align-items: center;
+}
+.extra-chevron {
+  display: flex;
+  flex-shrink: 0;
+}
+.extra-pill {
+  background: var(--accent);
+  color: #fff;
+}
 .hcard-icon.warm {
   background: rgba(245, 158, 11, 0.16);
   color: #f59e0b;

@@ -1,10 +1,11 @@
 'use client';
 
 // Cartões do Início no mesmo formato: ícone, linha pequena, título e ações (fechar/recolher).
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useI18n } from '@/lib/i18n';
 import { fmtKg } from '@/lib/stats';
-import { IconCheck, IconClose } from '@/components/Icons';
+import { supabase } from '@/lib/supabase';
+import { IconCheck, IconClose, IconChevron } from '@/components/Icons';
 
 export function CardHead({ icon, tone = 'accent', kicker, title, sub, onClose, extra }) {
   const { t } = useI18n();
@@ -47,14 +48,92 @@ const IconFood = () => (
   </svg>
 );
 
+const IconSpark = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z" />
+    <path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z" />
+  </svg>
+);
+
+// A conta tem o extra? { liberado, preco } pela mesma rota que a página do extra usa.
+// Enquanto carrega (ou se falhar), o cartão aparece como atalho, sem preço.
+function useExtra(rota) {
+  const [info, setInfo] = useState(null);
+  useEffect(() => {
+    let vivo = true;
+    (async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        const res = await fetch(rota, { headers: { Authorization: `Bearer ${data.session?.access_token || ''}` } });
+        if (!res.ok) return;
+        const j = await res.json();
+        if (vivo) setInfo({ liberado: !!j.liberado, preco: j.preco || j.oferta?.preco || null });
+      } catch (e) {}
+    })();
+    return () => {
+      vivo = false;
+    };
+  }, [rota]);
+  return info;
+}
+
+// Cartão de um extra: com acesso, atalho (seta); sem acesso, oferta com o valor e "Liberar".
+function ExtraCard({ href, icon, kicker, title, sub, ofertaSub, info }) {
+  const oferta = info && !info.liberado && info.preco;
+  return (
+    <a className="card extra-card" href={href}>
+      <CardHead
+        icon={icon}
+        kicker={kicker}
+        title={title}
+        sub={oferta ? `${ofertaSub} · ${info.preco}` : sub}
+        extra={
+          oferta ? (
+            <span className="pill extra-pill">Liberar</span>
+          ) : (
+            <span className="extra-chevron">
+              <IconChevron size={20} color="var(--muted)" />
+            </span>
+          )
+        }
+      />
+    </a>
+  );
+}
+
+/** Coach com IA: abre /coach (gerador de treino com IA, ou a oferta para quem não tem) */
+export function CoachCard() {
+  const { t, lang } = useI18n();
+  const info = useExtra('/api/coach/acesso');
+  const pt = lang === 'pt';
+  return (
+    <ExtraCard
+      href="/coach"
+      icon={<IconSpark />}
+      kicker={pt ? 'Treino com IA' : t('coachTitle')}
+      title={pt ? 'Gerador de treino com IA' : t('coachTitle')}
+      sub={pt ? 'Crie um treino novo quando quiser' : t('coachSub')}
+      ofertaSub="Treinos novos em segundos"
+      info={pt ? info : null}
+    />
+  );
+}
+
 /** Plano alimentar (só em português): abre /alimentacao, que mostra o plano ou a oferta */
 export function NutritionCard() {
   const { lang } = useI18n();
+  const info = useExtra('/api/nutricao');
   if (lang !== 'pt') return null;
   return (
-    <a className="card" href="/alimentacao" style={{ display: 'block', color: 'inherit', textDecoration: 'none' }}>
-      <CardHead icon={<IconFood />} kicker="Alimentação" title="Plano alimentar" sub="Calorias e refeições para o seu objetivo" />
-    </a>
+    <ExtraCard
+      href="/alimentacao"
+      icon={<IconFood />}
+      kicker="Alimentação"
+      title="Plano alimentar"
+      sub="Calorias e refeições para o seu objetivo"
+      ofertaSub="Calorias e refeições para você"
+      info={info}
+    />
   );
 }
 
