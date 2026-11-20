@@ -4,7 +4,7 @@
 // estes dois mandam o e-mail de recuperação (lib/recuperacaoServer.js),
 // customer.subscription.created, customer.subscription.updated, customer.subscription.deleted,
 // charge.refunded (reembolso tira o acesso), charge.dispute.created e charge.dispute.closed (contestação).
-import { stripe, supabaseAdmin, nomeDaCompra, APP_URL, PLANO_VITALICIO, extrasAtivos, extraDoPlano } from '@/lib/stripe';
+import { stripe, supabaseAdmin, nomeDaCompra, APP_URL, PLANO_VITALICIO, extrasAtivos, extraDoPlano, precoDoItem } from '@/lib/stripe';
 import { planosDaCompra, planosDoReembolso } from '@/lib/reembolso';
 import { sendWelcomeEmail, sendExtraEmail } from '@/lib/email';
 import { enviarRecuperacao } from '@/lib/recuperacaoServer';
@@ -101,7 +101,7 @@ async function liberarPagamentoUnico(db, session) {
   const email = await saveCompraAvulsa(db, session, PLANO_VITALICIO);
   if (extrasAtivos().length) {
     const itens = await stripe.checkout.sessions.listLineItems(session.id, { limit: 10 });
-    const precos = new Set(itens.data.map((i) => i.price?.id));
+    const precos = new Set(await Promise.all(itens.data.map(precoDoItem)));
     for (const e of extrasAtivos()) if (precos.has(e.price)) await saveCompraAvulsa(db, session, e.plano);
   }
   await welcome(db, session, email);
@@ -122,7 +122,7 @@ async function compraDoPagamento(paymentIntent) {
     session,
     email,
     plano: session.metadata?.plano,
-    itens: itens.data.map((i) => ({ price: i.price?.id, amount_total: i.amount_total })),
+    itens: await Promise.all(itens.data.map(async (i) => ({ price: await precoDoItem(i), amount_total: i.amount_total }))),
     extras: extrasAtivos().map((e) => ({ plano: e.plano, price: e.price })),
   };
 }
