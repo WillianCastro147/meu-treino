@@ -571,9 +571,11 @@
           b.textContent = ctaTxt;
         });
       }, { once: true });
-      // InitiateCheckout NÃO sai daqui: quem marca é a regra de clique da Utmify (botão "Garantir meu acesso"),
-      // que manda pelo servidor e conta 1 por pessoa. Mandar também por aqui duplicava o IC na Meta
-      // (IDs de evento diferentes, a Meta contava os dois).
+      // InitiateCheckout no quiz em português NÃO sai daqui: quem marca é a regra de clique da Utmify (botão
+      // "Garantir meu acesso"), que manda pelo servidor e conta 1 por pessoa. Mandar também por aqui duplicava o
+      // IC na Meta (IDs de evento diferentes, a Meta contava os dois).
+      // Quiz em espanhol (IC_PELO_QUIZ): pixel próprio, sem a Utmify na página; o IC sai daqui.
+      if (CFG.IC_PELO_QUIZ) track('InitiateCheckout', { value: p.total, currency: CFG.MOEDA || 'BRL' });
       if (destinoHotmart) {
         window.location.href = destinoHotmart;
         return;
