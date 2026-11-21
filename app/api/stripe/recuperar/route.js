@@ -43,6 +43,8 @@ export async function GET(req) {
       plano,
       email,
       nome: antiga.metadata?.nome || '',
+      whatsapp: antiga.metadata?.whatsapp,
+      lang: antiga.metadata?.lang,
       tracking: antiga.metadata || {},
       extra: {
         recuperacao: canal,

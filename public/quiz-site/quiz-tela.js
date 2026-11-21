@@ -23,6 +23,9 @@
       emailSub: 'Use o mesmo e-mail na compra e no app: é por ele que seu plano aparece pronto quando você entrar.',
       consentimento: 'Quero receber dicas de treino e novidades do Moviq por e-mail.',
       emailLegal: 'Seus dados ficam protegidos e são usados só para montar seu plano. Você pode pedir a exclusão a qualquer momento.',
+      zapLabel: 'WhatsApp (opcional)', zapPh: '(11) 91234-5678',
+      zapNota: 'Para receber seu plano e lembretes no WhatsApp. Ao informar, você aceita receber mensagens do Moviq (responda SAIR para parar).',
+      zapErro: 'Confira o WhatsApp com DDD. Ex.: (11) 91234-5678. Ou deixe em branco.',
       beneficios: [
         'Treino do dia pronto: exercício, séries, carga e descanso',
         'Plano montado pelo Coach com IA a partir das suas respostas',
@@ -405,13 +408,30 @@
     if (!res.ok) throw new Error(`save_quiz_lead ${res.status}: ${await res.text()}`);
   }
 
+  // WhatsApp do Brasil (com DDD, com ou sem 55) → só dígitos com 55; inválido → ''. Igual a lib/leona.js.
+  function zapNormalizado(v) {
+    let d = String(v || '').replace(/\D/g, '');
+    if ((d.length === 12 || d.length === 13) && d.startsWith('55')) d = d.slice(2);
+    if (d.length !== 10 && d.length !== 11) return '';
+    if (d[0] === '0' || (d.length === 11 && d[2] !== '9')) return '';
+    return '55' + d;
+  }
+  // Campo de WhatsApp: só no quiz em português (a recuperação pelo LeonaFlow é em português)
+  const pedeZap = LANG === 'pt';
+
   function emailStep(step, body) {
     let saving = false;
     const errBox = h('div', {});
     const { el, btn } = cta(T.continuar, () => submit(), !Q.isAnswered(step, answers));
+    const zapErr = h('p', { class: 'error-msg', hidden: true }, T.zapErro || '');
 
     async function submit() {
       if (!Q.isAnswered(step, answers) || saving) return;
+      // WhatsApp é opcional, mas se foi digitado precisa estar certo
+      if (pedeZap && String(answers.whatsapp || '').trim() && !zapNormalizado(answers.whatsapp)) {
+        zapErr.hidden = false;
+        return;
+      }
       saving = true;
       btn.disabled = true;
       btn.textContent = T.salvando;
@@ -454,11 +474,35 @@
       onkeydown: (e) => e.key === 'Enter' && submit(),
     });
     const box = h('input', { type: 'checkbox', checked: !!answers.marketing, onchange: (e) => set({ marketing: e.target.checked }) });
+    const zap = pedeZap
+      ? h(
+          'div',
+          { class: 'quiz-zap' },
+          h('label', { class: 'quiz-zap-label' }, T.zapLabel),
+          h('input', {
+            class: 'input',
+            type: 'tel',
+            autocomplete: 'tel-national',
+            inputMode: 'tel',
+            maxLength: 20,
+            value: answers.whatsapp || '',
+            placeholder: T.zapPh,
+            oninput: (e) => {
+              set({ whatsapp: e.target.value });
+              zapErr.hidden = true;
+            },
+            onkeydown: (e) => e.key === 'Enter' && submit(),
+          }),
+          zapErr,
+          h('p', { class: 'muted quiz-zap-nota' }, T.zapNota)
+        )
+      : null;
 
     body.append(
       ...title(step),
       h('p', { class: 'quiz-sub' }, T.emailSub),
       input,
+      zap,
       h('label', { class: 'quiz-consent' }, box, h('span', {}, T.consentimento)),
       el,
       errBox,
@@ -589,6 +633,8 @@
         h('input', { type: 'hidden', name: 'nome', value: String(answers.nome || '').trim() }),
         // idioma do quiz: a Stripe abre nesse idioma e o app volta nele (/bem-vindo?lang=es)
         LANG !== 'pt' ? h('input', { type: 'hidden', name: 'lang', value: LANG }) : null,
+        // WhatsApp do quiz (opcional): vai na sessão da Stripe para a recuperação pelo LeonaFlow
+        pedeZap && zapNormalizado(answers.whatsapp) ? h('input', { type: 'hidden', name: 'whatsapp', value: zapNormalizado(answers.whatsapp) }) : null,
         Object.entries(utms).map(([k, v]) => h('input', { type: 'hidden', name: k, value: String(v) }))
       );
       document.body.append(form);

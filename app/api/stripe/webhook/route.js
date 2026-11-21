@@ -9,8 +9,20 @@ import { planosDaCompra, planosDoReembolso } from '@/lib/reembolso';
 import { sendWelcomeEmail, sendExtraEmail } from '@/lib/email';
 import { enviarRecuperacao } from '@/lib/recuperacaoServer';
 import { enviarCompraMeta } from '@/lib/metaCapi';
+import { enviarLeona } from '@/lib/leona';
 
 export const runtime = 'nodejs';
+
+// WhatsApp pelo LeonaFlow (lib/leona.js): Pix gerado e compra confirmada. Pix expirado e pagamento
+// abandonado saem junto com o e-mail de recuperação (lib/recuperacaoServer.js). Falha só é registrada.
+async function avisarLeona(evento, session) {
+  try {
+    const r = await enviarLeona(evento, session, { appUrl: APP_URL });
+    if (!r?.skipped) console.log('LeonaFlow', evento, session.id, JSON.stringify(r));
+  } catch (e) {
+    console.error('LeonaFlow:', evento, session.id, e.message);
+  }
+}
 export const dynamic = 'force-dynamic';
 
 // Compra na Meta (API de Conversões) com os dados do clique no anúncio. Só envia com META_CAPI_TOKEN na Vercel.
@@ -169,6 +181,10 @@ export async function POST(req) {
           // cartão: pago na hora. Pix chega aqui como 'unpaid' e é liberado no aviso abaixo.
           await liberarPagamentoUnico(db, session);
           await compraNaMeta(session);
+          await avisarLeona('comprou', session);
+        } else if (session.mode === 'payment' && session.payment_status === 'unpaid') {
+          // Pix gerado, ainda não pago: o fluxo do LeonaFlow espera uns minutos e lembra
+          await avisarLeona('pix_gerado', session);
         }
         break;
       }
@@ -177,6 +193,7 @@ export async function POST(req) {
         if (session.mode === 'payment') {
           await liberarPagamentoUnico(db, session);
           await compraNaMeta(session);
+          await avisarLeona('comprou', session);
         }
         break;
       }

@@ -29,6 +29,7 @@ export async function POST(req) {
       email: body.email,
       nome: body.nome,
       lang: body.lang, // 'es' no quiz em espanhol
+      whatsapp: body.whatsapp, // opcional, digitado no quiz (recuperação pelo LeonaFlow)
       tracking: body,
       // fbp/fbc (cookies do pixel, mesmo domínio), IP e navegador de quem clicou: vão na Compra para a Meta
       // (lib/metaCapi.js), que assim liga a venda ao clique no anúncio

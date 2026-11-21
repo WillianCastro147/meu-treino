@@ -26,6 +26,7 @@ export async function GET(req) {
       plano: extra.plano,
       email: emailDaSessao(compra),
       nome: compra.metadata?.nome || '',
+      whatsapp: compra.metadata?.whatsapp,
       tracking: compra.metadata || {},
       extra: { upsell_de: compra.id, ...dadosDoClique(compra.metadata, dadosDoNavegador({ headers: req.headers })) },
       cancelUrl: voltar, // desistiu da oferta: volta para terminar o cadastro

@@ -915,6 +915,25 @@ textarea {
   margin-top: 16px;
 }
 
+/* WhatsApp opcional na tela do e-mail (recuperação pelo LeonaFlow) */
+.quiz-zap {
+  margin-top: 14px;
+}
+.quiz-zap-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 6px;
+}
+.quiz-zap .error-msg {
+  margin-top: 6px;
+}
+.quiz-zap-nota {
+  font-size: 12px;
+  line-height: 1.4;
+  margin-top: 6px;
+}
+
 .quiz-gallery {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
