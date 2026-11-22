@@ -1,7 +1,9 @@
 // Cria a Checkout Session da Stripe (página de pagamento hospedada pela Stripe) e redireciona para ela.
 // Chamado pela tela de planos do quiz (quiz.moviqgym.app) com um <form method="POST">: plano=12m|3m|1m|vitalicio, email e UTMs.
 // A sessão em si é montada em lib/checkout.js (a mesma usada pelo link de recuperação).
-import { stripe } from '@/lib/stripe';
+import { waitUntil } from '@vercel/functions';
+import { stripe, APP_URL } from '@/lib/stripe';
+import { enviarLeona } from '@/lib/leona';
 import { criarSessaoCheckout, planoValido } from '@/lib/checkout';
 import { dadosDoNavegador } from '@/lib/metaCapi';
 
@@ -42,6 +44,14 @@ export async function POST(req) {
       headers: { 'Content-Type': 'text/plain; charset=utf-8' },
     });
   }
+
+  // WhatsApp pelo LeonaFlow: "abriu o pagamento" (o fluxo espera ~10 min e chama quem não seguiu).
+  // waitUntil: sai depois da resposta, sem atrasar a abertura da página da Stripe.
+  waitUntil(
+    enviarLeona('checkout_aberto', session, { appUrl: APP_URL })
+      .then((r) => !r?.skipped && console.log('LeonaFlow checkout_aberto', session.id, JSON.stringify(r)))
+      .catch((e) => console.error('LeonaFlow: checkout_aberto', session.id, e.message))
+  );
 
   // Form POST do quiz: 303 leva o navegador direto para a página da Stripe. Fetch com JSON: devolve a URL.
   if ((req.headers.get('accept') || '').includes('application/json')) return Response.json({ url: session.url });

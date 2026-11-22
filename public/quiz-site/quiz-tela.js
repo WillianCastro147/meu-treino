@@ -438,11 +438,13 @@
       btn.disabled = true;
       btn.textContent = T.salvando;
       errBox.replaceChildren();
+      const zapOk = pedeZap ? zapNormalizado(answers.whatsapp) : '';
       try {
         await saveLead({
           p_email: answers.email.trim(),
           p_name: answers.nome.trim(),
-          p_answers: Q.cleanAnswers(answers),
+          // WhatsApp (opcional) vai junto nas respostas: é de lá que o app tira o número do evento "lead"
+          p_answers: Object.assign(Q.cleanAnswers(answers), zapOk ? { whatsapp: zapOk } : {}),
           p_marketing: !!answers.marketing,
           p_utm: Object.keys(tracking || {}).length ? tracking : null,
         });
@@ -458,6 +460,17 @@
         return;
       }
       track('Lead', { content_name: 'quiz' });
+      // Lead com WhatsApp: o app avisa o LeonaFlow (fluxo de quem não abre o pagamento). Não espera a resposta.
+      if (zapOk) {
+        try {
+          fetch(CFG.LEAD_URL || '/api/lead', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: answers.email.trim() }),
+            keepalive: true,
+          }).catch(() => {});
+        } catch (e) {}
+      }
       next(); // vai para a tela de planos
     }
 
