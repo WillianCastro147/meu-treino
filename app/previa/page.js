@@ -1,7 +1,8 @@
 'use client';
 
 // Prévia do app para quem fez o quiz e ainda não comprou (link da mensagem de WhatsApp do LeonaFlow):
-//   /previa?l=<id do lead>
+//   /previa?l=<id do lead>            mensagem do lead
+//   /previa?s=<id da sessão>          mensagens de recuperação (abriu o pagamento, Pix, abandonou)
 // Mostra o app com a cara do plano da pessoa (nome, resumo do quiz, semana e os treinos de um plano pronto
 // da mesma divisão, com as fotos dos exercícios). Qualquer toque abre o aviso de bloqueio com o botão de
 // compra, que leva ao pagamento já com os dados do quiz (/api/stripe/pagar?l=<id>). Sem login.
@@ -30,14 +31,15 @@ export default function PreviaPage() {
 
   useEffect(() => {
     setLang('pt');
-    const l = new URLSearchParams(window.location.search).get('l') || '';
-    setId(l);
+    const q = new URLSearchParams(window.location.search);
+    const busca = q.get('s') ? { s: q.get('s') } : { l: q.get('l') || '' };
     (async () => {
       try {
-        const res = await fetch(`/api/previa?l=${encodeURIComponent(l)}`);
+        const res = await fetch(`/api/previa?${new URLSearchParams(busca)}`);
         if (!res.ok) throw new Error('lead');
         const d = await res.json();
         await loadCatalog();
+        setId(d.l || '');
         setDados(d);
         setPlano(buildStarterPlan(d.plano, 'pt', (exId) => findExercise({ id: exId })));
       } catch (e) {
