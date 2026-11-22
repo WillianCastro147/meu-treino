@@ -2746,3 +2746,134 @@ textarea.input {
   background: var(--border);
   margin: 18px 0 4px;
 }
+
+/* Prévia do app para quem ainda não comprou (/previa): tudo bloqueado, botão de compra fixo */
+.previa-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.previa-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--card2);
+  color: var(--muted);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 700;
+}
+.previa-ola {
+  font-size: 30px;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+.previa-resumo {
+  display: grid;
+  gap: 9px;
+}
+.previa-resumo > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 15px;
+}
+.previa-resumo b {
+  text-align: right;
+}
+.previa-semana {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+.previa-dia {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: var(--card2);
+  border-radius: 12px;
+  padding: 8px 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+.previa-dia b {
+  font-size: 15px;
+  color: var(--muted);
+}
+.previa-dia.tem b {
+  color: var(--accent);
+}
+.previa-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.previa-cadeado {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.previa-ex {
+  width: 100%;
+  background: none;
+  color: inherit;
+}
+.previa-mais {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  margin-top: 10px;
+  padding: 12px;
+  border-radius: 14px;
+  background: var(--card2);
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 15px;
+}
+.previa-barra {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+  background: linear-gradient(to top, var(--bg) 70%, rgba(0, 0, 0, 0));
+}
+.previa-fundo {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.previa-aviso {
+  width: 100%;
+  max-width: 560px;
+  background: var(--card);
+  border-radius: 24px 24px 0 0;
+  padding: 24px 20px calc(20px + env(safe-area-inset-bottom));
+  text-align: center;
+}
+.previa-aviso h2 {
+  font-size: 22px;
+  margin: 10px 0 8px;
+}
+.previa-aviso-icone {
+  display: inline-flex;
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
