@@ -1,7 +1,7 @@
 // Link de recuperação (do e-mail automático ou da mensagem de WhatsApp):
 //   /api/stripe/recuperar?s=<id da Checkout Session perdida>&c=email|whatsapp
-// Gera um checkout novo com o mesmo plano, e-mail, nome e UTMs (a Utmify continua atribuindo a venda
-// ao anúncio de origem) e leva a pessoa direto para a página de pagamento.
+// Gera um checkout novo com o mesmo plano (o Premium volta como vitalício), e-mail, nome e UTMs (a Utmify
+// continua atribuindo a venda ao anúncio de origem) e leva a pessoa direto para a página de pagamento.
 import { stripe, supabaseAdmin, APP_URL, QUIZ_URL } from '@/lib/stripe';
 import { criarSessaoCheckout, planoValido } from '@/lib/checkout';
 import { emailDaSessao, situacao } from '@/lib/recuperacao';
@@ -35,7 +35,9 @@ export async function GET(req) {
   }
   if (pago) return Response.redirect(`${APP_URL}/login?${new URLSearchParams({ email })}`, 303);
 
-  const plano = antiga.metadata?.plano;
+  // Quem abandonou o Premium volta pelo acesso vitalício de R$ 37: é o valor que as mensagens de
+  // recuperação (templates do WhatsApp) mostram, e um preço menor ajuda a fechar.
+  const plano = antiga.metadata?.plano === 'premium' ? 'vitalicio' : antiga.metadata?.plano;
   if (!planoValido(plano)) return Response.redirect(QUIZ_URL, 303);
 
   try {

@@ -57,6 +57,13 @@ window.MOVIQ_CONFIG = {
   OFERTA_VITALICIA: { ativa: true, total: 37 },
   AVISO_VITALICIO: 'Pagamento único no Pix ou no cartão. Sem mensalidade e sem renovação automática.',
 
+  // POP-UP DO PREMIUM: depois do botão "Garantir meu acesso", oferece o app + plano alimentar + gerador de treino
+  // com IA num pagamento só. "Continuar com o básico" segue com o vitalício de sempre.
+  // ativa: false desliga o pop-up (o botão volta a ir direto para o pagamento do vitalício).
+  // total: SÓ PARA MOSTRAR. O valor cobrado é STRIPE_PRICE_PREMIUM (ou PREMIUM_CENTAVOS, padrão R$ 57) na Vercel.
+  // de: soma dos três comprados separados (R$ 37 + R$ 9,90 + R$ 19,90), mostrada riscada.
+  PREMIUM: { ativa: true, total: 57, de: 66.8 },
+
   // Garantia mostrada acima dos planos (0 = esconde)
   GARANTIA_DIAS: 7,
 

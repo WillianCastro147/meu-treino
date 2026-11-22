@@ -44,6 +44,19 @@
       garantia: (n) => `Garantia de ${n} dias`, garantiaTexto: 'Se não gostar, é só pedir: devolvemos 100% do seu dinheiro.',
       recebe: 'O que você recebe', altApp: 'Treino do dia no app Moviq',
       niveis: ['Iniciante', 'Intermediário', 'Avançado'], seuNivel: 'Seu nível', voceAqui: 'Você está aqui', proxima: 'Próxima etapa',
+      // Pop-up do Premium (depois do botão "Garantir meu acesso"). Os botões NÃO podem repetir o texto do CTA:
+      // a regra de InitiateCheckout da Utmify procura por ele.
+      premium: {
+        selo: 'OFERTA ÚNICA', titulo: 'Leve o Moviq Premium',
+        sub: 'Só agora, antes do pagamento: o app completo com tudo liberado.',
+        itens: [
+          'O app Moviq com o seu plano de treino',
+          'Plano alimentar montado para o seu objetivo',
+          'Gerador de treino com IA: monte treinos novos quando quiser',
+        ],
+        de: (v) => `de ${v}`, por: 'por', nota: 'pagamento único · 7 dias de garantia',
+        sim: (v) => `Quero o Premium · ${v}`, nao: (v) => `Continuar com o básico · ${v}`, fechar: 'Fechar',
+      },
     },
     es: {
       voltar: 'Volver', continuar: 'Continuar', pular: 'Omitir',
@@ -598,7 +611,52 @@
 
     const errBox = h('div', {});
     const hotmart = CFG.GATEWAY === 'hotmart';
+    // Pop-up do Premium: só no acesso vitalício pela Stripe, no quiz em português
+    const prem = oferta && !hotmart && T.premium && CFG.PREMIUM && CFG.PREMIUM.ativa && CFG.PREMIUM.total > 0 ? CFG.PREMIUM : null;
     let saindo = false;
+
+    // Pop-up "Leve o Moviq Premium": aparece depois do botão "Garantir meu acesso" (que já marcou o
+    // InitiateCheckout na Utmify). "Quero o Premium" paga o plano premium; "Continuar com o básico" segue
+    // com o vitalício de sempre; fechar (×, fora da caixa ou Esc) volta para a tela sem pagar.
+    function abrirPremium(p, utms) {
+      if (document.querySelector('.pm-fundo')) return;
+      const P = T.premium;
+      const fechar = () => {
+        fundo.remove();
+        document.removeEventListener('keydown', esc);
+      };
+      const esc = (e) => e.key === 'Escape' && fechar();
+      const escolher = (plano, total) => {
+        fechar();
+        pagar({ plano, total }, utms, null);
+      };
+      const fundo = h(
+        'div',
+        { class: 'pm-fundo', onclick: (e) => e.target === fundo && fechar() },
+        h(
+          'div',
+          { class: 'pm-caixa', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'pm-titulo' },
+          h('button', { class: 'pm-x', type: 'button', 'aria-label': P.fechar, onclick: fechar }, '×'),
+          h('span', { class: 'pm-selo' }, P.selo),
+          h('h2', { class: 'pm-titulo', id: 'pm-titulo' }, P.titulo),
+          h('p', { class: 'pm-sub' }, P.sub),
+          h('ul', { class: 'pm-itens' }, P.itens.map((t) => h('li', {}, h('span', { html: ICON_CHECK }), h('span', {}, t)))),
+          h(
+            'div',
+            { class: 'pm-preco' },
+            prem.de > prem.total ? h('s', {}, P.de(money(prem.de))) : null,
+            h('b', {}, money(prem.total)),
+            h('small', {}, P.nota)
+          ),
+          h('button', { class: 'btn pm-sim', type: 'button', onclick: () => escolher('premium', prem.total) }, P.sim(money(prem.total))),
+          h('button', { class: 'pm-nao', type: 'button', onclick: () => escolher(p.plano, p.total) }, P.nao(money(p.total)))
+        )
+      );
+      document.body.append(fundo);
+      document.addEventListener('keydown', esc);
+      fundo.querySelector('.pm-sim').focus();
+    }
+
     // Stripe: envia plano + e-mail para o app (Vercel), que cria a Checkout Session e redireciona para ela.
     // Hotmart: vai direto para o link de pagamento do plano (sem passar pelo app).
     function go() {
@@ -617,6 +675,16 @@
         errBox.replaceChildren(h('p', { class: 'error-msg', style: 'text-align:center' }, `Falta configurar o pagamento: ${falta}.`));
         return;
       }
+      if (prem) {
+        abrirPremium(p, utms);
+        return;
+      }
+      pagar(p, utms, destinoHotmart);
+    }
+
+    // Leva para a página de pagamento do plano escolhido
+    function pagar(p, utms, destinoHotmart) {
+      if (saindo) return;
       saindo = true;
       // Resposta na hora: a página de pagamento leva alguns segundos para abrir no celular
       body.querySelectorAll('.pw-cta').forEach((b) => {

@@ -4,8 +4,8 @@
 // estes dois mandam o e-mail de recuperação (lib/recuperacaoServer.js),
 // customer.subscription.created, customer.subscription.updated, customer.subscription.deleted,
 // charge.refunded (reembolso tira o acesso), charge.dispute.created e charge.dispute.closed (contestação).
-import { stripe, supabaseAdmin, nomeDaCompra, APP_URL, PLANO_VITALICIO, extrasAtivos, extraDoPlano, precoDoItem } from '@/lib/stripe';
-import { planosDaCompra, planosDoReembolso } from '@/lib/reembolso';
+import { stripe, supabaseAdmin, nomeDaCompra, APP_URL, PLANO_VITALICIO, PLANO_PREMIUM, extrasAtivos, extraDoPlano, precoDoItem } from '@/lib/stripe';
+import { planosDaCompra, planosDoReembolso, PLANOS_DO_PREMIUM } from '@/lib/reembolso';
 import { sendWelcomeEmail, sendExtraEmail } from '@/lib/email';
 import { enviarRecuperacao } from '@/lib/recuperacaoServer';
 import { enviarCompraMeta } from '@/lib/metaCapi';
@@ -99,7 +99,8 @@ async function saveCompraAvulsa(db, session, plano) {
 }
 
 // Pagamento único confirmado. Sessão de um extra sozinho (oferta depois da compra ou dentro do app)
-// libera só aquele extra. Sessão do vitalício libera o app e os extras marcados como order bump.
+// libera só aquele extra. Premium libera o app e os dois extras. Sessão do vitalício libera o app e os
+// extras marcados como order bump.
 async function liberarPagamentoUnico(db, session) {
   const avulso = extraDoPlano(session.metadata?.plano);
   if (avulso) {
@@ -108,6 +109,13 @@ async function liberarPagamentoUnico(db, session) {
     await sendExtraEmail({ email, name, extra: avulso, appUrl: APP_URL, idempotencyKey: `${avulso.plano}-${session.id}` }).catch((e) =>
       console.error('E-mail do extra:', avulso.plano, e.message)
     );
+    return;
+  }
+  // Premium (pop-up do quiz): app + plano alimentar + gerador de treino com IA
+  if (session.metadata?.plano === PLANO_PREMIUM) {
+    let email = null;
+    for (const plano of PLANOS_DO_PREMIUM) email = await saveCompraAvulsa(db, session, plano);
+    await welcome(db, session, email);
     return;
   }
   const email = await saveCompraAvulsa(db, session, PLANO_VITALICIO);

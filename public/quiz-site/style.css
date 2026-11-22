@@ -992,3 +992,124 @@ textarea {
 .quiz-opt > .quiz-icon {
   flex: 0 0 44px;
 }
+
+/* Pop-up "Leve o Moviq Premium" (depois do botão "Garantir meu acesso") */
+.pm-fundo {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(0, 0, 0, 0.72);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 16px;
+  animation: pm-in 0.18s ease-out;
+}
+@media (min-height: 640px) {
+  .pm-fundo {
+    align-items: center;
+  }
+}
+.pm-caixa {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  background: var(--card);
+  border: 1px solid var(--card3);
+  border-radius: 24px;
+  padding: 26px 20px 18px;
+  text-align: center;
+}
+.pm-x {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  font-size: 28px;
+  line-height: 1;
+}
+.pm-selo {
+  display: inline-block;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  border-radius: 999px;
+  padding: 5px 12px;
+}
+.pm-titulo {
+  font-size: 27px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  line-height: 1.15;
+  margin: 12px 0 6px;
+}
+.pm-sub {
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.4;
+}
+.pm-itens {
+  list-style: none;
+  text-align: left;
+  background: var(--card2);
+  border-radius: 16px;
+  padding: 12px 14px;
+  margin: 16px 0 14px;
+  display: grid;
+  gap: 10px;
+}
+.pm-itens li {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 15.5px;
+  line-height: 1.35;
+}
+.pm-itens li > span:first-child {
+  flex: 0 0 20px;
+  margin-top: 1px;
+}
+.pm-preco {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 14px;
+}
+.pm-preco s {
+  color: var(--muted);
+  font-size: 15px;
+}
+.pm-preco b {
+  font-size: 42px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+}
+.pm-preco small {
+  color: var(--muted);
+  font-size: 13px;
+  margin-top: 2px;
+}
+.pm-nao {
+  width: 100%;
+  background: transparent;
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 600;
+  padding: 14px 10px 6px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+@keyframes pm-in {
+  from {
+    opacity: 0;
+  }
+}

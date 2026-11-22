@@ -1,5 +1,5 @@
 // Cria a Checkout Session da Stripe (página de pagamento hospedada pela Stripe) e redireciona para ela.
-// Chamado pela tela de planos do quiz (quiz.moviqgym.app) com um <form method="POST">: plano=12m|3m|1m|vitalicio, email e UTMs.
+// Chamado pela tela de planos do quiz (quiz.moviqgym.app) com um <form method="POST">: plano=12m|3m|1m|vitalicio|premium, email e UTMs.
 // A sessão em si é montada em lib/checkout.js (a mesma usada pelo link de recuperação).
 import { waitUntil } from '@vercel/functions';
 import { stripe, APP_URL } from '@/lib/stripe';
