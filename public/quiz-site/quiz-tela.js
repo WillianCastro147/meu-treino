@@ -23,6 +23,7 @@
       emailSub: 'Use o mesmo e-mail na compra e no app: é por ele que seu plano aparece pronto quando você entrar.',
       consentimento: 'Quero receber dicas de treino e novidades do Moviq por e-mail.',
       emailLegal: 'Seus dados ficam protegidos e são usados só para montar seu plano. Você pode pedir a exclusão a qualquer momento.',
+      emailLabel: 'E-mail',
       zapLabel: 'WhatsApp (opcional)', zapPh: '(11) 91234-5678',
       zapNota: 'Para receber seu plano e lembretes no WhatsApp. Ao informar, você aceita receber mensagens do Moviq (responda SAIR para parar).',
       zapErro: 'Confira o WhatsApp com DDD. Ex.: (11) 91234-5678. Ou deixe em branco.',
@@ -56,6 +57,7 @@
       queroPlano: 'Quiero mi plan', nomePh: 'Tu nombre', salvando: 'Guardando…',
       erroSalvar: 'No pudimos guardar tu plan. Revisa tu conexión e inténtalo de nuevo.', continuarAssim: 'Continuar de todos modos',
       emailPh: 'tu@email.com',
+      emailLabel: 'Correo electrónico',
       emailSub: 'Usa el mismo correo en la compra y en la app: así tu plan aparece listo cuando entres.',
       consentimento: 'Quiero recibir consejos de entrenamiento y novedades de Moviq por correo.',
       emailLegal: 'Tus datos están protegidos y solo se usan para armar tu plan. Puedes pedir que se eliminen en cualquier momento.',
@@ -501,6 +503,7 @@
     body.append(
       ...title(step),
       h('p', { class: 'quiz-sub' }, T.emailSub),
+      h('label', { class: 'quiz-zap-label' }, T.emailLabel),
       input,
       zap,
       h('label', { class: 'quiz-consent' }, box, h('span', {}, T.consentimento)),
