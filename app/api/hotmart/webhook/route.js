@@ -45,7 +45,8 @@ async function avisarComprador(db, a) {
   if (a.evento !== 'PURCHASE_APPROVED' || a.renovacao || a.orderBump) return;
   const name = await nomeDaCompra({ metadata: {}, customer_email: a.email, customer_details: { name: a.nome } }, db);
   const enviar = PRODUTOS_DO_APP.includes(a.plano)
-    ? sendWelcomeEmail({ email: a.email, name, appUrl: APP_URL, idempotencyKey: `welcome-hotmart-${a.transacao}` })
+    ? // lang 'es': produto do quiz em espanhol (HOTMART_PRODUTO_VITALICIO_ES), boas-vindas em espanhol
+      sendWelcomeEmail({ email: a.email, name, appUrl: APP_URL, idempotencyKey: `welcome-hotmart-${a.transacao}`, lang: a.lang || undefined })
     : sendExtraEmail({
         email: a.email,
         name,
