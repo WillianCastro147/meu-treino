@@ -12,7 +12,9 @@ import { findExercise, loadCatalog } from '@/lib/catalog';
 import { buildStarterPlan } from '@/lib/starter';
 import { IconLogo, IconDumbbell } from '@/components/Icons';
 
-const PRECO = 'R$ 37';
+const PRECO_CHEIO = 'R$ 37';
+// ?o=1: condição especial do WhatsApp (lib/stripe.js OFERTA_CENTAVOS), o botão leva ao pagamento de R$ 19,90
+const PRECO_OFERTA = 'R$ 19,90';
 const DIAS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
 const IconLock = ({ size = 16 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -28,10 +30,12 @@ export default function PreviaPage() {
   const [plano, setPlano] = useState(null); // { routines, schedule }
   const [erro, setErro] = useState(false);
   const [bloqueio, setBloqueio] = useState(false);
+  const [oferta, setOferta] = useState(false);
 
   useEffect(() => {
     setLang('pt');
     const q = new URLSearchParams(window.location.search);
+    setOferta(q.get('o') === '1');
     const busca = q.get('s') ? { s: q.get('s') } : { l: q.get('l') || '' };
     (async () => {
       try {
@@ -48,7 +52,8 @@ export default function PreviaPage() {
     })();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const pagar = `/api/stripe/pagar?${new URLSearchParams({ l: id })}`;
+  const pagar = `/api/stripe/pagar?${new URLSearchParams(oferta ? { l: id, o: '1' } : { l: id })}`;
+  const PRECO = oferta ? PRECO_OFERTA : PRECO_CHEIO;
 
   // Qualquer toque na prévia abre o bloqueio (menos dentro do próprio aviso e no botão de compra)
   const travar = (e) => {
@@ -184,7 +189,15 @@ export default function PreviaPage() {
         <a className="btn" href={pagar} style={{ display: 'flex', width: '100%' }}>
           Liberar meu plano · {PRECO}
         </a>
-        <p className="muted" style={{ textAlign: 'center', fontSize: 12.5, marginTop: 6 }}>Pagamento único · 7 dias de garantia</p>
+        <p className="muted" style={{ textAlign: 'center', fontSize: 12.5, marginTop: 6 }}>
+          {oferta ? (
+            <>
+              Condição especial: <s>{PRECO_CHEIO}</s> por {PRECO_OFERTA} · pagamento único · 7 dias de garantia
+            </>
+          ) : (
+            'Pagamento único · 7 dias de garantia'
+          )}
+        </p>
       </div>
 
       {/* Aviso de bloqueio */}
@@ -200,6 +213,11 @@ export default function PreviaPage() {
               todo o seu progresso salvo.
             </p>
             <p style={{ margin: '14px 0 12px', textAlign: 'center' }}>
+              {oferta && (
+                <span className="muted" style={{ display: 'block', fontSize: 15 }}>
+                  Condição especial: de <s>{PRECO_CHEIO}</s> por
+                </span>
+              )}
               <b style={{ fontSize: 34 }}>{PRECO}</b>
               <span className="muted" style={{ display: 'block', fontSize: 14 }}>
                 pagamento único, sem mensalidade · 7 dias de garantia

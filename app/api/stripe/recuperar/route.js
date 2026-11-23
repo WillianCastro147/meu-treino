@@ -1,5 +1,6 @@
 // Link de recuperação (do e-mail automático ou da mensagem de WhatsApp):
 //   /api/stripe/recuperar?s=<id da Checkout Session perdida>&c=email|whatsapp
+//   ...&o=1: condição especial do WhatsApp (acesso vitalício por R$ 19,90). Quem já estava nela continua nela.
 // Gera um checkout novo com o mesmo plano (o Premium volta como vitalício), e-mail, nome e UTMs (a Utmify
 // continua atribuindo a venda ao anúncio de origem) e leva a pessoa direto para a página de pagamento.
 import { stripe, supabaseAdmin, APP_URL, QUIZ_URL } from '@/lib/stripe';
@@ -48,6 +49,7 @@ export async function GET(req) {
       whatsapp: antiga.metadata?.whatsapp,
       lang: antiga.metadata?.lang,
       tracking: antiga.metadata || {},
+      oferta: url.searchParams.get('o') === '1' || !!antiga.metadata?.oferta,
       extra: {
         recuperacao: canal,
         recuperado_de: antiga.id,

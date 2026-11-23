@@ -1,5 +1,6 @@
 // Link pessoal da mensagem de WhatsApp para quem deixou o lead e não abriu o pagamento:
-//   /api/stripe/pagar?l=<id do lead em quiz_leads>
+//   /api/stripe/pagar?l=<id do lead em quiz_leads>          acesso vitalício (R$ 37)
+//   /api/stripe/pagar?l=<id do lead em quiz_leads>&o=1      condição especial (R$ 19,90, lib/stripe.js OFERTA_CENTAVOS)
 // Cria a página de pagamento do acesso vitalício com o nome, e-mail, WhatsApp e UTMs do quiz (a Utmify
 // continua atribuindo a venda ao anúncio de origem) e leva a pessoa direto para ela. Se o e-mail já tem
 // acesso, vai para o app. Abre no navegador do WhatsApp, que não tem as respostas do quiz salvas: por isso
@@ -16,7 +17,9 @@ export const dynamic = 'force-dynamic';
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export async function GET(req) {
-  const id = new URL(req.url).searchParams.get('l') || '';
+  const params = new URL(req.url).searchParams;
+  const id = params.get('l') || '';
+  const oferta = params.get('o') === '1';
   const db = supabaseAdmin();
   if (!stripe || !db || !UUID_RE.test(id)) return Response.redirect(QUIZ_URL, 303);
 
@@ -40,6 +43,7 @@ export async function GET(req) {
       nome: lead.name || '',
       whatsapp: lead.answers?.whatsapp,
       tracking: lead.utm || {},
+      oferta,
       extra: { recuperacao: 'whatsapp_lead', ...dadosDoNavegador({ headers: req.headers }) },
     });
   } catch (e) {
