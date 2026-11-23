@@ -48,6 +48,7 @@ Cada variável aceita vários IDs separados por vírgula. Sem a variável, valem
 | Moviq: App de Treino Personalizado | 9022148 | R$ 37,00 | `docs/hotmart/acesso-moviq.pdf` |
 | Moviq: Plano Alimentar (order bump) | 9022748 | R$ 19,90 | `docs/hotmart/plano-alimentar.pdf` |
 | Moviq: Gerador de Treino com IA (order bump) | 9022760 | R$ 27,90 | `docs/hotmart/gerador-ia.pdf` |
+| Moviq: App de Entrenamiento Personalizado (quiz `/es`) | 9053615 | US$ 9,90 | `docs/hotmart/acceso-moviq-es.pdf` |
 
 Os order bumps ficam na página "Em Branco" do Checkout Builder do produto 9022148 (Ferramentas > Order Bump),
 publicada como padrão. Essa página só abre com `?checkoutMode=10` no link e **sem** `off=`: por isso o link do
@@ -77,6 +78,11 @@ Até 23/11/2026 o quiz em espanhol vendia assinatura de US$ 5/mês pela Stripe (
 4 vendas com R$ 357 de anúncio em 3 dias. A troca para pagamento único pela Hotmart abre os meios de pagamento
 locais e a moeda de cada país. A troca é **só o link** em `public/quiz-site/es.html` (`HOTMART_ES`): vazio, segue a
 assinatura pela Stripe.
+
+Produto criado em 23/11/2026: **9053615** (Aplicativo para celular, espanhol, México como país principal,
+US$ 9,90 à vista com conversão automática de moeda, página externa `https://quiz.moviqgym.app/es`, entrega
+`docs/hotmart/acceso-moviq-es.pdf`), já no webhook "MOVIQ APP - libera acesso" e em
+`HOTMART_PRODUTO_VITALICIO_ES` na Vercel.
 
 1. **Hotmart: produto novo, em espanhol** (não use o 9022148, que é em português e em reais):
    - Nome, descrição e página de entrega em espanhol; idioma do produto: espanhol.
