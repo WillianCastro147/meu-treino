@@ -21,11 +21,12 @@
           (ID do produto em HOTMART_PRODUTO_VITALICIO_ES na Vercel). Passo a passo em HOTMART.md, "Quiz em espanhol".
         - HOTMART_ES vazio: assinatura mensal de US$ 5 pela Stripe (plano '1m_usd' = STRIPE_PRICE_1M_USD na Vercel,
           produto "Moviq · Plan mensual"), como era até 23/11/2026 (4 vendas com R$ 357 de anúncio em 3 dias).
-      PIXEL: pixel próprio da Meta, "MOVIQ APP ES" (974150118749887), direto na página (sem o pixel da Utmify,
-      que manda para o pixel do Brasil). PageView aqui; QuizStep, Lead e InitiateCheckout saem do quiz-tela.js
-      (IC_PELO_QUIZ abaixo). A Compra: Stripe = API de Conversões do app (META_PIXEL_ID_ES / META_CAPI_TOKEN_ES);
-      Hotmart = integração de pixel do próprio produto na Hotmart (o webhook do app não manda Compra à Meta).
-      UTMIFY: só o script de UTMs (as UTMs do anúncio seguem até a Stripe ou no link da Hotmart).
+      PIXEL: pixel da Utmify do dashboard GLOBAL OF 2 (abaixo), que leva ao pixel da Meta "MOVIQ APP ES"
+      (974150118749887). PageView sai da Utmify; QuizStep, Lead e InitiateCheckout saem do quiz-tela.js pelo fbq
+      que ela define (IC_PELO_QUIZ abaixo). A Compra: Hotmart = Utmify, pelo webhook "GLOBAL OF 2 PRINCIPAL" da
+      Hotmart (o produto 9053615 não tem pixel próprio na Hotmart, para não contar a compra duas vezes);
+      Stripe = API de Conversões do app (META_PIXEL_ID_ES / META_CAPI_TOKEN_ES).
+      UTMIFY: pixel + script de UTMs (as UTMs do anúncio seguem até a Stripe ou no link da Hotmart).
     -->
     <script src="config.js?v=18"></script>
     <script>
@@ -38,7 +39,7 @@
       Object.assign(window.MOVIQ_CONFIG, {
         MOEDA: 'USD',
         GARANTIA_DIAS: 7,
-        // Sem a regra de clique da Utmify aqui: o próprio quiz manda o InitiateCheckout ao pixel ao tocar no botão
+        // Sem regra de clique de IC na Utmify do GLOBAL OF 2: o próprio quiz manda o InitiateCheckout (fbq) ao tocar no botão
         IC_PELO_QUIZ: true,
       });
       if (HOTMART_ES) {
@@ -60,15 +61,22 @@
       }
     </script>
 
-    <!-- Meta Pixel: MOVIQ APP ES -->
+    <!--
+      Pixel da Utmify do dashboard GLOBAL OF 2 ("MOVIQ APP ES", pixelId 6b04cd5eac9e35657ac48eb1). O código do
+      painel vinha embaralhado; este é o mesmo, legível: carrega https://cdn.utmify.com.br/scripts/pixel/pixel.js
+      com window.pixelId. Ele carrega o pixel da Meta configurado na Utmify (974150118749887), manda o PageView
+      pelo navegador e pelo servidor (com o mesmo ID, sem contar duas vezes) e define o fbq que o quiz usa para
+      QuizStep, Lead e InitiateCheckout. Não coloque outro fbq('init')/PageView aqui: duplicaria o PageView.
+    -->
     <script>
-      !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-      n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
-      n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
-      t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
-      document,'script','https://connect.facebook.net/en_US/fbevents.js');
-      fbq('init', '974150118749887');
-      fbq('track', 'PageView');
+      window.pixelId = '6b04cd5eac9e35657ac48eb1';
+      (function () {
+        var s = document.createElement('script');
+        s.src = 'https://cdn.utmify.com.br/scripts/pixel/pixel.js';
+        s.async = true;
+        s.defer = true;
+        (document.head || document.documentElement).appendChild(s);
+      })();
     </script>
     <script>
       (function () {
