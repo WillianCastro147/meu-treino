@@ -13,28 +13,51 @@
     <!--
       QUIZ EN ESPAÑOL (quiz.moviqgym.app/es; rewrite em next.config.mjs)
       Mesmo quiz do português (quiz-tela.js), com os textos de quiz-dados-es.js e window.MOVIQ_LANG = 'es'.
-      Oferta: assinatura mensal de US$ 5 (plano '1m_usd' = STRIPE_PRICE_1M_USD na Vercel, produto
-      "Moviq · Plan mensual" na Stripe). O config.js do português é carregado primeiro (Supabase, URL do checkout)
-      e o bloco abaixo troca só o que muda aqui.
+      O config.js do português é carregado primeiro (Supabase, URL do checkout) e o bloco abaixo troca só o que muda aqui.
+
+      OFERTA (escolhida por HOTMART_ES logo abaixo):
+        - HOTMART_ES preenchido: ACESSO VITALÍCIO, pagamento único pela Hotmart (cartão e meios de pagamento locais,
+          na moeda do país). Produto próprio em espanhol na Hotmart; o app libera o acesso pelo /api/hotmart/webhook
+          (ID do produto em HOTMART_PRODUTO_VITALICIO_ES na Vercel). Passo a passo em HOTMART.md, "Quiz em espanhol".
+        - HOTMART_ES vazio: assinatura mensal de US$ 5 pela Stripe (plano '1m_usd' = STRIPE_PRICE_1M_USD na Vercel,
+          produto "Moviq · Plan mensual"), como era até 23/11/2026 (4 vendas com R$ 357 de anúncio em 3 dias).
       PIXEL: pixel próprio da Meta, "MOVIQ APP ES" (974150118749887), direto na página (sem o pixel da Utmify,
       que manda para o pixel do Brasil). PageView aqui; QuizStep, Lead e InitiateCheckout saem do quiz-tela.js
-      (IC_PELO_QUIZ abaixo). A Compra vai pela API de Conversões do app (META_PIXEL_ID_ES / META_CAPI_TOKEN_ES).
-      UTMIFY: só o script de UTMs (as UTMs do anúncio seguem até a Stripe).
+      (IC_PELO_QUIZ abaixo). A Compra: Stripe = API de Conversões do app (META_PIXEL_ID_ES / META_CAPI_TOKEN_ES);
+      Hotmart = integração de pixel do próprio produto na Hotmart (o webhook do app não manda Compra à Meta).
+      UTMIFY: só o script de UTMs (as UTMs do anúncio seguem até a Stripe ou no link da Hotmart).
     -->
     <script src="config.js?v=18"></script>
     <script>
       window.MOVIQ_LANG = 'es';
+      // Link do checkout do produto em espanhol na Hotmart (Produtos > produto > Links > "Link do checkout").
+      // Vazio: segue a assinatura de US$ 5 pela Stripe.
+      var HOTMART_ES = 'https://pay.hotmart.com/J108632542Q'; // produto 9053615, US$ 9,90 à vista
+      var VITALICIO_ES_USD = 9.9; // SÓ PARA MOSTRAR: precisa ser igual ao preço do produto na Hotmart
+
       Object.assign(window.MOVIQ_CONFIG, {
-        GATEWAY: 'stripe',
         MOEDA: 'USD',
-        OFERTA_VITALICIA: { ativa: false },
-        // total: SÓ PARA MOSTRAR; o valor cobrado é o preço da Stripe (US$ 5,00/mês, price_1Ue1NBQfnCdLHlDYBsYb2hPk)
-        PLANOS: [{ meses: 1, total: 5, plano: '1m_usd', destaque: true }],
-        AVISO_ASSINATURA: 'Suscripción mensual con renovación automática. Cancela cuando quieras.',
         GARANTIA_DIAS: 7,
         // Sem a regra de clique da Utmify aqui: o próprio quiz manda o InitiateCheckout ao pixel ao tocar no botão
         IC_PELO_QUIZ: true,
       });
+      if (HOTMART_ES) {
+        Object.assign(window.MOVIQ_CONFIG, {
+          GATEWAY: 'hotmart',
+          HOTMART_LINKS: { vitalicio: HOTMART_ES },
+          OFERTA_VITALICIA: { ativa: true, total: VITALICIO_ES_USD },
+          AVISO_VITALICIO: 'Pago único con tarjeta o medios de pago de tu país. Sin mensualidad y sin renovación automática.',
+          PREMIUM: { ativa: false }, // pop-up do Premium é só do quiz em português (Stripe, em reais)
+        });
+      } else {
+        Object.assign(window.MOVIQ_CONFIG, {
+          GATEWAY: 'stripe',
+          OFERTA_VITALICIA: { ativa: false },
+          // total: SÓ PARA MOSTRAR; o valor cobrado é o preço da Stripe (US$ 5,00/mês, price_1Ue1NBQfnCdLHlDYBsYb2hPk)
+          PLANOS: [{ meses: 1, total: 5, plano: '1m_usd', destaque: true }],
+          AVISO_ASSINATURA: 'Suscripción mensual con renovación automática. Cancela cuando quieras.',
+        });
+      }
     </script>
 
     <!-- Meta Pixel: MOVIQ APP ES -->
@@ -49,17 +72,21 @@
     </script>
     <script>
       (function () {
+        // Mesmo modo do index.html: Stripe leva as UTMs na sessão; Hotmart, no xcod/sck do link de pagamento
+        var hotmart = (window.MOVIQ_CONFIG || {}).GATEWAY === 'hotmart';
         var s = document.createElement('script');
         s.src = 'https://cdn.utmify.com.br/scripts/utms/latest.js';
         s.async = true;
         s.defer = true;
         s.setAttribute('data-utmify-prevent-subids', '');
-        s.setAttribute('data-utmify-prevent-xcod-sck', '');
-        s.setAttribute('data-utmify-is-stripe', '');
+        if (!hotmart) {
+          s.setAttribute('data-utmify-prevent-xcod-sck', '');
+          s.setAttribute('data-utmify-is-stripe', '');
+        }
         (document.head || document.documentElement).appendChild(s);
         var pre = document.createElement('link');
         pre.rel = 'preconnect';
-        pre.href = 'https://checkout.stripe.com';
+        pre.href = hotmart ? 'https://pay.hotmart.com' : 'https://checkout.stripe.com';
         document.head.appendChild(pre);
       })();
     </script>

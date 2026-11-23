@@ -14,9 +14,20 @@ import { useI18n } from '@/lib/i18n';
 
 // Quiz em espanhol (quiz.moviqgym.app/es): a Stripe volta com ?lang=es, que também deixa o app em espanhol.
 // As ofertas de extra abaixo são só do quiz em português (vitalício em reais), então aqui só os avisos.
+// hotmart: volta da Hotmart (página de obrigado do produto: /bem-vindo no português, /bem-vindo?lang=es no espanhol)
 const AVISOS = {
-  pt: { confirmando: 'Confirmando seu pagamento…', confirmado: 'Pagamento confirmado! Agora crie sua conta com o mesmo e-mail.', titulo: 'Bem-vindo ao Moviq!' },
-  es: { confirmando: 'Confirmando tu pago…', confirmado: '¡Pago confirmado! Ahora crea tu cuenta con el mismo correo.', titulo: '¡Bienvenido a Moviq!' },
+  pt: {
+    confirmando: 'Confirmando seu pagamento…',
+    confirmado: 'Pagamento confirmado! Agora crie sua conta com o mesmo e-mail.',
+    hotmart: 'Compra recebida! Agora crie sua conta com o mesmo e-mail da compra. O acesso é liberado assim que o pagamento for confirmado.',
+    titulo: 'Bem-vindo ao Moviq!',
+  },
+  es: {
+    confirmando: 'Confirmando tu pago…',
+    confirmado: '¡Pago confirmado! Ahora crea tu cuenta con el mismo correo.',
+    hotmart: '¡Compra recibida! Ahora crea tu cuenta con el mismo correo de la compra. El acceso se activa en cuanto se confirme el pago.',
+    titulo: '¡Bienvenido a Moviq!',
+  },
 };
 
 const OFERTAS = {
@@ -95,7 +106,7 @@ export default function BemVindoPage() {
         // aviso da Hotmart (/api/hotmart/webhook) quando o pagamento cai; aqui só abre o cadastro,
         // com o e-mail e o nome se a Hotmart mandar na URL.
         info = { email: params.get('email') || '', name: params.get('name') || params.get('nome') || '' };
-        setMsg('Compra recebida! Agora crie sua conta com o mesmo e-mail da compra. O acesso é liberado assim que o pagamento for confirmado.');
+        setMsg(AVISOS[params.get('lang') === 'es' ? 'es' : 'pt'].hotmart);
         const q = new URLSearchParams({ modo: 'cadastro' });
         if (info.email) q.set('email', info.email);
         if (info.name) q.set('name', String(info.name).trim().split(/\s+/)[0]);
