@@ -9,7 +9,7 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const BUCKET = process.env.GUIA_BUCKET || 'guias';
-const ARQUIVO = process.env.GUIA_FEMININO_ARQUIVO || 'guia-de-treino-feminino.pdf';
+const ARQUIVO = process.env.GUIA_FEMININO_ARQUIVO || 'Guia_de_Treino_Feminino_PT.pdf';
 const NOME_DOWNLOAD = 'Guia de Treino Feminino - Moviq.pdf';
 
 const json = (body, status = 200) => Response.json(body, { status, headers: { 'Cache-Control': 'no-store' } });
