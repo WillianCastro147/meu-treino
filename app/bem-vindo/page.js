@@ -67,12 +67,10 @@ export default function BemVindoPage() {
   const [msg, setMsg] = useState(''); // vazio = "confirmando" no idioma da tela
   const [ofertas, setOfertas] = useState([]); // [{ plano, nome, preco, url }], uma de cada vez
   const [cadastro, setCadastro] = useState('');
-  const [demo, setDemo] = useState(false); // ?demo=<plano>: só mostra a oferta, botões sem ação
   const oferta = ofertas[0] || null;
 
   // "Não, obrigado": próxima oferta (plano alimentar → gerador com IA) ou, se acabou, o cadastro
   const recusar = () => {
-    if (demo) return;
     if (ofertas.length > 1) {
       setOfertas(ofertas.slice(1));
       window.scrollTo(0, 0);
@@ -81,20 +79,10 @@ export default function BemVindoPage() {
 
   useEffect(() => {
     (async () => {
-      const params = new URLSearchParams(window.location.search);
-      // Demonstração da oferta (/bem-vindo?demo=guia_feminino): mostra a tela sem compra por trás.
-      // Os botões não abrem pagamento nem cadastro (não há cliente nenhum ligado a esta visita).
-      const demo = params.get('demo');
-      if (demo && OFERTAS[demo]) {
-        setDemo(true);
-        setCadastro('#');
-        setOfertas([{ plano: demo, preco: demo === 'guia_feminino' ? 'R$ 27,00' : 'R$ 19,90', url: '#' }]);
-        return;
-      }
-
       const { data } = await supabase.auth.getSession();
       if (data.session) return router.replace('/preparando');
 
+      const params = new URLSearchParams(window.location.search);
       const id = params.get('session_id') || '';
       let info = {};
       if (id) {
@@ -177,12 +165,7 @@ export default function BemVindoPage() {
               pagamento único, no Pix ou no cartão
             </span>
           </p>
-          <a
-            className="btn"
-            href={oferta.url}
-            onClick={demo ? (e) => e.preventDefault() : undefined}
-            style={{ display: 'block', textAlign: 'center' }}
-          >
+          <a className="btn" href={oferta.url} style={{ display: 'block', textAlign: 'center' }}>
             {o.botao}
           </a>
           <button className="btn secondary" style={{ marginTop: 10, width: '100%' }} onClick={recusar}>
