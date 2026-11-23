@@ -16,7 +16,7 @@ import { useDialog } from '@/components/Dialog';
 import { fetchAllWorkouts, fetchBodyWeights, fetchPlan } from '@/lib/data';
 import { findExercise, useCatalog } from '@/lib/catalog';
 import { levelInfo, monthlyChallenges, recoveryNote, weekLeft } from '@/lib/engage';
-import { RecoveryCard, ChallengesCard, NutritionCard, CoachCard } from '@/components/HomeCards';
+import { RecoveryCard, ChallengesCard, NutritionCard, CoachCard, GuideCard } from '@/components/HomeCards';
 import { todaysRoutine } from '@/lib/plan';
 import { startUrl, resultOfWorkout } from '@/lib/circuit';
 import { useCircuitText } from '@/lib/circuitText';
@@ -223,6 +223,7 @@ function Accueil({ user }) {
       {/* Extras logo abaixo da semana: atalho para quem tem, oferta para quem não tem */}
       <CoachCard />
       <NutritionCard />
+      <GuideCard />
 
       {homeChallenge && planInfo && (
         <ChallengeBoard

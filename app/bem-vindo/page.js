@@ -3,9 +3,9 @@
 // Volta da Stripe depois do pagamento (success_url): confirma a sessão e abre o cadastro
 // com o e-mail da compra. Quem já está logado segue para /preparando.
 // Volta da Hotmart (página de obrigado, sem session_id): abre o cadastro direto.
-// Se a compra foi o acesso vitalício e ficou de fora algum extra (plano alimentar, gerador de treino com IA),
-// mostra antes as ofertas dos que faltaram, uma de cada vez (upsell, um pagamento à parte): plano alimentar e,
-// para quem recusar, o gerador de treino com IA. "Não, obrigado" na última segue para o cadastro.
+// Se a compra foi o app (vitalício ou Premium), mostra antes as ofertas depois da compra que a pessoa ainda não
+// tem (upsell, um pagamento à parte; /api/stripe/sessao): hoje, o Guia de Treino Feminino para quem marcou
+// feminino no quiz. "Não, obrigado" na última segue para o cadastro.
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
@@ -43,6 +43,18 @@ const OFERTAS = {
     ],
     botao: 'Quero o gerador de treino com IA',
     aviso: '',
+  },
+  guia_feminino: {
+    titulo: 'Quer o Guia de Treino Feminino completo?',
+    sub: 'Um ebook de 95 páginas feito para o corpo e os objetivos da mulher, para treinar com mais segurança e ver resultado mais rápido.',
+    beneficios: [
+      'Como montar e ajustar o treino para glúteos, pernas e definição',
+      'Como progredir as cargas e evitar platôs, semana a semana',
+      'Postura e execução dos principais exercícios, sem lesão',
+      'Ebook em PDF de 95 páginas para ler no celular, quando quiser',
+    ],
+    botao: 'Quero o guia feminino',
+    aviso: 'Você recebe o link para baixar o guia por e-mail e na tela "Meu guia" do app.',
   },
 };
 
@@ -105,7 +117,7 @@ export default function BemVindoPage() {
       setMsg(
         params.get('lang') === 'es'
           ? AVISOS.es.confirmado
-          : info.plano === 'plano_alimentar' || info.plano === 'gerador_ia'
+          : info.plano === 'plano_alimentar' || info.plano === 'gerador_ia' || info.plano === 'guia_feminino'
             ? 'Compra confirmada! Agora crie sua conta com o mesmo e-mail.'
             : AVISOS.pt.confirmado
       );

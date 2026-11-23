@@ -137,6 +137,23 @@ export function NutritionCard() {
   );
 }
 
+const IconBook = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z" />
+    <path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5" />
+  </svg>
+);
+
+/** Guia de Treino Feminino (ebook): só aparece para quem comprou, como atalho para baixar (/guia) */
+export function GuideCard() {
+  const { lang } = useI18n();
+  const info = useExtra('/api/guia?status=1');
+  if (lang !== 'pt' || !info?.liberado) return null;
+  return (
+    <ExtraCard href="/guia" icon={<IconBook />} kicker="Seu ebook" title="Guia de Treino Feminino" sub="Baixe o PDF de 95 páginas" info={info} />
+  );
+}
+
 /** Aviso de recuperação: { group, days, covered } de lib/engage.js recoveryNote */
 export function RecoveryCard({ note, onClose }) {
   const { t, tf } = useI18n();
