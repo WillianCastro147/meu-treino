@@ -770,7 +770,8 @@
     body.append(
       ...[
         h('h1', { class: 'quiz-title pw-title' }, Q.resolve(step.title, answers)),
-        h('img', { class: 'pw-app pw-app-top', src: 'img/info-app.webp?v=7', alt: T.altApp, width: 220, height: 293, fetchpriority: 'high' }),
+        // Q.imgSrc: no quiz em espanhol vem a tela do app em espanhol (info-app-es)
+        h('img', { class: 'pw-app pw-app-top', src: Q.imgSrc('info-app'), alt: T.altApp, width: 220, height: 293, fetchpriority: 'high' }),
         planBox,
         h('div', { class: 'pw-plans' }, oferta ? [lifetimeCard] : soMensal ? [monthlyCard] : cards),
         h('button', { class: 'btn pw-cta', onclick: go }, ctaTxt),

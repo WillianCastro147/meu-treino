@@ -6,7 +6,9 @@
   const MINUTES = [30, 45, 60, 90];
 
   const IMG_V = 7;
-  const imgSrc = (slot) => `img/${slot}.webp?v=${IMG_V}`;
+  // Imagens com a tela do app: versão em espanhol (scripts/mockup/gerar-mockups-es.py). As outras são as mesmas.
+  const IMG_ES = { 'info-app': 'info-app-es', 'info-objetivo': 'info-objetivo-es' };
+  const imgSrc = (slot) => `img/${IMG_ES[slot] || slot}.webp?v=${IMG_V}`;
 
   const SECTIONS = ['Objetivo', 'Tu entrenamiento', 'Medidas', 'Tu plan'];
 
