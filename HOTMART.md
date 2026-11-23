@@ -82,7 +82,10 @@ assinatura pela Stripe.
 Produto criado em 23/11/2026: **9053615** (Aplicativo para celular, espanhol, México como país principal,
 US$ 9,90 à vista com conversão automática de moeda, página externa `https://quiz.moviqgym.app/es`, entrega
 `docs/hotmart/acceso-moviq-es.pdf`), já no webhook "MOVIQ APP - libera acesso" e em
-`HOTMART_PRODUTO_VITALICIO_ES` na Vercel.
+`HOTMART_PRODUTO_VITALICIO_ES` na Vercel. Checkout `https://pay.hotmart.com/J108632542Q` (oferta hu9n71nd),
+em espanhol, com página de obrigado externa `…/bem-vindo?lang=es` (aprovada, aguardando pagamento e análise de
+crédito) e pixel 974150118749887 só com "Vendas realizadas" via web (o "InitiateCheckout" sai do quiz; o token da
+API de Conversões não foi colocado na Hotmart).
 
 1. **Hotmart: produto novo, em espanhol** (não use o 9022148, que é em português e em reais):
    - Nome, descrição e página de entrega em espanhol; idioma do produto: espanhol.
