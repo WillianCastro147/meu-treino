@@ -11,10 +11,10 @@ import { IconBack } from '@/components/Icons';
 import { supabase } from '@/lib/supabase';
 
 const CONTEUDO = [
-  'Como montar e ajustar o treino para glúteos, pernas e definição',
-  'Como progredir as cargas e evitar platôs, semana a semana',
-  'Postura e execução dos principais exercícios, sem lesão',
-  'Ebook em PDF de 95 páginas para ler no celular, quando quiser',
+  '+83 exercícios passo a passo, 100% ilustrados, com a posição inicial e a final',
+  '8 capítulos: glúteos, quadríceps, posteriores, costas, ombros, peito, braços e core',
+  'Em cada exercício: como fazer, o que sentir, quanto peso usar e os erros mais comuns',
+  'Ebook em PDF de 95 páginas para consultar no celular, na academia',
 ];
 
 export default function GuiaPage() {
@@ -69,6 +69,13 @@ function Guia({ user }) {
         </button>
       </div>
       <PageHeader title="Guia de Treino Feminino" sub="Ebook de 95 páginas" />
+      <img
+        src="/img/guia-feminino-mockup-720.webp"
+        alt="Ebook Treino Feminino: Guia Completo, com páginas de exercícios ilustrados"
+        width={720}
+        height={667}
+        style={{ display: 'block', width: '100%', maxWidth: 480, height: 'auto', margin: '0 auto 14px' }}
+      />
 
       {estado === 'carregando' && <p className="muted">Carregando…</p>}
       {estado === 'erro' && <p className="muted">Não foi possível abrir o guia agora. Tente de novo em instantes.</p>}

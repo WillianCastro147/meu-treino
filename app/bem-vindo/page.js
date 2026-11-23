@@ -45,16 +45,18 @@ const OFERTAS = {
     aviso: '',
   },
   guia_feminino: {
-    titulo: 'Quer o Guia de Treino Feminino completo?',
-    sub: 'Um ebook de 95 páginas feito para o corpo e os objetivos da mulher, para treinar com mais segurança e ver resultado mais rápido.',
+    titulo: 'Leve o Guia Completo de Treino Feminino',
+    sub: 'De "não sei o que fazer na academia" a treinar como se tivesse uma personal trainer só sua.',
+    imagem: '/img/guia-feminino-mockup-720.webp',
+    imagemAlt: 'Ebook Treino Feminino: Guia Completo, com páginas de exercícios ilustrados',
     beneficios: [
-      'Como montar e ajustar o treino para glúteos, pernas e definição',
-      'Como progredir as cargas e evitar platôs, semana a semana',
-      'Postura e execução dos principais exercícios, sem lesão',
-      'Ebook em PDF de 95 páginas para ler no celular, quando quiser',
+      '+83 exercícios passo a passo, 100% ilustrados, com a posição inicial e a final',
+      '8 capítulos: glúteos, quadríceps, posteriores, costas, ombros, peito, braços e core',
+      'Em cada exercício: como fazer, o que sentir, quanto peso usar e os erros mais comuns',
+      'Ebook em PDF de 95 páginas para consultar no celular, na academia',
     ],
     botao: 'Quero o guia feminino',
-    aviso: 'Você recebe o link para baixar o guia por e-mail e na tela "Meu guia" do app.',
+    aviso: 'Você recebe o link para baixar o guia por e-mail e na página do guia, dentro do app.',
   },
 };
 
@@ -139,6 +141,15 @@ export default function BemVindoPage() {
               {o.titulo}
             </h1>
             <p className="quiz-sub">{o.sub}</p>
+            {o.imagem ? (
+              <img
+                src={o.imagem}
+                alt={o.imagemAlt || ''}
+                width={720}
+                height={667}
+                style={{ display: 'block', width: '100%', height: 'auto', margin: '14px auto 0' }}
+              />
+            ) : null}
           </div>
           <ul className="card" style={{ listStyle: 'none', display: 'grid', gap: 12, margin: '18px 0', padding: 18 }}>
             {o.beneficios.map((b) => (
