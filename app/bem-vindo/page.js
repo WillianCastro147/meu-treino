@@ -147,7 +147,7 @@ export default function BemVindoPage() {
                 alt={o.imagemAlt || ''}
                 width={720}
                 height={667}
-                style={{ display: 'block', width: '100%', height: 'auto', margin: '14px auto 0' }}
+                style={{ display: 'block', width: '62%', maxWidth: 230, height: 'auto', margin: '12px auto 0' }}
               />
             ) : null}
           </div>

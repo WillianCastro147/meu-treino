@@ -74,7 +74,7 @@ function Guia({ user }) {
         alt="Ebook Treino Feminino: Guia Completo, com páginas de exercícios ilustrados"
         width={720}
         height={667}
-        style={{ display: 'block', width: '100%', maxWidth: 480, height: 'auto', margin: '0 auto 14px' }}
+        style={{ display: 'block', width: '62%', maxWidth: 240, height: 'auto', margin: '0 auto 14px' }}
       />
 
       {estado === 'carregando' && <p className="muted">Carregando…</p>}
