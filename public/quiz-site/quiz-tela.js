@@ -705,7 +705,11 @@
       // Quiz em espanhol (IC_PELO_QUIZ): pixel próprio, sem a Utmify na página; o IC sai daqui.
       if (CFG.IC_PELO_QUIZ) track('InitiateCheckout', { value: p.total, currency: CFG.MOEDA || 'BRL' });
       if (destinoHotmart) {
-        window.location.href = destinoHotmart;
+        // window.open(..., '_self') e não location.href: o script de UTMs da Utmify (utms/latest.js) só completa
+        // links, formulários e window.open. Pelo window.open ele acrescenta xcod/sck (UTMs do anúncio + ID do lead),
+        // os únicos parâmetros que a Hotmart repassa na venda; com location.href a venda chegava sem origem.
+        // Sem o script da Utmify, é o window.open normal e abre a Hotmart do mesmo jeito.
+        window.open(destinoHotmart, '_self');
         return;
       }
       const form = h(
