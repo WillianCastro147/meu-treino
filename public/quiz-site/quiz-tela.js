@@ -24,6 +24,9 @@
       consentimento: 'Quero receber dicas de treino e novidades do Moviq por e-mail.',
       emailLegal: 'Seus dados ficam protegidos e são usados só para montar seu plano. Você pode pedir a exclusão a qualquer momento.',
       emailLabel: 'E-mail',
+      // E-mail digitado errado (email-check.js): "Você quis dizer ana@gmail.com?"
+      emailSugestao: ['Você quis dizer ', '?'], emailCorrigir: 'Sim, corrigir', emailManter: 'Não, está certo',
+      emailFinalErrado: 'O final do seu e-mail parece ter um erro de digitação. Sem o e-mail certo, seu acesso não chega.',
       zapLabel: 'WhatsApp (opcional)', zapPh: '(11) 91234-5678',
       zapNota: 'Para receber seu plano e lembretes no WhatsApp. Ao informar, você aceita receber mensagens do Moviq (responda SAIR para parar).',
       zapErro: 'Confira o WhatsApp com DDD. Ex.: (11) 91234-5678. Ou deixe em branco.',
@@ -71,6 +74,8 @@
       erroSalvar: 'No pudimos guardar tu plan. Revisa tu conexión e inténtalo de nuevo.', continuarAssim: 'Continuar de todos modos',
       emailPh: 'tu@email.com',
       emailLabel: 'Correo electrónico',
+      emailSugestao: ['¿Quisiste decir ', '?'], emailCorrigir: 'Sí, corregir', emailManter: 'No, está bien',
+      emailFinalErrado: 'El final de tu correo parece tener un error. Sin el correo correcto, tu acceso no te llega.',
       emailSub: 'Usa el mismo correo en la compra y en la app: así tu plan aparece listo cuando entres.',
       consentimento: 'Quiero recibir consejos de entrenamiento y novedades de Moviq por correo.',
       emailLegal: 'Tus datos están protegidos y solo se usan para armar tu plan. Puedes pedir que se eliminen en cualquier momento.',
@@ -440,8 +445,57 @@
     const { el, btn } = cta(T.continuar, () => submit(), !Q.isAnswered(step, answers));
     const zapErr = h('p', { class: 'error-msg', hidden: true }, T.zapErro || '');
 
+    // E-mail digitado errado (gmail.con, gmai.com...): sugere o certo antes de seguir. É esse e-mail que vai
+    // para o checkout e para a conta; com ele errado, nenhum e-mail chega (e os e-mails devolvidos pesam no
+    // envio do Supabase e da Resend). "Não, está certo" segue com o digitado; final inexistente (.con) não segue.
+    const EC = window.MoviqEmailCheck;
+    let emailAceito = '';
+    const dica = h('div', { class: 'email-dica', hidden: true });
+    function conferirEmail() {
+      if (!EC) return true;
+      const atual = String(answers.email || '').trim().toLowerCase();
+      const chk = EC.checkEmail(atual);
+      if (!chk.sugestao || (chk.valido && emailAceito === atual)) {
+        dica.hidden = true;
+        return true;
+      }
+      // .filter(Boolean): append/replaceChildren escrevem "null" na tela se receberem null
+      dica.replaceChildren(...[
+        h('p', { class: 'email-dica-texto' }, T.emailSugestao[0], h('b', {}, chk.sugestao), T.emailSugestao[1]),
+        chk.valido ? null : h('p', { class: 'email-dica-aviso' }, T.emailFinalErrado),
+        h(
+          'div',
+          { class: 'email-dica-botoes' },
+          h('button', {
+            type: 'button',
+            class: 'btn small',
+            onclick: () => {
+              set({ email: chk.sugestao });
+              input.value = chk.sugestao;
+              dica.hidden = true;
+              btn.disabled = !Q.isAnswered(step, answers);
+            },
+          }, T.emailCorrigir),
+          chk.valido
+            ? h('button', {
+                type: 'button',
+                class: 'link-btn',
+                onclick: () => {
+                  emailAceito = atual;
+                  dica.hidden = true;
+                  submit();
+                },
+              }, T.emailManter)
+            : null
+        ),
+      ].filter(Boolean));
+      dica.hidden = false;
+      return false;
+    }
+
     async function submit() {
       if (!Q.isAnswered(step, answers) || saving) return;
+      if (!conferirEmail()) return;
       // WhatsApp é opcional, mas se foi digitado precisa estar certo
       if (pedeZap && String(answers.whatsapp || '').trim() && !zapNormalizado(answers.whatsapp)) {
         zapErr.hidden = false;
@@ -497,8 +551,11 @@
       'data-autofocus': true,
       oninput: (e) => {
         set({ email: e.target.value });
+        dica.hidden = true;
         if (!saving) btn.disabled = !Q.isAnswered(step, answers);
       },
+      // Ao sair do campo já mostra a sugestão, antes de tocar em Continuar
+      onblur: () => Q.isAnswered(step, answers) && conferirEmail(),
       onkeydown: (e) => e.key === 'Enter' && submit(),
     });
     const box = h('input', { type: 'checkbox', checked: !!answers.marketing, onchange: (e) => set({ marketing: e.target.checked }) });
@@ -526,16 +583,20 @@
         )
       : null;
 
+    // .filter(Boolean): sem o campo de WhatsApp (quiz em espanhol), append escrevia "null" na tela
     body.append(
-      ...title(step),
-      h('p', { class: 'quiz-sub' }, T.emailSub),
-      h('label', { class: 'quiz-zap-label' }, T.emailLabel),
-      input,
-      zap,
-      h('label', { class: 'quiz-consent' }, box, h('span', {}, T.consentimento)),
-      el,
-      errBox,
-      h('p', { class: 'muted quiz-legal' }, T.emailLegal)
+      ...[
+        ...title(step),
+        h('p', { class: 'quiz-sub' }, T.emailSub),
+        h('label', { class: 'quiz-zap-label' }, T.emailLabel),
+        input,
+        dica,
+        zap,
+        h('label', { class: 'quiz-consent' }, box, h('span', {}, T.consentimento)),
+        el,
+        errBox,
+        h('p', { class: 'muted quiz-legal' }, T.emailLegal),
+      ].filter(Boolean)
     );
   }
 

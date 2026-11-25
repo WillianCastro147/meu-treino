@@ -7,7 +7,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test": "node --no-warnings --test lib/stats.test.mjs lib/fase2.test.mjs lib/quiz.test.mjs lib/circuit.test.mjs lib/engage.test.mjs lib/email.test.mjs lib/recuperacao.test.mjs lib/nutricao.test.mjs lib/challenge.test.mjs lib/hotmart.test.mjs lib/metaCapi.test.mjs lib/reembolso.test.mjs lib/leona.test.mjs lib/ofertas.test.mjs scripts/details-i18n.test.mjs"
+    "test": "node --no-warnings --test lib/stats.test.mjs lib/fase2.test.mjs lib/quiz.test.mjs lib/circuit.test.mjs lib/engage.test.mjs lib/email.test.mjs lib/recuperacao.test.mjs lib/nutricao.test.mjs lib/challenge.test.mjs lib/hotmart.test.mjs lib/metaCapi.test.mjs lib/reembolso.test.mjs lib/leona.test.mjs lib/emailTypos.test.mjs lib/ofertas.test.mjs scripts/details-i18n.test.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",

@@ -919,6 +919,37 @@ textarea {
 .quiz-zap {
   margin-top: 14px;
 }
+/* E-mail digitado errado: "¿Quisiste decir ana@gmail.com?" (email-check.js) */
+.email-dica {
+  margin-top: 10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  text-align: left;
+}
+.email-dica[hidden] {
+  display: none;
+}
+.email-dica-texto {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.4;
+  word-break: break-all;
+}
+.email-dica-aviso {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--red);
+}
+.email-dica-botoes {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
 .quiz-zap-label {
   display: block;
   font-size: 14px;
