@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { useI18n } from '@/lib/i18n';
 import { IconLogo } from '@/components/Icons';
 import LangSwitcher from '@/components/LangSwitcher';
+import { checkEmail } from '@/lib/emailTypos';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -17,6 +18,10 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [msg, setMsg] = useState('');
   const [loading, setLoading] = useState(false);
+  // E-mail digitado errado no cadastro (gmail.con, gmai.com...): sugestão antes de criar a conta.
+  // Só no cadastro: no login e no "esqueci a senha" vale o e-mail com que a conta já existe.
+  const [emailDica, setEmailDica] = useState(null); // { valido, sugestao } do lib/emailTypos
+  const [emailAceito, setEmailAceito] = useState('');
 
   // Link vindo do checkout/e-mail de acesso: /login?email=...&modo=cadastro
   useEffect(() => {
@@ -47,6 +52,15 @@ export default function LoginPage() {
     e.preventDefault();
     setError('');
     setMsg('');
+    if (mode === 'signup') {
+      const atual = email.trim().toLowerCase();
+      const chk = checkEmail(atual);
+      if (chk.sugestao && !(chk.valido && emailAceito === atual)) {
+        setEmailDica(chk);
+        return;
+      }
+    }
+    setEmailDica(null);
     setLoading(true);
 
     try {
@@ -120,10 +134,48 @@ export default function LoginPage() {
             type="email"
             autoComplete="email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              setEmailDica(null);
+            }}
             placeholder={t('emailPlaceholder')}
             required
           />
+
+          {mode === 'signup' && emailDica && (
+            <div className="email-dica">
+              <p style={{ margin: 0, fontSize: 15, lineHeight: 1.4, wordBreak: 'break-all' }}>
+                {t('emailDidYouMean').split('{email}')[0]}
+                <b>{emailDica.sugestao}</b>
+                {t('emailDidYouMean').split('{email}')[1]}
+              </p>
+              {!emailDica.valido && <p className="error-msg" style={{ marginTop: 6, fontSize: 13 }}>{t('emailTypo')}</p>}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', marginTop: 10 }}>
+                <button
+                  type="button"
+                  className="btn small"
+                  onClick={() => {
+                    setEmail(emailDica.sugestao);
+                    setEmailDica(null);
+                  }}
+                >
+                  {t('emailFix')}
+                </button>
+                {emailDica.valido && (
+                  <button
+                    type="button"
+                    className="link-btn"
+                    onClick={() => {
+                      setEmailAceito(email.trim().toLowerCase());
+                      setEmailDica(null);
+                    }}
+                  >
+                    {t('emailKeep')}
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
 
           {mode !== 'forgot' && (
             <>

@@ -495,6 +495,15 @@ textarea {
   margin-top: 10px;
 }
 
+/* Cadastro com e-mail digitado errado: "Você quis dizer ana@gmail.com?" (lib/emailTypos.js) */
+.email-dica {
+  margin-top: 10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.4);
+}
+
 /* Seletor de idioma (PT / ES / FR) */
 .lang-switch {
   display: flex;
