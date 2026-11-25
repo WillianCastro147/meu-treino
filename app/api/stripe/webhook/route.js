@@ -1,7 +1,8 @@
 // Avisos da Stripe: mantém a tabela assinaturas (migração 006) igual à assinatura na Stripe.
 // Eventos (cadastre na Stripe): checkout.session.completed, checkout.session.async_payment_succeeded (Pix),
 // checkout.session.async_payment_failed (Pix expirou) e checkout.session.expired (pagamento abandonado):
-// estes dois mandam o e-mail de recuperação (lib/recuperacaoServer.js),
+// estes dois disparam a recuperação pelo WhatsApp/LeonaFlow (lib/recuperacaoServer.js; o e-mail de
+// recuperação está desligado, só com RECUPERACAO_EMAIL=on),
 // customer.subscription.created, customer.subscription.updated, customer.subscription.deleted,
 // charge.refunded (reembolso tira o acesso), charge.dispute.created e charge.dispute.closed (contestação).
 import { stripe, supabaseAdmin, nomeDaCompra, APP_URL, PLANO_VITALICIO, PLANO_PREMIUM, extrasAtivos, extraDoPlano, precoDoItem } from '@/lib/stripe';
