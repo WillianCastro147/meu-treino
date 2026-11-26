@@ -6,6 +6,7 @@
 import { supabaseAdmin, nomeDaCompra, APP_URL, EXTRAS } from '@/lib/stripe';
 import { sendWelcomeEmail, sendExtraEmail } from '@/lib/email';
 import { lerAviso, hottokValido } from '@/lib/hotmart';
+import { enviarCompraHotmartLeona } from '@/lib/leona';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -56,6 +57,18 @@ async function avisarComprador(db, a) {
       });
   // falha no e-mail não refaz o aviso (só registra), para não reenviar em loop
   await enviar.catch((e) => console.error('Hotmart e-mail:', a.plano, e.message));
+}
+
+// WhatsApp de compra confirmada pelo LeonaFlow (o mesmo fluxo "Comprou" da Stripe, lib/leona.js), com o
+// WhatsApp do quiz do mesmo e-mail ou, sem ele, o celular do checkout. Falha só é registrada.
+async function avisarLeona(db, a) {
+  try {
+    const { data } = await db.from('quiz_leads').select('name, answers').eq('email', a.email).maybeSingle();
+    const r = await enviarCompraHotmartLeona(a, { appUrl: APP_URL, whatsappQuiz: data?.answers?.whatsapp, nomeQuiz: data?.name });
+    if (!r?.skipped) console.log('LeonaFlow comprou (Hotmart)', a.transacao, JSON.stringify(r));
+  } catch (e) {
+    console.error('LeonaFlow (Hotmart):', a.transacao, e.message);
+  }
 }
 
 // Reembolso, chargeback ou compra cancelada: só a linha daquela compra perde o acesso
@@ -110,6 +123,7 @@ export async function POST(req) {
     if (a.acao === 'liberar') {
       await liberar(db, a);
       await avisarComprador(db, a);
+      await avisarLeona(db, a);
     } else if (a.acao === 'cortar') {
       await cortar(db, a);
     } else if (a.acao === 'cancelar_assinatura') {
