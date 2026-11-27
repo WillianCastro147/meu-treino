@@ -4,6 +4,8 @@
 // preenche o perfil (nome, altura, peso, meta), monta o plano com o Coach com IA
 // (ou um plano pronto, se a IA não estiver disponível) e leva para o app.
 // Sem quiz pendente, vai direto para o Início. Funções do banco em supabase/migrations/005_quiz.sql.
+// Quiz feito com outro e-mail (trocou no checkout): acha pela marca que o quiz deixou no cookie
+// moviq_quiz (migração 008, adopt_quiz_lead).
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -17,6 +19,31 @@ import { createChallenge } from '@/lib/challengeCreate';
 import { firstName, toCoachInput, toChallengeInput, starterFor } from '@/lib/quiz';
 import { IconLogo } from '@/components/Icons';
 import { isStandalone } from '@/lib/install';
+
+const MARCA_COOKIE = 'moviq_quiz';
+
+function lerMarca() {
+  try {
+    const m = document.cookie.match(new RegExp(`(?:^|;\\s*)${MARCA_COOKIE}=([A-Za-z0-9-]{16,64})`));
+    return m ? m[1] : null;
+  } catch {
+    return null;
+  }
+}
+
+// Quiz usado: a marca não serve mais (num aparelho compartilhado, não vale para outra conta)
+function apagarMarca() {
+  try {
+    const dominio = /(^|\.)moviqgym\.app$/.test(window.location.hostname) ? '; domain=.moviqgym.app' : '';
+    document.cookie = `${MARCA_COOKIE}=; path=/; max-age=0${dominio}`;
+    if (dominio) document.cookie = `${MARCA_COOKIE}=; path=/; max-age=0`;
+  } catch {}
+}
+
+async function meuQuiz() {
+  const { data, error } = await supabase.rpc('get_my_quiz_lead');
+  return !error && Array.isArray(data) ? data[0] || null : null;
+}
 
 // Depois do plano pronto, quem ainda não instalou o app passa pela tela de instalação
 const afterPlan = (dest) => (isStandalone() ? dest : `/instalar?next=${encodeURIComponent(dest)}`);
@@ -40,8 +67,13 @@ function Preparando({ user }) {
 
   async function run() {
     // 1) Tem quiz para este e-mail? (se a migração 005 não rodou, segue sem quiz)
-    const { data, error: err } = await supabase.rpc('get_my_quiz_lead');
-    const found = !err && Array.isArray(data) ? data[0] : null;
+    let found = await meuQuiz();
+    // Não tem: o quiz pode ter sido feito com outro e-mail neste navegador (marca do cookie)
+    const marca = found ? null : lerMarca();
+    if (marca) {
+      const { data: adotou } = await supabase.rpc('adopt_quiz_lead', { p_marca: marca });
+      if (adotou === true) found = await meuQuiz();
+    }
     if (!found) return router.replace('/inicio');
     setLead(found);
     const a = found.answers || {};
@@ -66,6 +98,7 @@ function Preparando({ user }) {
         setError('Não conseguimos montar seu plano agora. Você pode criar pelo Coach na aba Plano.');
         setPhase('error');
         await supabase.rpc('claim_quiz_lead', { p_id: found.id });
+        apagarMarca();
         return;
       }
     }
@@ -80,6 +113,7 @@ function Preparando({ user }) {
 
     // 5) Marca o quiz como usado
     await supabase.rpc('claim_quiz_lead', { p_id: found.id });
+    apagarMarca();
     setPhase('done');
   }
 

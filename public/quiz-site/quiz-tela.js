@@ -428,6 +428,25 @@
     if (!res.ok) throw new Error(`save_quiz_lead ${res.status}: ${await res.text()}`);
   }
 
+  // Marca aleatória do quiz: vai nas respostas e num cookie que o app (www.moviqgym.app) também lê.
+  // Se a pessoa pagar com outro e-mail, o app acha o quiz por ela (adopt_quiz_lead, migração 008).
+  function novaMarca() {
+    try {
+      if (crypto.randomUUID) return crypto.randomUUID();
+      return Array.from(crypto.getRandomValues(new Uint8Array(16)), (x) => x.toString(16).padStart(2, '0')).join('');
+    } catch (e) {
+      return '';
+    }
+  }
+  function gravarMarca(marca) {
+    if (!marca) return;
+    try {
+      const dominio = /(^|\.)moviqgym\.app$/.test(window.location.hostname) ? '; domain=.moviqgym.app' : '';
+      const seguro = window.location.protocol === 'https:' ? '; Secure' : '';
+      document.cookie = `moviq_quiz=${marca}; path=/; max-age=${60 * 60 * 24 * 30}; SameSite=Lax${dominio}${seguro}`;
+    } catch (e) {}
+  }
+
   // WhatsApp do Brasil (com DDD, com ou sem 55) → só dígitos com 55; inválido → ''. Igual a lib/leona.js.
   function zapNormalizado(v) {
     let d = String(v || '').replace(/\D/g, '');
@@ -506,15 +525,17 @@
       btn.textContent = T.salvando;
       errBox.replaceChildren();
       const zapOk = pedeZap ? zapNormalizado(answers.whatsapp) : '';
+      const marca = novaMarca();
       try {
         await saveLead({
           p_email: answers.email.trim(),
           p_name: answers.nome.trim(),
           // WhatsApp (opcional) vai junto nas respostas: é de lá que o app tira o número do evento "lead"
-          p_answers: Object.assign(Q.cleanAnswers(answers), zapOk ? { whatsapp: zapOk } : {}),
+          p_answers: Object.assign(Q.cleanAnswers(answers), zapOk ? { whatsapp: zapOk } : {}, marca ? { marca } : {}),
           p_marketing: !!answers.marketing,
           p_utm: Object.keys(tracking || {}).length ? tracking : null,
         });
+        gravarMarca(marca);
       } catch (e) {
         console.error(e);
         saving = false;
