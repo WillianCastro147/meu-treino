@@ -100,6 +100,8 @@ O quiz é uma **página estática** em `public/quiz-site/`, servida no subdomín
 
 Quando a pessoa compra e entra no app **com o mesmo e-mail**, a tela **`/preparando`** acha o quiz dela, preenche o perfil (nome, altura, peso, meta), monta a semana de treinos com o **Coach com IA** (ou um plano pronto, se a IA não estiver configurada) e leva para a aba Plano. Quem não tem quiz vai direto para o Início. Depois do login (e da troca de senha) o app passa sempre por `/preparando`.
 
+Se a pessoa trocar o e-mail no checkout (fez o quiz com um e pagou com outro), o app ainda acha o quiz: o quiz deixa uma marca num cookie que vale para `quiz.moviqgym.app` e `www.moviqgym.app`, e `/preparando` usa essa marca para passar o quiz para o e-mail da conta (`supabase/migrations/008_quiz_marca.sql`, que explica as travas). Só funciona no mesmo navegador do quiz.
+
 Configuração (uma vez):
 1. Rode `supabase/migrations/005_quiz.sql` no SQL Editor. Ele cria a tabela `quiz_leads` (fechada; o acesso é só pelas funções `save_quiz_lead`, `get_my_quiz_lead` e `claim_quiz_lead`).
 2. Mantenha **Confirm email** ligado no Supabase em produção. É a confirmação que garante que só o dono do e-mail recebe o plano do quiz.

@@ -223,6 +223,53 @@ grant execute on function public.save_quiz_lead(text, text, jsonb, boolean, json
 grant execute on function public.get_my_quiz_lead() to authenticated;
 grant execute on function public.claim_quiz_lead(uuid) to authenticated;
 
+-- 4) Quiz feito com outro e-mail: passa para o e-mail da conta pela marca do cookie
+--    (igual a migrations/008_quiz_marca.sql, que explica as travas)
+create index if not exists quiz_leads_marca_idx on public.quiz_leads ((answers ->> 'marca'));
+
+create or replace function public.adopt_quiz_lead(p_marca text)
+returns boolean
+language plpgsql
+security definer set search_path = public
+as $$
+declare
+  e text := lower(auth.jwt() ->> 'email');
+  criada timestamptz;
+  alvo uuid;
+begin
+  if auth.uid() is null or e is null or p_marca is null or length(p_marca) < 16 or length(p_marca) > 64 then
+    return false;
+  end if;
+  if exists (select 1 from public.quiz_leads where email = e or claimed_by = auth.uid()) then
+    return false;
+  end if;
+
+  select u.created_at into criada from auth.users u where u.id = auth.uid();
+
+  select q.id into alvo
+  from public.quiz_leads q
+  where q.answers ->> 'marca' = p_marca
+    and q.claimed_at is null
+    and q.created_at > now() - interval '30 days'
+    and q.created_at <= coalesce(criada, now())
+    and not exists (select 1 from auth.users u where lower(u.email) = q.email)
+  order by q.created_at desc
+  limit 1;
+
+  if alvo is null then
+    return false;
+  end if;
+
+  update public.quiz_leads
+  set email = e, updated_at = now()
+  where id = alvo and claimed_at is null;
+  return found;
+end;
+$$;
+
+revoke all on function public.adopt_quiz_lead(text) from public;
+grant execute on function public.adopt_quiz_lead(text) to authenticated;
+
 
 -- ============================================================
 -- Assinaturas Stripe (igual a migrations/006_assinaturas.sql)
